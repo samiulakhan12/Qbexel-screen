@@ -296,6 +296,13 @@ const DECLARED: WritePath[] = [
 	w("src/lib/ai-edition/store/useTimeline.ts", "removeRegions", "save", "gesture"),
 	w("src/lib/ai-edition/store/useTimeline.ts", "saveZoomPatch", "save", "gesture"),
 	w("src/lib/ai-edition/store/useTimeline.ts", "setTrimEntries", "save", "gesture"),
+	// The Tutorial Director (StoryboardPane): the analysis saved onto the document, the
+	// review decisions, the application of approved suggestions, and clearing it all. Each
+	// is a click in the pane, so each records an undo step.
+	w("src/lib/ai-edition/store/useStoryboard.ts", "analyze", "save", "gesture"),
+	w("src/lib/ai-edition/store/useStoryboard.ts", "apply", "save", "gesture"),
+	w("src/lib/ai-edition/store/useStoryboard.ts", "clearStoryboard", "save", "gesture"),
+	w("src/lib/ai-edition/store/useStoryboard.ts", "setStatus", "save", "gesture"),
 	w("src/lib/ai-edition/store/useTimeline.ts", "splitClipAtPlayhead", "save", "gesture"),
 	w("src/lib/ai-edition/store/useTimeline.ts", "addTitleCard", "save", "gesture"),
 	w("src/lib/ai-edition/store/useTimeline.ts", "addBundledEffectAtPlayhead", "save", "gesture"),

@@ -34,53 +34,86 @@ via `scripts/apply-branding.mjs`. The `.openscreen` project extension, the
 compatibility aliases: changing them would strand existing user projects and
 every documented agent setup.
 
-## Tutorial Director (M5)
+## Tutorial Director (M5) — as built
 
-Document field: `storyboard?: AxcutStoryboard` (optional, additive).
+Document field: `storyboard?: AxcutStoryboard` (optional, additive; schema in
+`src/lib/ai-edition/schema/index.ts`, no version bump).
 
 ```
 AxcutStoryboard {
   version: 1
-  brief: string                       // the user's request
   generatedAt: iso
-  source: "deterministic" | "llm"     // what produced the scene list
-  title?: string; opening?: string; conclusion?: string
+  clipSignature: string                // clipExtentSignature() of the timeline analysed; differs → stale
+  enrichment: { provider, model, at } | null   // which model named the scenes; never a credential
   scenes: AxcutStoryboardScene[]
+  suggestions: AxcutStoryboardSuggestion[]     // flat, each pointing at its sceneId
 }
 AxcutStoryboardScene {
-  id; title; order
-  startMs; endMs                       // RAW ruler ms (the clock every tool takes)
-  narration: string                    // transcript words inside the span, verbatim
-  observed: ObservedEvent[]            // clicks / scrolls / pauses that happened
-  inferred: string[]                   // sentences the model inferred, labelled as such
-  suggestedAction: string
-  zoom?: { depth, focus, startMs, endMs }
-  overlays: StoryboardOverlay[]        // text callouts / arrows, frame space
-  cuts: { startMs, endMs, reason }[]   // dead air / retakes to remove
-  status: "pending" | "approved" | "rejected" | "applied"
-  appliedIds: string[]                 // region ids written when applied
+  id; order; title                     // title = the LLM's when enriched, else the heuristic one
+  startMs; endMs; clipId               // RAW ruler ms; a scene never crosses a clip
+  narration: string                    // transcribed words in the span — observed, not written
+  observed: { kind: click|double-click|right-click|silence, atMs, endMs?, cx?, cy? }[]
+  inferred: { kind: title|summary|step|retake, text, confidence, source: heuristic|llm, model? }[]
 }
+AxcutStoryboardSuggestion = (base & kind-specific):
+  base: { id; sceneId; status: proposed|approved|rejected|applied; source; rationale; appliedIds; error? }
+  cut       { reason: silence|lead-in|tail|retake; assetId; clipId; sourceStartSec; sourceEndSec }
+  zoom      { startMs; endMs; focus {cx,cy}; depth 1..6 }
+  callout   { startMs; endMs; text; x; y (percent of frame) }
+  titleCard { cardKind: intro|outro; text }
 ```
 
-Pipeline, in `src/lib/ai-edition/director/`:
+Observed events and inferences are separate lists with separate tags in the UI,
+so a guess can never read as a fact. A suggestion is data, never code: applying
+one builds the arguments of an agent tool and runs `executeAgentTool`.
 
-1. `analyze.ts` (pure): transcript (speech/silence segments, words) + cursor
-   telemetry (clicks, scroll) → candidate scenes. Clicks within
-   `SHOT_MERGE_GAP_MS` of each other and of the speech around them form one
-   scene; a silence ≥ 1.5 s or a repeated phrase (retake) becomes a cut
-   candidate. Deterministic, no LLM needed.
-2. `enrich.ts` (optional LLM): the candidate list, the brief and the transcript
-   are sent to the configured provider with a strict Zod output schema
-   (`storyboardEnrichmentSchema`); the model may only rename scenes, write
-   headings/opening/conclusion and propose overlays that reference observed
-   event ids. Anything else is rejected by the parser.
-3. `apply.ts`: approved scenes → `executeAgentTool` calls (`addTrims`,
-   `addZooms`, `addAnnotation`), recorded in `appliedIds` so a scene can be
-   un-applied by `removeModifier`.
+Pipeline:
 
-Surfaces: a **Storyboard** facet in the floating inspector; CLI
-`qbexel storyboard <project> [--brief …] [--apply] [--json]`; MCP
-`generateStoryboard` / `applyStoryboard`.
+1. `src/lib/ai-edition/director/analyze.ts` (pure, deterministic). Per clip:
+   spoken words and speech segments inside the clip's source window, clicks from
+   the cursor telemetry. Scene boundaries at speech pauses ≥ 1.5 s (never before
+   4 s of scene, never leaving < 4 s), or at click gaps ≥ 6 s when there is no
+   speech; scenes longer than 45 s are split at their widest pause. Suggestions:
+   silence cuts (pause ≥ 1.5 s, 0.3 s breath kept, no click inside, no existing
+   trim), lead-in/tail cuts (≥ 2 s of silence at the clip's edges, the stop
+   click ignored), retake cuts (two consecutive segments sharing ≥ 4 opening
+   words within 8 s), zooms (the timeline's own `buildAutoZoomSuggestionsForClips`
+   planner, clear of existing zooms), callouts (the step title beside a scene's
+   first click, when the narration names a step), intro/outro title cards
+   (programme ≥ 10 s, nothing already on the frame there). Review decisions are
+   carried over between analyses by content fingerprint
+   (`director/storyboard.ts`).
+2. `electron/ai-edition/director/enrich.ts` (optional, main process). Sends each
+   scene's id, times, narration (≤ 600 chars) and click/silence counts to the
+   configured chat model; strict Zod reply `[{id, title, summary}]`; unknown ids
+   dropped; writes `llm` inferences beside the heuristic ones and sets the scene
+   title. 60 s timeout, AbortSignal, token usage returned. Runs only when the
+   user ticks the consent toggle for that run (never remembered).
+3. `electron/ai-edition/director/apply.ts` (main process). Approved suggestions →
+   `addTrim` / `addZoom` / `addAnnotation` / `addTitleCard` through
+   `executeAgentTool`; created ids recorded in `appliedIds`; a refusal is stored
+   on the suggestion in the tool's words. `addTitleCard` was added as an agent
+   tool for this (chat and MCP get it too).
+
+Bridge: `aiEdition` actions `director.analyze` (reads telemetry via the cursor
+sidecar, optional enrich) and `director.apply`; the renderer saves the returned
+storyboard / document through `saveDocument` with history
+(`src/lib/ai-edition/store/useStoryboard.ts`, rows in
+`documentWriteAudit.test.ts`).
+
+Surface: the **Director** facet of the floating inspector
+(`StoryboardPane.tsx`): analyse (+ consent toggle), stale banner, approve /
+reject per suggestion, approve all, apply approved, one-click **Remove
+silences** (the deterministic silence pass), clear with confirmation; scene and
+event rows seek the playhead.
+
+Chat: a **Stop** button while a turn runs (`chat.cancel` → `cancelChat`, an
+AbortSignal through `invokeOpenScreenAgent` into LangGraph's `streamEvents`),
+and a stall watchdog that stops a turn after 120 s without any text, thinking
+or tool event. Both resolve the turn as `cancelled`, reported as information.
+
+Not built yet (M8): CLI `qbexel storyboard` and MCP `director.*` tools; the
+analyser is pure and ready for both.
 
 ## Privacy Guardian (M6)
 

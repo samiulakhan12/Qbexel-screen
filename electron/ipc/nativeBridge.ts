@@ -76,6 +76,8 @@ export interface NativeBridgeContext {
 		projectId: string,
 		sessionId: string,
 	) => import("../../src/native/contracts").AiEditionChatResult;
+	/** Stops a running chat turn. Absent in the headless CLI, where none runs. */
+	cancelAiEditionChat?: (projectId: string, sessionId: string) => boolean;
 	rewindToMessage: (
 		projectId: string,
 		sessionId: string,
@@ -249,6 +251,8 @@ export function registerNativeBridgeHandlers(context: NativeBridgeContext) {
 		selectSession: context.selectAiEditionChatSession,
 		renameSession: context.renameAiEditionChatSession,
 		deleteSession: context.deleteAiEditionChatSession,
+		loadCursorTelemetry: context.loadCursorTelemetry,
+		cancelChat: context.cancelAiEditionChat,
 	});
 
 	const exportJobs = new ExportJobs();
@@ -664,6 +668,11 @@ export function registerNativeBridgeHandlers(context: NativeBridgeContext) {
 								),
 							);
 						}
+						case "chat.cancel":
+							return createSuccessResponse(
+								requestId,
+								aiEditionService.chatCancel(request.payload.projectId, request.payload.sessionId),
+							);
 						case "chat.undoLastBatch":
 							return createSuccessResponse(
 								requestId,
@@ -757,6 +766,46 @@ export function registerNativeBridgeHandlers(context: NativeBridgeContext) {
 									sourceLanguage: request.payload.sourceLanguage,
 								}),
 							);
+						case "director.analyze":
+							if (
+								request.payload?.enrich !== undefined &&
+								typeof request.payload.enrich !== "boolean"
+							) {
+								return createErrorResponse(requestId, "INVALID_REQUEST", "Invalid enrich flag.");
+							}
+							return createSuccessResponse(
+								requestId,
+								await aiEditionService.directorAnalyze({
+									document: request.payload.document,
+									enrich: request.payload.enrich === true,
+									outroText:
+										typeof request.payload.outroText === "string"
+											? request.payload.outroText.slice(0, 200)
+											: undefined,
+								}),
+							);
+						case "director.apply": {
+							const ids = request.payload?.suggestionIds;
+							if (
+								!Array.isArray(ids) ||
+								ids.length === 0 ||
+								ids.length > 1000 ||
+								!ids.every((id) => typeof id === "string" && id.length > 0 && id.length <= 128)
+							) {
+								return createErrorResponse(
+									requestId,
+									"INVALID_REQUEST",
+									"suggestionIds must be 1 to 1000 non-empty strings.",
+								);
+							}
+							return createSuccessResponse(
+								requestId,
+								await aiEditionService.directorApply({
+									document: request.payload.document,
+									suggestionIds: ids,
+								}),
+							);
+						}
 						default:
 							return createErrorResponse(
 								requestId,

@@ -320,7 +320,9 @@
 			"subtitle": "Alternar ou criar sessões",
 			"empty": "Ainda não há conversas.",
 			"msgsCount": "{{count}} mensagens · {{date}}"
-		}
+		},
+		"stop": "Stop",
+		"stopped": "Stopped."
 	},
 	"newProjectDialog": {
 		"title": "Novo projeto",
@@ -447,5 +449,83 @@
 	"cpuCompositor": {
 		"notice": "Sem GPU compatível — a renderização ocorre na CPU, então a reprodução fica mais lenta.",
 		"exportWarning": "Sem GPU compatível: esta exportação roda na CPU e vai demorar muito mais que o normal."
+	},
+	"director": {
+		"title": "Director",
+		"help": "The Tutorial Director reads the recording — the words you said and the clicks it recorded — and proposes scenes, cuts, zooms, callouts and title cards. Nothing changes the video until you approve it. What was observed and what is inferred are always marked apart.",
+		"intro": "Analyse the recording to get a storyboard: scenes, what was observed in each, and suggested edits to review.",
+		"analyze": "Analyse recording",
+		"reanalyze": "Analyse again",
+		"analyzing": "Analysing…",
+		"applying": "Applying…",
+		"enrich": "Ask the AI model for scene titles",
+		"enrichHint": "Sends the transcribed words and click counts of each scene to the configured provider. No video, screenshots or files are sent.",
+		"enrichWarning": "Scene titles were not generated: {{error}}",
+		"enrichedBy": "Titles by {{model}}",
+		"noFootage": "Add a recording to the timeline first.",
+		"noScenes": "No scenes found: the timeline has no footage.",
+		"stale": "The timeline changed since this analysis. Analyse again to refresh the suggestions.",
+		"summary": "{{scenes}} scenes · {{open}} open suggestions · {{applied}} applied",
+		"approveAll": "Approve all",
+		"applyApproved": "Apply approved ({{count}})",
+		"removeSilences": "Remove silences ({{count}})",
+		"clear": "Clear storyboard",
+		"clearConfirm": "Remove the storyboard from this project? Edits already applied stay.",
+		"keep": "Keep",
+		"observed": "Observed",
+		"inferred": "AI inference",
+		"heuristic": "Heuristic",
+		"confidence": "{{percent}}% confidence",
+		"narrationEmpty": "No narration in this scene.",
+		"untitled": "Untitled scene",
+		"jumpTo": "Jump to {{time}}",
+		"events": {
+			"click": "Click",
+			"doubleClick": "Double-click",
+			"rightClick": "Right-click",
+			"silence": "Silence"
+		},
+		"eventAt": "{{kind}} at {{time}}",
+		"silenceSpan": "Silence {{from}}–{{to}}",
+		"suggestion": {
+			"cut": "Cut",
+			"zoom": "Zoom",
+			"callout": "Callout",
+			"titleCard": "Title card"
+		},
+		"cutReason": {
+			"silence": "silence",
+			"leadIn": "lead-in",
+			"tail": "tail",
+			"retake": "retake"
+		},
+		"cutDetail": "Cut {{from}}–{{to}} of the source ({{reason}})",
+		"zoomDetail": "Zoom {{from}}–{{to}}, depth {{depth}}",
+		"calloutDetail": "“{{text}}” at {{time}}",
+		"titleCardDetail": "{{kind}} card: “{{text}}”",
+		"cardKind": {
+			"intro": "Intro",
+			"outro": "Outro"
+		},
+		"inferenceKind": {
+			"title": "Title",
+			"summary": "Summary",
+			"step": "Step",
+			"retake": "Retake"
+		},
+		"status": {
+			"proposed": "Proposed",
+			"approved": "Approved",
+			"rejected": "Rejected",
+			"applied": "Applied"
+		},
+		"approve": "Approve",
+		"reject": "Reject",
+		"applyOne": "Apply",
+		"applied": "Applied {{count}} suggestions",
+		"applyFailed": "{{count}} suggestions were refused; each one says why",
+		"applyError": "Could not apply: {{error}}",
+		"analyzeFailed": "Analysis failed: {{error}}",
+		"nothingApproved": "Approve a suggestion first."
 	}
 }

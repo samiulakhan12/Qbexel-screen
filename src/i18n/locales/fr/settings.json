@@ -348,8 +348,10 @@
 			"layout": "Disposition caméra : position, forme et taille de la caméra",
 			"audio": "Audio : niveau de sortie de toute la vidéo",
 			"cursor": "Curseur : style, taille et effets",
-			"transcript": "Transcription : modifiez les mots pour couper la vidéo"
-		}
+			"transcript": "Transcription : modifiez les mots pour couper la vidéo",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "Recadrage",

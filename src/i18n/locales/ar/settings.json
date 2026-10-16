@@ -348,8 +348,10 @@
 			"layout": "تخطيط الكاميرا: موضع الكاميرا وشكلها وحجمها",
 			"audio": "الصوت: مستوى إخراج الفيديو كله",
 			"cursor": "المؤشر: النمط والحجم والتأثيرات",
-			"transcript": "النص: عدّل الكلمات لقص الفيديو"
-		}
+			"transcript": "النص: عدّل الكلمات لقص الفيديو",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "اقتصاص",

@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Loader2, X } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Square, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
@@ -689,6 +689,10 @@ export function ChatStripPanel() {
 					},
 				]);
 				void refreshSessions(projectId);
+			} else if (result.cancelled) {
+				// Stopped on purpose (the Stop button) or by the stall watchdog: not a failure
+				// of the chat, so it is said as information, with the reason the service gave.
+				toast.info(result.error ?? t("chat.stopped"));
 			} else {
 				toast.error(result.error ?? t("chat.chatFailed"));
 			}
@@ -1574,6 +1578,27 @@ export function ChatStripPanel() {
 					) : null}
 					{/* `aria-disabled`, not `disabled`: this is where "Set up a provider" is said, and a
 					    natively disabled button takes no pointer events, so nothing could show it. */}
+					{busy ? (
+						// While a turn runs, the send button's place is taken by Stop: the only
+						// way to end a turn that is taking too long or doing the wrong thing.
+						// `chatRun` then resolves with `cancelled`, which the send path reports.
+						<Tooltip content={t("chat.stop")}>
+							<button
+								type="button"
+								className={styles.sendBtn}
+								aria-label={t("chat.stop")}
+								onClick={() => {
+									const sessionId = thinkingRunSessionRef.current ?? activeSessionId;
+									if (!sessionId || !projectId) return;
+									void nativeBridgeClient.aiEdition.chatCancel(projectId, sessionId).catch(() => {
+										/* the turn ends on its own; nothing else to do */
+									});
+								}}
+							>
+								<Square size={12} fill="currentColor" />
+							</button>
+						</Tooltip>
+					) : null}
 					<Tooltip
 						content={canChat ? t("chat.send") : t("chat.composerDisabledNoProvider")}
 						shortcut={canChat ? "Enter" : undefined}
@@ -1583,6 +1608,7 @@ export function ChatStripPanel() {
 							className={styles.sendBtn}
 							aria-label={t("chat.send")}
 							aria-disabled={sendDisabled || undefined}
+							hidden={busy}
 							onClick={sendDisabled ? undefined : () => void send()}
 						>
 							<svg

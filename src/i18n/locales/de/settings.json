@@ -348,8 +348,10 @@
 			"layout": "Kamera-Layout: Position, Form und Größe der Kamera",
 			"audio": "Audio: Ausgangspegel des ganzen Videos",
 			"cursor": "Cursor: Stil, Größe und Effekte",
-			"transcript": "Transkript: Wörter bearbeiten, um das Video zu schneiden"
-		}
+			"transcript": "Transkript: Wörter bearbeiten, um das Video zu schneiden",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "Zuschneiden",

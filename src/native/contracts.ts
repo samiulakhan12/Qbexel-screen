@@ -407,6 +407,13 @@ export interface AiEditionChatResult {
 	error?: string;
 	/** Document checkpoint id recorded for the user message that triggered this turn (axcut parity). */
 	userMessageCheckpointId?: string;
+	/** The turn was stopped — by the user or by the stall watchdog — before it answered. */
+	cancelled?: boolean;
+}
+
+export interface AiEditionChatCancelResult {
+	/** True when a turn was running for the session and has been told to stop. */
+	cancelled: boolean;
 }
 
 export interface AiEditionChatRewindResult {
@@ -458,6 +465,34 @@ export interface AiEditionCaptionTranslateResult {
 	segments: Record<string, string>;
 	/** Model that produced the translation, for provenance in the UI. */
 	model?: string;
+	error?: string;
+}
+
+export interface AiEditionTokenUsage {
+	inputTokens: number;
+	outputTokens: number;
+}
+
+/** Result of a Tutorial Director analysis. `storyboard` is an `AxcutStoryboard` the
+ *  renderer merges into the document and saves. `enriched` says whether the model pass
+ *  ran; `warning` carries a model-pass failure when the deterministic part succeeded. */
+export interface AiEditionDirectorAnalyzeResult {
+	success: boolean;
+	storyboard?: unknown;
+	enriched: boolean;
+	model?: string;
+	usage?: AiEditionTokenUsage | null;
+	warning?: string;
+	error?: string;
+}
+
+export interface AiEditionDirectorApplyResult {
+	success: boolean;
+	/** The edited document when at least the call ran; absent on a hard failure. */
+	document?: unknown;
+	applied: string[];
+	failed: Array<{ id: string; error: string }>;
+	skipped: string[];
 	error?: string;
 }
 
@@ -737,6 +772,13 @@ export type NativeBridgeRequest =
 	  }
 	| {
 			domain: "aiEdition";
+			action: "chat.cancel";
+			/** Stops the turn running for this session, if any. */
+			payload: { projectId: string; sessionId: string };
+			requestId?: string;
+	  }
+	| {
+			domain: "aiEdition";
 			action: "chat.undoLastBatch";
 			payload: { projectId: string; sessionId: string };
 			requestId?: string;
@@ -812,6 +854,24 @@ export type NativeBridgeRequest =
 				targetLanguage: string;
 				sourceLanguage?: string;
 			};
+			requestId?: string;
+	  }
+	| {
+			domain: "aiEdition";
+			action: "director.analyze";
+			/** Runs the Tutorial Director over the document snapshot. `enrich` asks the
+			 *  configured chat model for scene titles and summaries — only ever with the
+			 *  user's explicit consent, since narration text leaves the machine. Nothing is
+			 *  written on the main side: the renderer saves the returned storyboard. */
+			payload: { document: unknown; enrich?: boolean; outroText?: string };
+			requestId?: string;
+	  }
+	| {
+			domain: "aiEdition";
+			action: "director.apply";
+			/** Applies the named storyboard suggestions through the agent tools and returns
+			 *  the edited document for the renderer to save. */
+			payload: { document: unknown; suggestionIds: string[] };
 			requestId?: string;
 	  }
 	| {

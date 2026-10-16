@@ -348,8 +348,10 @@
 			"layout": "カメラレイアウト：カメラの位置、形状、サイズ",
 			"audio": "オーディオ：動画全体の出力レベル",
 			"cursor": "カーソル：スタイル、サイズ、エフェクト",
-			"transcript": "文字起こし：単語を編集して動画をカットします"
-		}
+			"transcript": "文字起こし：単語を編集して動画をカットします",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "クロップ",

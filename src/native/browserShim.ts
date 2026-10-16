@@ -4,7 +4,12 @@
 // rapid iteration without the Electron window overhead.
 
 import { PROVIDER_DEFINITIONS } from "../../electron/ai-edition/provider-registry";
-import { axcutSchemaVersion, migrateRawDocumentToCurrent } from "../lib/ai-edition/schema";
+import { analyzeStoryboard } from "../lib/ai-edition/director/analyze";
+import {
+	axcutSchemaVersion,
+	documentSchema,
+	migrateRawDocumentToCurrent,
+} from "../lib/ai-edition/schema";
 import {
 	compareStylePresets,
 	FACTORY_STYLE_PRESET_ID,
@@ -776,11 +781,48 @@ function createShimBridgeClient() {
 			// ponytail: no provider credentials in browser mode, so this reports the
 			// same "configure a provider" failure the real bridge would, rather than
 			// inventing fake translations that would land in the document.
+			// No turn ever runs in the browser shim, so there is never one to stop.
+			chatCancel: () => Promise.resolve({ cancelled: false }),
 			translateCaptions: () =>
 				Promise.resolve({
 					success: false,
 					segments: {},
 					error: "Caption translation needs the desktop app's AI provider.",
+				}),
+			// The deterministic half of the Director runs anywhere; the browser has no cursor
+			// telemetry and no provider, so there are no click events and no model pass.
+			directorAnalyze: (
+				document: unknown,
+				options: { enrich?: boolean; outroText?: string } = {},
+			) => {
+				const parsed = documentSchema.safeParse(document);
+				if (!parsed.success) {
+					return Promise.resolve({
+						success: false,
+						enriched: false,
+						error: "The document snapshot is not valid.",
+					});
+				}
+				return Promise.resolve({
+					success: true,
+					enriched: false,
+					storyboard: analyzeStoryboard(parsed.data, {
+						previous: parsed.data.storyboard,
+						outroText: options.outroText,
+					}),
+					...(options.enrich
+						? { warning: "Scene titles from the AI model need the desktop app's provider." }
+						: {}),
+				});
+			},
+			// Applying goes through the agent tools, which live in the main process.
+			directorApply: () =>
+				Promise.resolve({
+					success: false,
+					applied: [],
+					failed: [],
+					skipped: [],
+					error: "Applying storyboard suggestions needs the desktop app.",
 				}),
 		},
 		project: {

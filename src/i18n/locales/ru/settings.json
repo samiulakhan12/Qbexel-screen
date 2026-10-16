@@ -348,8 +348,10 @@
 			"layout": "Расположение камеры: положение, форма и размер камеры",
 			"audio": "Аудио: уровень выхода всего видео",
 			"cursor": "Курсор: стиль, размер и эффекты",
-			"transcript": "Транскрипт: правьте слова, чтобы вырезать видео"
-		}
+			"transcript": "Транскрипт: правьте слова, чтобы вырезать видео",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "Обрезка",

@@ -2659,3 +2659,185 @@ textarea.control {
   margin-top: 2px;
   opacity: 0.8;
 }
+
+/* ─── Storyboard pane (Tutorial Director) ─────────────────────── */
+.sbIntro,
+.sbNote,
+.sbSummary {
+	margin: 4px var(--sp-4) 10px;
+	font: 400 13px/1.5 var(--font-body);
+	color: var(--muted);
+}
+.sbSummary { color: var(--fg-2); }
+.sbProvenance { color: var(--muted); }
+.sbWarning {
+	margin: 4px var(--sp-4) 10px;
+	padding: 8px 10px;
+	border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent);
+	border-radius: var(--r-md);
+	background: color-mix(in oklab, var(--danger) 10%, transparent);
+	font: 400 12px/1.5 var(--font-body);
+	color: var(--fg-2);
+}
+.sbActions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0 var(--sp-4) 12px;
+}
+.sbConfirm {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	font: 400 12px/1.4 var(--font-body);
+	color: var(--fg-2);
+}
+.sbScene {
+	margin: 0 var(--sp-4) 12px;
+	border: 1px solid var(--border-soft);
+	border-radius: var(--r-md);
+	background: var(--surface-1);
+	overflow: hidden;
+}
+.sbSceneHead {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 10px 12px;
+	border: 0;
+	background: transparent;
+	color: var(--fg);
+	text-align: left;
+	cursor: pointer;
+}
+.sbSceneHead:hover { background: color-mix(in oklab, var(--fg) 6%, transparent); }
+.sbSceneIndex {
+	flex: 0 0 auto;
+	min-width: 22px;
+	height: 22px;
+	display: grid;
+	place-items: center;
+	border-radius: 999px;
+	background: var(--accent-soft);
+	color: var(--fg);
+	font: 600 11px/1 var(--font-mono);
+}
+.sbSceneTitle {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: 600 13px/1.3 var(--font-body);
+}
+.sbSceneTime {
+	flex: 0 0 auto;
+	font: 400 11px/1 var(--font-mono);
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+.sbBlock {
+	padding: 8px 12px;
+	border-top: 1px solid var(--border-soft);
+}
+.sbTag {
+	display: inline-block;
+	margin: 0 8px 4px 0;
+	padding: 2px 6px;
+	border-radius: 999px;
+	font: 600 10px/1.4 var(--font-body);
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+.sbTagObserved { background: color-mix(in oklab, var(--accent) 18%, transparent); color: var(--fg); }
+.sbTagHeuristic { background: color-mix(in oklab, var(--fg) 10%, transparent); color: var(--fg-2); }
+.sbTagLlm { background: color-mix(in oklab, var(--brand) 22%, transparent); color: var(--fg); }
+.sbNarration {
+	margin: 0 0 6px;
+	font: 400 12px/1.5 var(--font-body);
+	color: var(--fg-2);
+}
+.sbEvents {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.sbEventBtn {
+	padding: 2px 8px;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--fg-2);
+	font: 400 11px/1.4 var(--font-body);
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+}
+.sbEventBtn:hover { border-color: var(--brand); color: var(--fg); }
+.sbInference {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 8px;
+	margin-bottom: 4px;
+	font: 400 12px/1.5 var(--font-body);
+	color: var(--fg-2);
+}
+.sbInferenceKind { color: var(--muted); }
+.sbInferenceText { flex: 1 1 100%; color: var(--fg); }
+.sbConfidence { font: 400 11px/1 var(--font-mono); color: var(--muted); }
+.sbSuggestion {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 8px 12px;
+	border-top: 1px solid var(--border-soft);
+}
+.sbSuggestion[data-status="approved"] { background: color-mix(in oklab, var(--accent) 8%, transparent); }
+.sbSuggestion[data-status="rejected"] { opacity: 0.6; }
+.sbSuggestion[data-status="applied"] { background: color-mix(in oklab, var(--fg) 4%, transparent); }
+.sbSuggestionMain {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 8px;
+	font: 400 12px/1.5 var(--font-body);
+	color: var(--fg-2);
+}
+.sbKind {
+	font: 600 11px/1.4 var(--font-body);
+	color: var(--fg);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+.sbDetail { color: var(--fg); }
+.sbRationale { flex: 1 1 100%; color: var(--muted); }
+.sbError { flex: 1 1 100%; color: var(--danger); }
+.sbSuggestionActions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+.sbStatus {
+	margin-right: auto;
+	font: 500 11px/1 var(--font-body);
+	color: var(--muted);
+}
+.sbDecision {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-sm);
+	background: transparent;
+	color: var(--fg-2);
+	cursor: pointer;
+}
+.sbDecision:hover:not(:disabled) { border-color: var(--brand); color: var(--fg); }
+.sbDecision.isOn { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); }
+.sbDecision:disabled { opacity: 0.5; cursor: default; }

@@ -704,6 +704,148 @@ export const audioTrackSchema = endGteStart(
 	"startMs",
 );
 
+// ---- Tutorial Director storyboard --------------------------------------------
+// What the Director read off the recording (observed), what it concluded (inferred)
+// and what it proposes (suggestions), kept on the document so a review survives a
+// restart and travels with the project. Optional and additive, like `shaderEffects`:
+// an older build drops the key on save and a document without a storyboard carries
+// no trace of one.
+//
+// Observed events are FACTS taken from the media: transcribed words, recorded
+// clicks, measured silences. Inferences are guesses, each with its source
+// (`heuristic` is the deterministic analyser, `llm` the configured model) and a
+// confidence. The two never share a list, so the UI cannot show a guess as a fact.
+//
+// A suggestion is a typed, validated operation, never code: applying one builds the
+// arguments of an agent tool (`addTrim`, `addZoom`, `addAnnotation`, `addTitleCard`)
+// and runs it through `executeAgentTool`, the same gate the chat and MCP use, so a
+// Director edit can never bypass a rule a manual edit obeys.
+export const storyboardObservedEventSchema = z.object({
+	kind: z.enum(["click", "double-click", "right-click", "silence"]),
+	/** RAW ruler ms, the axis zooms and annotations are placed on. */
+	atMs: z.number().nonnegative(),
+	endMs: z.number().nonnegative().optional(),
+	cx: z.number().min(0).max(1).optional(),
+	cy: z.number().min(0).max(1).optional(),
+});
+
+export const storyboardInferenceSchema = z.object({
+	kind: z.enum(["title", "summary", "step", "retake"]),
+	text: z.string(),
+	confidence: z.number().min(0).max(1),
+	source: z.enum(["heuristic", "llm"]),
+	/** The model that wrote an `llm` inference; absent for heuristics. */
+	model: z.string().optional(),
+});
+
+export const storyboardSuggestionStatusSchema = z.enum([
+	"proposed",
+	"approved",
+	"rejected",
+	"applied",
+]);
+
+const storyboardSuggestionBase = {
+	id: z.string().min(1),
+	sceneId: z.string().min(1),
+	status: storyboardSuggestionStatusSchema.default("proposed"),
+	source: z.enum(["heuristic", "llm"]),
+	rationale: z.string().default(""),
+	/** Ids of the regions an applied suggestion created (trim, zoom or annotation ids). */
+	appliedIds: z.array(z.string().min(1)).default([]),
+	/** Why the last apply was refused, verbatim from the tool, until the next attempt. */
+	error: z.string().optional(),
+};
+
+export const storyboardSuggestionSchema = z.discriminatedUnion("kind", [
+	z
+		.object({
+			...storyboardSuggestionBase,
+			kind: z.literal("cut"),
+			reason: z.enum(["silence", "lead-in", "tail", "retake"]),
+			assetId: z.string().min(1),
+			clipId: z.string().min(1),
+			/** SOURCE seconds of the asset, as trims are stored. */
+			sourceStartSec: z.number().nonnegative(),
+			sourceEndSec: z.number().nonnegative(),
+		})
+		.refine((data) => data.sourceEndSec >= data.sourceStartSec, {
+			message: "sourceEndSec must be greater than or equal to sourceStartSec",
+			path: ["sourceEndSec"],
+		}),
+	z
+		.object({
+			...storyboardSuggestionBase,
+			kind: z.literal("zoom"),
+			startMs: z.number().nonnegative(),
+			endMs: z.number().nonnegative(),
+			focus: z.object({ cx: z.number().min(0).max(1), cy: z.number().min(0).max(1) }),
+			depth: z.number().int().min(1).max(6),
+		})
+		.refine((data) => data.endMs >= data.startMs, {
+			message: "endMs must be greater than or equal to startMs",
+			path: ["endMs"],
+		}),
+	z
+		.object({
+			...storyboardSuggestionBase,
+			kind: z.literal("callout"),
+			startMs: z.number().nonnegative(),
+			endMs: z.number().nonnegative(),
+			text: z.string().min(1).max(200),
+			/** Centre of the text, in percent of the output frame. */
+			x: z.number().min(0).max(100),
+			y: z.number().min(0).max(100),
+		})
+		.refine((data) => data.endMs >= data.startMs, {
+			message: "endMs must be greater than or equal to startMs",
+			path: ["endMs"],
+		}),
+	z.object({
+		...storyboardSuggestionBase,
+		kind: z.literal("titleCard"),
+		cardKind: z.enum(["intro", "outro"]),
+		text: z.string().min(1).max(200),
+	}),
+]);
+
+export const storyboardSceneSchema = z
+	.object({
+		id: z.string().min(1),
+		order: z.number().int().nonnegative(),
+		/** The best title known: the LLM's when enriched, else the heuristic one. */
+		title: z.string(),
+		/** RAW ruler ms. */
+		startMs: z.number().nonnegative(),
+		endMs: z.number().nonnegative(),
+		/** The clip the scene lies in; a scene never crosses a clip boundary. */
+		clipId: z.string().min(1).optional(),
+		/** The transcribed words spoken in the scene — observed, not written. */
+		narration: z.string().default(""),
+		observed: z.array(storyboardObservedEventSchema).default([]),
+		inferred: z.array(storyboardInferenceSchema).default([]),
+	})
+	.refine((data) => data.endMs >= data.startMs, {
+		message: "endMs must be greater than or equal to startMs",
+		path: ["endMs"],
+	});
+
+export const STORYBOARD_VERSION = 1;
+
+export const storyboardSchema = z.object({
+	version: z.literal(STORYBOARD_VERSION),
+	generatedAt: isoDateSchema,
+	/** `clipExtentSignature` of the timeline the analysis read. Differs → stale. */
+	clipSignature: z.string(),
+	/** Which model wrote the `llm` inferences, if any. Never the credential. */
+	enrichment: z
+		.object({ provider: z.string(), model: z.string(), at: isoDateSchema })
+		.nullable()
+		.default(null),
+	scenes: z.array(storyboardSceneSchema).default([]),
+	suggestions: z.array(storyboardSuggestionSchema).default([]),
+});
+
 // Legacy OpenScreen appearance / export settings that the v3 schema doesn't
 // normalize into the timeline / assets model. They are applied at export time
 // by the existing pipeline (see technical-documentation/architecture/document-model.md).
@@ -747,6 +889,8 @@ const documentSchemaShape = z.object({
 	// Imported audio tracks (issue #350). Defaulted so every document written
 	// before this loads unchanged; an older build simply strips the key on save.
 	audioTracks: z.array(audioTrackSchema).default([]),
+	// The Tutorial Director's review (above). Optional like `shaderEffects`.
+	storyboard: storyboardSchema.optional(),
 	legacyEditor: legacyEditorSchema.nullable().default(null),
 });
 
@@ -1384,6 +1528,12 @@ export type AxcutShaderEffectParam = z.infer<typeof shaderEffectParamSchema>;
 export type AxcutShaderEffectRange = z.infer<typeof shaderEffectRangeSchema>;
 export type AxcutShaderEffectValue = z.infer<typeof shaderEffectValueSchema>;
 export type AxcutLegacyEditor = z.infer<typeof legacyEditorSchema>;
+export type AxcutStoryboard = z.infer<typeof storyboardSchema>;
+export type AxcutStoryboardScene = z.infer<typeof storyboardSceneSchema>;
+export type AxcutStoryboardSuggestion = z.infer<typeof storyboardSuggestionSchema>;
+export type AxcutStoryboardSuggestionStatus = z.infer<typeof storyboardSuggestionStatusSchema>;
+export type AxcutStoryboardObservedEvent = z.infer<typeof storyboardObservedEventSchema>;
+export type AxcutStoryboardInference = z.infer<typeof storyboardInferenceSchema>;
 export type AxcutDocument = z.infer<typeof documentSchema>;
 export type AxcutDocumentInput = z.input<typeof documentSchema>;
 export type CreateProjectInput = z.infer<typeof createProjectInputSchema>;

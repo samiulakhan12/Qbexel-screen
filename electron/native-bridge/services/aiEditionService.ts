@@ -1,14 +1,19 @@
-import { documentSchema } from "../../../src/lib/ai-edition/schema";
+import type { CursorTelemetryPoint } from "../../../src/components/video-editor/types";
+import { analyzeStoryboard } from "../../../src/lib/ai-edition/director/analyze";
+import { type AxcutDocument, documentSchema } from "../../../src/lib/ai-edition/schema";
 import type {
 	AiEditionAssetResult,
 	AiEditionCaptionTranslateResult,
 	AiEditionChatBudget,
+	AiEditionChatCancelResult,
 	AiEditionChatCompactResult,
 	AiEditionChatMessage,
 	AiEditionChatResult,
 	AiEditionChatRewindResult,
 	AiEditionChatSession,
 	AiEditionChatSessionSummary,
+	AiEditionDirectorAnalyzeResult,
+	AiEditionDirectorApplyResult,
 	AiEditionDocumentResult,
 	AiEditionLlmConfig,
 	AiEditionLlmDisconnectResult,
@@ -21,6 +26,8 @@ import {
 	translateCaptionSegments,
 } from "../../ai-edition/caption-translate";
 import type { ChatEventSink } from "../../ai-edition/chat-service";
+import { applyStoryboardSuggestions } from "../../ai-edition/director/apply";
+import { enrichStoryboard } from "../../ai-edition/director/enrich";
 import type { DocumentService } from "../../ai-edition/document-service";
 import type { LlmConfigStore, LlmCredential } from "../../ai-edition/llm-config-store";
 import {
@@ -83,8 +90,15 @@ export interface AiEditionServiceOptions {
 		title: string,
 	) => AiEditionChatSessionSummary | null;
 	deleteSession: (projectId: string, sessionId: string) => boolean;
+	/** Stops the turn running for a session; absent where no chat runs (tests). */
+	cancelChat?: (projectId: string, sessionId: string) => boolean;
 	/** The local MCP server. Absent where no server is wired (tests, headless CLI). */
 	mcp?: McpController;
+	/** Cursor telemetry of a recording, by its video path, for the Director's click events
+	 *  and zoom suggestions. Absent → the analysis runs on the transcript alone. */
+	loadCursorTelemetry?: (
+		videoPath: string,
+	) => Promise<{ success: boolean; samples?: CursorTelemetryPoint[] }>;
 }
 
 export class AiEditionService {
@@ -393,6 +407,10 @@ export class AiEditionService {
 	 * `segmentId → text` map: the caller writes it into the document's caption
 	 * translation layer, so nothing here can touch the transcript SSOT.
 	 */
+	chatCancel(projectId: string, sessionId: string): AiEditionChatCancelResult {
+		return { cancelled: this.options.cancelChat?.(projectId, sessionId) ?? false };
+	}
+
 	async captionsTranslate(input: {
 		segments: CaptionTranslateSegment[];
 		targetLanguage: string;
@@ -419,5 +437,129 @@ export class AiEditionService {
 			reasoningEffort: config.reasoningEffort,
 		});
 		return { ...result, model: config.model };
+	}
+
+	/**
+	 * The Tutorial Director. Deterministic analysis first (scenes, observed events,
+	 * suggestions); then, only when asked, the configured model names the scenes. A model
+	 * failure does not fail the call: the storyboard is returned with a `warning`, since
+	 * the facts in it do not depend on the model.
+	 */
+	async directorAnalyze(input: {
+		document: unknown;
+		enrich?: boolean;
+		outroText?: string;
+	}): Promise<AiEditionDirectorAnalyzeResult> {
+		const parsed = documentSchema.safeParse(input.document);
+		if (!parsed.success) {
+			return { success: false, enriched: false, error: "The document snapshot is not valid." };
+		}
+		const document = parsed.data;
+		const telemetryByAssetId = await this.telemetryForDocument(document);
+		let storyboard = analyzeStoryboard(document, {
+			telemetryByAssetId,
+			previous: document.storyboard,
+			outroText: input.outroText,
+		});
+		if (!input.enrich || storyboard.scenes.length === 0) {
+			return { success: true, enriched: false, storyboard };
+		}
+		const config = this.llmConfig.getConfig();
+		if (!config) {
+			return {
+				success: true,
+				enriched: false,
+				storyboard,
+				warning: "No AI provider is configured. Connect one in the agent settings first.",
+			};
+		}
+		const def = PROVIDER_DEFINITIONS.find((d) => d.id === config.provider);
+		const credential = def ? this.llmConfig.getCredential(def.id, def.envKeys) : null;
+		const language =
+			document.transcripts.find((transcript) => transcript.language !== "auto")?.language ??
+			undefined;
+		const enriched = await enrichStoryboard({
+			storyboard,
+			projectTitle: document.project.title,
+			language,
+			provider: config.provider,
+			model: config.model,
+			apiKey: credential?.value ?? "",
+			baseUrl: config.baseUrl,
+			reasoningEffort: config.reasoningEffort,
+		});
+		if (!enriched.success) {
+			return {
+				success: true,
+				enriched: false,
+				storyboard,
+				model: config.model,
+				usage: enriched.usage,
+				warning: enriched.error,
+			};
+		}
+		storyboard = enriched.storyboard;
+		return {
+			success: true,
+			enriched: true,
+			storyboard,
+			model: config.model,
+			usage: enriched.usage,
+		};
+	}
+
+	/** Each video asset's telemetry in its own source time, read in parallel. */
+	private async telemetryForDocument(
+		document: AxcutDocument,
+	): Promise<Map<string, CursorTelemetryPoint[]>> {
+		const load = this.options.loadCursorTelemetry;
+		const out = new Map<string, CursorTelemetryPoint[]>();
+		if (!load) return out;
+		const assets = document.assets.filter(
+			(asset) =>
+				asset.kind === "video" &&
+				asset.originalPath &&
+				document.timeline.clips.some((clip) => clip.assetId === asset.id),
+		);
+		await Promise.all(
+			assets.map(async (asset) => {
+				try {
+					const result = await load(asset.originalPath);
+					if (result.success && result.samples?.length) out.set(asset.id, result.samples);
+				} catch {
+					// No telemetry for this asset: the analysis goes on without click events.
+				}
+			}),
+		);
+		return out;
+	}
+
+	/** Applies the named suggestions through the agent tools; the renderer saves the result. */
+	async directorApply(input: {
+		document: unknown;
+		suggestionIds: string[];
+	}): Promise<AiEditionDirectorApplyResult> {
+		const parsed = documentSchema.safeParse(input.document);
+		if (!parsed.success) {
+			return {
+				success: false,
+				applied: [],
+				failed: [],
+				skipped: [],
+				error: "The document snapshot is not valid.",
+			};
+		}
+		try {
+			const result = applyStoryboardSuggestions(parsed.data, input.suggestionIds);
+			return { success: true, ...result };
+		} catch (error) {
+			return {
+				success: false,
+				applied: [],
+				failed: [],
+				skipped: [],
+				error: error instanceof Error ? error.message : String(error),
+			};
+		}
 	}
 }

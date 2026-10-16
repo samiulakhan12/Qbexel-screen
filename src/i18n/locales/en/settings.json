@@ -348,8 +348,10 @@
 			"layout": "Camera layout: position, shape and size of the camera",
 			"audio": "Audio: output level of the whole video",
 			"cursor": "Cursor: style, size and effects",
-			"transcript": "Transcript: edit the words to cut the video"
-		}
+			"transcript": "Transcript: edit the words to cut the video",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "Crop",

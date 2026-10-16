@@ -322,6 +322,8 @@ export interface ChatRunEnv {
 	checkShaderEffect?: ShaderEffectChecker;
 	/** Runtime-only model retry override used by bounded measurement harnesses. */
 	maxRetries?: number;
+	/** The stall watchdog's delay; tests shorten it. */
+	stallTimeoutMs?: number;
 }
 
 // ponytail: zero-config noop for sink callbacks that the caller did not provide.
@@ -335,6 +337,21 @@ const NOOP_SINK: Required<ChatEventSink> = {
 	toolEnd: noop,
 	error: noop,
 };
+
+/** A turn stops when nothing has arrived from the model or a tool for this long. */
+export const CHAT_STALL_TIMEOUT_MS = 120_000;
+
+/** In-flight turns by the session id the renderer asked with, so Stop can find them. */
+const activeRuns = new Map<string, AbortController>();
+const runKey = (projectId: string, sessionId: string) => `${projectId}\u0000${sessionId}`;
+
+/** Aborts the turn running for this session, if any. True when there was one to stop. */
+export function cancelChat(projectId: string, sessionId: string): boolean {
+	const controller = activeRuns.get(runKey(projectId, sessionId));
+	if (!controller) return false;
+	controller.abort();
+	return true;
+}
 
 export async function runChat(
 	projectId: string,
@@ -433,13 +450,39 @@ export async function runChat(
 
 	const appliedToolCalls: AiEditionToolCallSummary[] = [];
 
+	// One controller per turn: Stop aborts it, and so does the stall watchdog when
+	// nothing — no text, no thinking, no tool — has arrived for `stallTimeoutMs`.
+	const key = runKey(projectId, sessionId);
+	activeRuns.get(key)?.abort();
+	const controller = new AbortController();
+	activeRuns.set(key, controller);
+	const stallTimeoutMs = env.stallTimeoutMs ?? CHAT_STALL_TIMEOUT_MS;
+	let stalled = false;
+	let watchdog: ReturnType<typeof setTimeout> | null = null;
+	const touch = () => {
+		if (watchdog) clearTimeout(watchdog);
+		watchdog = setTimeout(() => {
+			stalled = true;
+			controller.abort();
+		}, stallTimeoutMs);
+	};
+	touch();
+
 	const agentSink = {
-		text: (delta: string) => emit.text(delta),
-		thinking: (delta: string) => emit.thinking(delta),
+		text: (delta: string) => {
+			touch();
+			emit.text(delta);
+		},
+		thinking: (delta: string) => {
+			touch();
+			emit.thinking(delta);
+		},
 		toolStart: (name: string, args: unknown) => {
+			touch();
 			emit.toolStart(name, args);
 		},
 		toolEnd: (name: string, ok: boolean, summary?: string) => {
+			touch();
 			emit.toolEnd(name, ok, summary);
 			if (ok && summary) {
 				appliedToolCalls.push({ name, summary });
@@ -450,24 +493,41 @@ export async function runChat(
 
 	const { invokeOpenScreenAgent } = await import("./deep-agent/service");
 
-	const result = await invokeOpenScreenAgent({
-		document: workingDocument ?? emptyDocumentForTextOnly(projectId),
-		model: {
-			provider: config.provider,
-			model: config.model,
-			apiKey: apiKey ?? undefined,
-			baseUrl: config.baseUrl,
-			reasoningEffort: config.reasoningEffort,
-			maxRetries: env.maxRetries,
-		},
-		history,
-		userMessage: message,
-		sink: agentSink,
-		editsAllowed,
-		cursor: env.cursor,
-		cameraSegmentation: env.cameraSegmentation,
-		checkShaderEffect: env.checkShaderEffect,
-	});
+	let result: Awaited<ReturnType<typeof invokeOpenScreenAgent>>;
+	try {
+		result = await invokeOpenScreenAgent({
+			signal: controller.signal,
+			document: workingDocument ?? emptyDocumentForTextOnly(projectId),
+			model: {
+				provider: config.provider,
+				model: config.model,
+				apiKey: apiKey ?? undefined,
+				baseUrl: config.baseUrl,
+				reasoningEffort: config.reasoningEffort,
+				maxRetries: env.maxRetries,
+			},
+			history,
+			userMessage: message,
+			sink: agentSink,
+			editsAllowed,
+			cursor: env.cursor,
+			cameraSegmentation: env.cameraSegmentation,
+			checkShaderEffect: env.checkShaderEffect,
+		});
+	} finally {
+		if (watchdog) clearTimeout(watchdog);
+		if (activeRuns.get(key) === controller) activeRuns.delete(key);
+	}
+
+	if (result.cancelled || controller.signal.aborted) {
+		return {
+			success: false,
+			cancelled: true,
+			error: stalled
+				? `The model sent nothing for ${Math.round(stallTimeoutMs / 1000)} s, so the turn was stopped.`
+				: "Stopped.",
+		};
+	}
 
 	// The project was deleted while the agent ran: its sessions are gone, so a
 	// reply recorded now would be reported as sent and then never be seen again.

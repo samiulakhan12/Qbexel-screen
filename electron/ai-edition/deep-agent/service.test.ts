@@ -82,6 +82,7 @@ const ARGS: Record<string, unknown> = {
 	setSpeed: { speedId: "speed_nope" },
 	addAnnotation: { startSec: 1, endSec: 2, text: "hi" },
 	setAnnotation: { annotationId: "ann_nope" },
+	addTitleCard: { kind: "intro" },
 	addCameraFullscreen: { startSec: 1, endSec: 2 },
 	setCameraFullscreen: { cameraFullscreenId: "cam_nope" },
 	// No checker in these tests: the effect is stored unchecked, and the result says so.

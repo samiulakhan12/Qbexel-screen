@@ -58,6 +58,7 @@ import {
 	addCameraFullscreenArgs,
 	addEffectArgs,
 	addSpeedArgs,
+	addTitleCardArgs,
 	addTrimArgs,
 	addTrimsArgs,
 	addZoomArgs,
@@ -259,6 +260,8 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
 		"Move, resize, or change the multiplier of an existing speed region by id (virtual-timeline seconds). Only the fields you pass are changed.",
 	addAnnotation:
 		"Add an annotation over a span of the edited timeline (virtual seconds). type picks what it is: 'text' (the default) for callouts, labels and titles; 'figure' for an arrow pointing at something; 'blur' for a privacy mask that blurs or pixelates what is under it, the way to hide an email address, a token, a password field or any private detail the recording shows. Image annotations are not available here: they need a file, added in the editor. x/y place the centre, 0–100 percent of the annotation's box (default the centre). Text and arrows sit on the output frame, the whole picture padding included, as the editor places them: zooms and padding never move them. A blur sits on the recording's picture instead, so x/y/width/height are percent of the recording and it stays on what it hides when padding or a zoom moves the picture. A text box is sized to its words and kept inside the frame; it is drawn on a dark plate by default, and fontSize, color, background, bold and animation set its look. An arrow or a blur takes width/height (default 30 × 20) and its own data: figureData {arrowDirection, color, strokeWidth} for an arrow, blurData {type 'blur' or 'mosaic', shape 'rectangle' or 'oval', color, intensity, blockSize} for a blur. The result reads the annotation back as getCurrentDocument reports it.",
+	addTitleCard:
+		"Put an intro card over the first seconds of the video or an outro card over its last: large centred text on a dark plate, animated in, as the editor's Scenes section adds it. It is a text annotation, so setAnnotation edits it afterwards and removeModifier deletes it. The text defaults to the project title for an intro; an outro needs its text. durationSec is 1 to 15, 3 when omitted.",
 	setAnnotation:
 		"Change an existing annotation by id: its span (virtual-timeline seconds), its type, its centre (x/y, percent of its box), its size (width/height, arrow and blur only), its text and look (text only: fontSize, color, background, bold, animation), or its figureData / blurData, of which only the keys you pass change. Only the fields you pass are changed. A type change converts it as the editor's type switch does: it stays where it is on screen, a text turned into an arrow or a blur takes the default box, and the text is kept to come back to. A text box is refitted to its text around its centre. Arguments that belong to another kind (width on a text, blurData on an arrow) are refused. A new span that would run into another annotation is refused, naming it.",
 	setAspectRatio:
@@ -560,6 +563,7 @@ export const TOOL_ARG_SCHEMAS: ReadonlyArray<readonly [string, z.ZodObject]> = [
 	["setSpeed", setSpeedArgs],
 	["addAnnotation", addAnnotationArgs],
 	["setAnnotation", setAnnotationArgs],
+	["addTitleCard", addTitleCardArgs],
 	["addCameraFullscreen", addCameraFullscreenArgs],
 	["setCameraFullscreen", setCameraFullscreenArgs],
 	["addEffect", addEffectArgs],
@@ -620,6 +624,9 @@ export interface InvokeArgs {
 	cameraSegmentation?: () => SegmentationSupport;
 	/** Injected the same way: the compositor's check of an effect's WGSL. */
 	checkShaderEffect?: ShaderEffectChecker;
+	/** Aborts the turn: the model stream is cut and the result says `cancelled`. The
+	 *  chat-service wires it to the Stop button and to its stall watchdog. */
+	signal?: AbortSignal;
 }
 
 /** One cheap probe per asset, run before the tools are built so the very first
@@ -676,6 +683,9 @@ export interface InvokeResult {
 	 * `content_block_delta` events). Carries a short diagnostic describing
 	 * what the LangChain layer actually saw. */
 	reason?: string;
+	/** The turn was aborted through `InvokeArgs.signal`; `document` is whatever the
+	 *  tools had written by then, which the chat-service discards. */
+	cancelled?: boolean;
 }
 
 export async function invokeOpenScreenAgent(args: InvokeArgs): Promise<InvokeResult> {
@@ -730,12 +740,15 @@ export async function invokeOpenScreenAgent(args: InvokeArgs): Promise<InvokeRes
 			agent as unknown as {
 				streamEvents: (state: unknown, config?: unknown) => AsyncIterable<Record<string, unknown>>;
 			}
-		).streamEvents({ messages }, undefined);
+		).streamEvents({ messages }, args.signal ? { signal: args.signal } : undefined);
 
 		let finalText = "";
 		const nonChatEvents: Array<{ event: string; name: string }> = [];
 
 		for await (const event of stream) {
+			// LangGraph honours the signal between steps; a provider stream that ignores it
+			// is still cut here, at the next event.
+			if (args.signal?.aborted) throw new Error("Cancelled.");
 			const eventType = typeof event.event === "string" ? event.event : "";
 			const data = event.data as Record<string, unknown> | undefined;
 			const name = typeof event.name === "string" ? (event.name as string) : "";
@@ -792,6 +805,10 @@ export async function invokeOpenScreenAgent(args: InvokeArgs): Promise<InvokeRes
 		}
 		return { text: finalText.trim(), document: holder.current, mutated };
 	} catch (err) {
+		if (args.signal?.aborted) {
+			const mutated = JSON.stringify(holder.current) !== initialDocumentJSON;
+			return { text: "", document: holder.current, mutated, reason: "Cancelled.", cancelled: true };
+		}
 		// ponytail: surface the LangChain/HTTP error (with name + truncated
 		// stack) so we can tell whether the stream threw (e.g. MiniMax
 		// returning a non-Anthropic JSON envelope that the SDK rejects) or

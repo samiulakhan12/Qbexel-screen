@@ -211,6 +211,7 @@ describe("the mutating-tool table", () => {
 				"removeWords",
 				"replaceTimeline",
 				"setAnnotation",
+				"addTitleCard",
 				"setAspectRatio",
 				"setAudio",
 				"setCameraFullscreen",

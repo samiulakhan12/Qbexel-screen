@@ -176,7 +176,7 @@ interface PaneProps {
 	children: ReactNode;
 }
 
-function Pane({ title, icon, helpText, actions, onClose, children }: PaneProps) {
+export function Pane({ title, icon, helpText, actions, onClose, children }: PaneProps) {
 	const ts = useScopedT("settings");
 	const tc = useScopedT("common");
 	const helpLabel = ts("panes.help");

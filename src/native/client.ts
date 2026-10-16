@@ -2,11 +2,14 @@ import {
 	type AiEditionAssetResult,
 	type AiEditionCaptionTranslateResult,
 	type AiEditionChatBudget,
+	type AiEditionChatCancelResult,
 	type AiEditionChatCompactResult,
 	type AiEditionChatResult,
 	type AiEditionChatRewindResult,
 	type AiEditionChatSession,
 	type AiEditionChatSessionSummary,
+	type AiEditionDirectorAnalyzeResult,
+	type AiEditionDirectorApplyResult,
 	type AiEditionDocumentResult,
 	type AiEditionLlmConfig,
 	type AiEditionLlmDisconnectResult,
@@ -296,6 +299,14 @@ export const nativeBridgeClient = {
 				action: "chat.run",
 				payload: { projectId, sessionId, message, document },
 			}),
+		/** Stops the turn running for a session. Resolves once the stop was requested, not
+		 *  when the turn ends: `chatRun` itself resolves with `cancelled: true` then. */
+		chatCancel: (projectId: string, sessionId: string) =>
+			requireNativeBridgeData<AiEditionChatCancelResult>({
+				domain: "aiEdition",
+				action: "chat.cancel",
+				payload: { projectId, sessionId },
+			}),
 		chatUndoLastBatch: (projectId: string, sessionId: string) =>
 			requireNativeBridgeData<AiEditionChatResult>({
 				domain: "aiEdition",
@@ -374,6 +385,21 @@ export const nativeBridgeClient = {
 				domain: "aiEdition",
 				action: "captions.translate",
 				payload: input,
+			}),
+		/** The Tutorial Director's analysis of a document snapshot. `enrich` sends the
+		 *  narration to the configured model; callers ask the user first. */
+		directorAnalyze: (document: unknown, options: { enrich?: boolean; outroText?: string } = {}) =>
+			requireNativeBridgeData<AiEditionDirectorAnalyzeResult>({
+				domain: "aiEdition",
+				action: "director.analyze",
+				payload: { document, ...options },
+			}),
+		/** Applies storyboard suggestions through the agent tools; the caller saves the result. */
+		directorApply: (document: unknown, suggestionIds: string[]) =>
+			requireNativeBridgeData<AiEditionDirectorApplyResult>({
+				domain: "aiEdition",
+				action: "director.apply",
+				payload: { document, suggestionIds },
 			}),
 	},
 	/** Style presets. `create` and `rename` reject with a `NativeBridgeRequestError` whose

@@ -348,8 +348,10 @@
 			"layout": "Bố cục camera: vị trí, hình dạng và kích thước của camera",
 			"audio": "Âm thanh: mức đầu ra của toàn bộ video",
 			"cursor": "Con trỏ: kiểu, kích thước và hiệu ứng",
-			"transcript": "Bản ghi lời thoại: chỉnh sửa từ để cắt video"
-		}
+			"transcript": "Bản ghi lời thoại: chỉnh sửa từ để cắt video",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "Cắt xén",

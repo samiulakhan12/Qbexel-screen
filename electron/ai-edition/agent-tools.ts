@@ -98,6 +98,12 @@ import {
 	transitionCutsMs,
 	zoomTransitions,
 } from "../../src/lib/ai-edition/timeline/zoom-transitions";
+import {
+	addTitleCard as addTitleCardToDocument,
+	TITLE_CARD_DEFAULT_SEC,
+	TITLE_CARD_MAX_SEC,
+	TITLE_CARD_MIN_SEC,
+} from "../../src/lib/ai-edition/titleCards";
 import { SETTING_BOUNDS } from "../../src/lib/projectDefaults";
 import type { SegmentationSupport } from "../../src/native/contracts";
 import { annotationFootageRect, zoomScaleLimit } from "../../src/native/sceneDescription";
@@ -980,6 +986,26 @@ export const setAnnotationArgs = z.object({
 	...annotationShapeArgs,
 });
 
+/** An intro or outro card: the editor's Scenes section, as a tool. Text defaults to the
+ *  project's title for an intro; an outro needs its text. */
+export const addTitleCardArgs = z.object({
+	kind: z.enum(["intro", "outro"]).describe("intro opens the video, outro closes it."),
+	text: z
+		.string()
+		.min(1)
+		.max(200)
+		.optional()
+		.describe("The card's words. Defaults to the project title for an intro."),
+	durationSec: z
+		.number()
+		.min(TITLE_CARD_MIN_SEC)
+		.max(TITLE_CARD_MAX_SEC)
+		.optional()
+		.describe(
+			`Seconds on screen, ${TITLE_CARD_MIN_SEC} to ${TITLE_CARD_MAX_SEC}; ${TITLE_CARD_DEFAULT_SEC} when omitted.`,
+		),
+});
+
 /** A track's fade, capped where the inspector's slider stops. */
 const fadeMsSchema = z.number().int().min(0).max(AUDIO_FADE_MAX_MS);
 
@@ -1125,6 +1151,7 @@ export const OPENSCREEN_TOOL_NAMES = [
 	"setSpeed",
 	"addAnnotation",
 	"setAnnotation",
+	"addTitleCard",
 	"addCameraFullscreen",
 	"setCameraFullscreen",
 	"addEffect",
@@ -1208,6 +1235,7 @@ export const MUTATING_TOOL_NAMES: ReadonlySet<string> = new Set([
 	"setSpeed",
 	"addAnnotation",
 	"setAnnotation",
+	"addTitleCard",
 	"addCameraFullscreen",
 	"setCameraFullscreen",
 	"addEffect",
@@ -3262,6 +3290,49 @@ export function executeAgentTool(
 						: `added ${type === "blur" ? "blur" : "arrow"}`) +
 					` ${formatSec(landing.startSec)} – ${formatSec(landing.endSec)}` +
 					landingSuffix(landing, startMs / 1000, endMs / 1000),
+			};
+		}
+
+		case "addTitleCard": {
+			const parsed = addTitleCardArgs.safeParse(args);
+			if (!parsed.success) return failure(parsed.error.message);
+			const text = (
+				parsed.data.text ?? (parsed.data.kind === "intro" ? document.project.title : "")
+			).trim();
+			if (!text) return failure("An outro card needs its text.");
+			const frameAspect = resolveAspectRatioValue(
+				document,
+				getEditorSettings(document).aspectRatio,
+			);
+			let next: AxcutDocument;
+			try {
+				next = addTitleCardToDocument(document, {
+					kind: parsed.data.kind,
+					text,
+					durationSec: parsed.data.durationSec,
+					frameAspect,
+					origin: "agent",
+				});
+			} catch (error) {
+				return failure(error instanceof Error ? error.message : String(error));
+			}
+			const created = next.annotations.filter(
+				(annotation) => !document.annotations.some((existing) => existing.id === annotation.id),
+			);
+			const first = created[0];
+			if (!first) return failure("The title card covers no clip.");
+			return {
+				ok: true,
+				document: next,
+				resultJson: JSON.stringify({
+					annotationId: first.id,
+					annotationIds: created.map((annotation) => annotation.id),
+					kind: parsed.data.kind,
+					text,
+					startSec: first.startMs / 1000,
+					endSec: created[created.length - 1].endMs / 1000,
+				}),
+				summary: `added an ${parsed.data.kind} title card "${text}" ${formatSec(first.startMs / 1000)} – ${formatSec(created[created.length - 1].endMs / 1000)}`,
 			};
 		}
 

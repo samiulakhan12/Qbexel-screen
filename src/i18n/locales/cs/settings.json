@@ -348,8 +348,10 @@
 			"layout": "Rozvržení kamery: poloha, tvar a velikost kamery",
 			"audio": "Zvuk: výstupní úroveň celého videa",
 			"cursor": "Kurzor: styl, velikost a efekty",
-			"transcript": "Přepis: upravujte slova a stříhejte video"
-		}
+			"transcript": "Přepis: upravujte slova a stříhejte video",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "Oříznutí",

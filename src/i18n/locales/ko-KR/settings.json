@@ -348,8 +348,10 @@
 			"layout": "카메라 레이아웃: 카메라의 위치, 모양, 크기",
 			"audio": "오디오: 영상 전체의 출력 레벨",
 			"cursor": "커서: 스타일, 크기, 효과",
-			"transcript": "대본: 단어를 편집하여 영상을 자릅니다"
-		}
+			"transcript": "대본: 단어를 편집하여 영상을 자릅니다",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "자르기",

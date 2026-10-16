@@ -41,8 +41,8 @@ of every milestone.
 | 2 | Recording workflow, safe persistence, recovery | **done** (see below) |
 | 3 | Editing timeline and export pipeline | **done** (see below) |
 | 4 | Creative presets, cursor effects, editable zooms | **done** (see below) |
-| 5 | Transcription and AI Tutorial Director | in progress |
-| 6 | Privacy Guardian and redaction workflow | pending |
+| 5 | Transcription and AI Tutorial Director | **done** (see below) |
+| 6 | Privacy Guardian and redaction workflow | in progress |
 | 7 | Multi-format compositions and publishing presets | pending |
 | 8 | CLI and MCP interfaces | pending |
 | 9 | Adversarial review, benchmarks, packaging | pending |
@@ -104,6 +104,34 @@ part of this milestone relies on the upstream zoom regions and auto-zoom
 suggestions, which were inspected but not changed. Translations of new strings
 are English in all 15 locales pending translation.
 
+## Milestone 5 — what was built and how it was verified
+
+Transcription itself is upstream's whisper.cpp pipeline and was not changed; its
+unit tests pass here, but no transcription ran on this machine (no helper
+binary, no model). Everything below is verified by unit and jsdom tests, `tsc`,
+Biome, locale parity and a Vite build; no model was called (the LLM pass is
+exercised through an injected stand-in).
+
+| Change | Where | Verified by |
+|---|---|---|
+| `storyboard` on the document: scenes (observed events and inferences kept apart), typed suggestions with review status | `src/lib/ai-edition/schema/index.ts` | schema parse in `director/analyze.test.ts` and `apply.test.ts` |
+| Deterministic Director analysis: scenes from speech pauses / click gaps, silence, lead-in, tail and retake cuts, zooms from the upstream click planner, callouts, intro/outro cards; review decisions carried over by fingerprint | `src/lib/ai-edition/director/{analyze,storyboard,toolCalls}.ts` | `analyze.test.ts` (19 tests), `storyboard.test.ts` (10) |
+| Optional model pass: strict Zod reply, unknown ids dropped, 60 s timeout, abort, token usage; only titles and summaries, never times or events | `electron/ai-edition/director/enrich.ts` | `enrich.test.ts` (8 tests, injected model) |
+| Apply through the agent tools (`addTrim`, `addZoom`, `addAnnotation`, new `addTitleCard`), refusals recorded per suggestion | `electron/ai-edition/director/apply.ts`, `agent-tools.ts` | `apply.test.ts` (4), tool parity tests, MCP server tests |
+| Bridge actions `director.analyze` / `director.apply`, telemetry read from the cursor sidecar, payload validation | `contracts.ts`, `client.ts`, `browserShim.ts`, `aiEditionService.ts`, `nativeBridge.ts` | bridge tests; `tsc` on the contract union |
+| Director facet: analyse with per-run consent toggle, stale banner, approve/reject/apply, approve all, Remove silences, clear with confirmation, seek from scenes and events | `StoryboardPane.tsx`, `useStoryboard.ts`, `FloatingInspector.tsx` | `StoryboardPane.test.tsx` (7 jsdom tests), `documentWriteAudit.test.ts` rows |
+| Chat Stop button and 120 s stall watchdog; turns resolve as `cancelled` | `chat-service.ts` (`cancelChat`), `deep-agent/service.ts` (AbortSignal into `streamEvents`), `LeftPanel.tsx`, `chat.cancel` bridge action | `chat-service.cancel.test.ts` (5 tests) |
+
+Known limitations of M5: the Director's scene titles and inference texts from
+the heuristics are English; the LLM pass writes in the narration's language.
+No end-to-end run with a real recording, telemetry file or model happened here.
+The chat's approve-before-apply is upstream's `allowAgentEdits` switch (the
+agent must ask; writes are refused in the executor) — there is no per-edit
+confirmation dialog in the chat panel. Per-task model selection is not built:
+the Director's model pass uses the chat's configured provider and model. Token
+usage of the Director pass is returned over the bridge but not yet shown in the
+pane (only the model name is).
+
 ## Backlog (needs a Windows/macOS device, native binaries or compositor work)
 
 
@@ -123,8 +151,9 @@ are English in all 15 locales pending translation.
 
 ## Next steps
 
-1. M5 Tutorial Director: `storyboard` field on the document, deterministic
-   analysis (`src/lib/ai-edition/director/analyze.ts`), LLM enrichment with a
-   strict output schema, apply-through-tools, Storyboard facet with
-   approve/reject, silence-removal pass, chat review-before-apply.
-2. M6 Privacy Guardian, M7 compositions, M8 CLI/MCP additions, M9 review.
+1. M6 Privacy Guardian: `privacy` field, pattern + OCR (tesseract.js) scan of
+   sampled frames in the main process, findings → blur annotations through
+   `addAnnotation`, export gate ("review findings before export"), post-export
+   re-scan report.
+2. M7 compositions and export presets; M8 CLI `qbexel storyboard` / `privacy
+   scan` and MCP `director.*` / `privacy.*` tools with strict schemas; M9 review.

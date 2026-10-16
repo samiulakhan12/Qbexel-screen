@@ -348,8 +348,10 @@
 			"layout": "攝影機版面：攝影機的位置、形狀和大小",
 			"audio": "音訊：整部影片的輸出音量",
 			"cursor": "游標：樣式、大小和效果",
-			"transcript": "逐字稿：編輯文字即可剪輯影片"
-		}
+			"transcript": "逐字稿：編輯文字即可剪輯影片",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "裁剪",

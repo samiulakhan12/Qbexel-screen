@@ -55,6 +55,7 @@ import {
 } from "../../src/native/contracts";
 import { PRODUCT_NAME } from "../about";
 import {
+	cancelChat,
 	compactSessionNow,
 	configureChatPersistence,
 	createSession,
@@ -5400,6 +5401,7 @@ export function registerIpcHandlers(
 		getAiEditionDocuments: () => aiEditionDocuments,
 		getStylePresets: () => stylePresets,
 		getAiEditionLlmConfig,
+		cancelAiEditionChat: cancelChat,
 		runAiEditionChat: (projectId, sessionId, message, document, sink) =>
 			runChat(projectId, sessionId, message, getAiEditionLlmConfig(), document, sink, {
 				cursor: agentCursorTelemetryReader,

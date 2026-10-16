@@ -348,8 +348,10 @@
 			"layout": "Kamera düzeni: kameranın konumu, şekli ve boyutu",
 			"audio": "Ses: tüm videonun çıkış seviyesi",
 			"cursor": "İmleç: stil, boyut ve efektler",
-			"transcript": "Metin Dökümü: videoyu kesmek için kelimeleri düzenleyin"
-		}
+			"transcript": "Metin Dökümü: videoyu kesmek için kelimeleri düzenleyin",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "Kırpma",

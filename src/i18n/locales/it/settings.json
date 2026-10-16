@@ -348,8 +348,10 @@
 			"layout": "Disposizione camera: posizione, forma e dimensione della fotocamera",
 			"audio": "Audio: livello di uscita di tutto il video",
 			"cursor": "Cursore: stile, dimensione ed effetti",
-			"transcript": "Trascrizione: modifica le parole per tagliare il video"
-		}
+			"transcript": "Trascrizione: modifica le parole per tagliare il video",
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+		},
+		"director": "Director"
 	},
 	"crop": {
 		"title": "Ritaglia",
