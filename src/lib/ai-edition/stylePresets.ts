@@ -87,6 +87,9 @@ export interface StylePreset {
 	appearance: StylePresetAppearance;
 	/** Set by `list` on the preset a new project starts from. */
 	forNewProjects?: boolean;
+	/** A theme that ships with the product (`bundledStylePresets.ts`): listed, applied and
+	 *  usable for new projects like any other, but never renamed, updated or deleted. */
+	builtIn?: boolean;
 }
 
 export interface StylePresetFile {

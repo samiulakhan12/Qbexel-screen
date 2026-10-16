@@ -56,6 +56,7 @@ import {
 	type WebcamBackgroundMode,
 } from "@/components/video-editor/types";
 import { useI18n, useScopedT } from "@/contexts/I18nContext";
+import type { BundledEffectKey } from "@/lib/ai-edition/bundledEffects";
 import { resolveCaptionLane } from "@/lib/ai-edition/captions/settings";
 import {
 	AUDIO_FADE_MAX_MS,
@@ -105,6 +106,7 @@ import { assetCameraSource, hasAnyClipWithCamera } from "@/lib/ai-edition/timeli
 import { breatheCut } from "@/lib/ai-edition/timeline/cut-breath";
 import { formatMs } from "@/lib/ai-edition/timeline/format";
 import { removedRawSpans } from "@/lib/ai-edition/timeline/programme-time";
+import type { TitleCardKind } from "@/lib/ai-edition/titleCards";
 import {
 	type AssetTranscriptionView,
 	type TranscriptGateReason,
@@ -2362,7 +2364,15 @@ const FRAME_THEME_LABEL_KEYS: Record<FrameTheme, string> = {
  * Merged, the sections read as what they are: pick a background, decide how the recording
  * sits on it, then the one control that is about neither.
  */
-export function VideoEffectsPane() {
+/** What the effects pane can add to the timeline beyond settings: title cards and bundled
+ *  effects. Handed in by the inspector, which holds the timeline API; absent in the browser
+ *  shim's stories, where the rows are simply not shown. */
+export interface SceneActions {
+	addTitleCard: (kind: TitleCardKind) => Promise<boolean>;
+	addEffect: (key: BundledEffectKey) => Promise<boolean>;
+}
+
+export function VideoEffectsPane({ scenes }: { scenes?: SceneActions } = {}) {
 	const ts = useScopedT("settings");
 	const { settings, set, setLive, commit, hasDocument } = useEditorSettings();
 	const document = useProjectStore((s) => s.document);
@@ -2630,6 +2640,54 @@ export function VideoEffectsPane() {
 			    (zooms, layout changes) — see `effects.motion_blur` driving the tap count in
 			    frame_geometry.rs. It is the one control here that never touches the
 			    background, so it does not belong under "Frame" either. */}
+			{scenes ? (
+				<>
+					{/* Title cards and bundled effects: timeline content, not settings, so they live
+					    behind the timeline API the inspector hands in rather than the settings store. */}
+					<div className={styles.sectionLabel}>{ts("effects.scenes")}</div>
+					<div className={styles.paneRow}>
+						<button
+							type="button"
+							className={styles.rowAction}
+							disabled={!hasDocument}
+							onClick={() => void scenes.addTitleCard("intro")}
+						>
+							{ts("effects.introTitle")}
+						</button>
+						<button
+							type="button"
+							className={styles.rowAction}
+							disabled={!hasDocument}
+							onClick={() => void scenes.addTitleCard("outro")}
+						>
+							{ts("effects.outroTitle")}
+						</button>
+					</div>
+					<div className={styles.sectionLabel}>{ts("effects.extras")}</div>
+					<div className={styles.paneRow}>
+						<span className={styles.label}>{ts("effects.spotlight")}</span>
+						<button
+							type="button"
+							className={styles.rowAction}
+							disabled={!hasDocument}
+							onClick={() => void scenes.addEffect("spotlight")}
+						>
+							{ts("effects.addAtPlayhead")}
+						</button>
+					</div>
+					<div className={styles.paneRow}>
+						<span className={styles.label}>{ts("effects.focusVignette")}</span>
+						<button
+							type="button"
+							className={styles.rowAction}
+							disabled={!hasDocument}
+							onClick={() => void scenes.addEffect("focus-vignette")}
+						>
+							{ts("effects.addAtPlayhead")}
+						</button>
+					</div>
+				</>
+			) : null}
 			<div className={styles.sectionLabel}>{ts("effects.motion")}</div>
 			<div className={styles.sliderGrid}>
 				<SliderCell

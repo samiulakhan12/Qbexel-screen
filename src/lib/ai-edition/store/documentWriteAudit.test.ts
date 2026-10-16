@@ -296,6 +296,9 @@ const DECLARED: WritePath[] = [
 	w("src/lib/ai-edition/store/useTimeline.ts", "removeRegions", "save", "gesture"),
 	w("src/lib/ai-edition/store/useTimeline.ts", "saveZoomPatch", "save", "gesture"),
 	w("src/lib/ai-edition/store/useTimeline.ts", "setTrimEntries", "save", "gesture"),
+	w("src/lib/ai-edition/store/useTimeline.ts", "splitClipAtPlayhead", "save", "gesture"),
+	w("src/lib/ai-edition/store/useTimeline.ts", "addTitleCard", "save", "gesture"),
+	w("src/lib/ai-edition/store/useTimeline.ts", "addBundledEffectAtPlayhead", "save", "gesture"),
 	// The live halves of the drags.
 	w("src/lib/ai-edition/store/useTimeline.ts", "updateAnnotationLive", "set", "automatic"),
 	w("src/lib/ai-edition/store/useTimeline.ts", "updateAnnotationSpan", "save", "gesture"),

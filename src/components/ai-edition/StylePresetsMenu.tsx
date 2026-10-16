@@ -13,6 +13,10 @@ import { type KeyboardEvent, useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useScopedT } from "@/contexts/I18nContext";
+import {
+	BUNDLED_STYLE_PRESETS,
+	isBundledStylePresetId,
+} from "@/lib/ai-edition/bundledStylePresets";
 import { getEditorSettings, patchEditorSettings } from "@/lib/ai-edition/store/editorSettings";
 import { useProjectStore } from "@/lib/ai-edition/store/projectStore";
 import { useEditorSettings } from "@/lib/ai-edition/store/useEditorSettings";
@@ -37,6 +41,15 @@ import {
 import { getPlatform } from "@/utils/platformUtils";
 import styles from "./NewEditorShell.module.css";
 import topbarStyles from "./v4/EditorShellV4.module.css";
+
+/** The bundled themes first, in their own order, then the saved presets. A bundled theme the
+ *  service lists itself (the one marked for new projects) replaces the plain copy, so the mark
+ *  shows on it. */
+function withBundledPresets(saved: StylePreset[]): StylePreset[] {
+	const listed = new Map(saved.map((preset) => [preset.id, preset]));
+	const bundled = BUNDLED_STYLE_PRESETS.map((preset) => listed.get(preset.id) ?? preset);
+	return [...bundled, ...saved.filter((preset) => !isBundledStylePresetId(preset.id))];
+}
 
 function errorMessage(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
@@ -148,7 +161,7 @@ export function StylePresetsMenu() {
 		try {
 			const next = await nativeBridgeClient.presets.list();
 			if (seq !== loadSeq.current) return;
-			setPresets(next);
+			setPresets(withBundledPresets(next));
 			setLoadFailed(false);
 		} catch {
 			if (seq !== loadSeq.current) return;
@@ -347,6 +360,8 @@ export function StylePresetsMenu() {
 								<span className={styles.actionMenuCount}>
 									{ts("stylePresets.newProjectsBadge")}
 								</span>
+							) : preset.builtIn ? (
+								<span className={styles.actionMenuCount}>{ts("stylePresets.factoryBadge")}</span>
 							) : null}
 						</button>
 						<button
@@ -387,12 +402,20 @@ export function StylePresetsMenu() {
 							</div>
 						) : (
 							<>
-								{actionRow(ts(revealLabelKey()), () => void runReveal(preset.id))}
-								{actionRow(ts("stylePresets.rename"), () => {
-									resetInline();
-									setMode({ kind: "rename", id: preset.id });
-								})}
-								{actionRow(ts("stylePresets.update"), () => void runUpdate(preset.id))}
+								{/* A bundled theme has no file: nothing to reveal, rename, update or delete.
+								    Using it for new projects is the one action it shares with a saved one. */}
+								{preset.builtIn
+									? null
+									: actionRow(ts(revealLabelKey()), () => void runReveal(preset.id))}
+								{preset.builtIn
+									? null
+									: actionRow(ts("stylePresets.rename"), () => {
+											resetInline();
+											setMode({ kind: "rename", id: preset.id });
+										})}
+								{preset.builtIn
+									? null
+									: actionRow(ts("stylePresets.update"), () => void runUpdate(preset.id))}
 								{preset.forNewProjects
 									? actionRow(
 											ts("stylePresets.stopForNewProjects"),
@@ -402,10 +425,12 @@ export function StylePresetsMenu() {
 											ts("stylePresets.useForNewProjects"),
 											() => void runSetForNewProjects(preset.id),
 										)}
-								{actionRow(ts("stylePresets.delete"), () => {
-									resetInline();
-									setMode({ kind: "confirmDelete", id: preset.id });
-								})}
+								{preset.builtIn
+									? null
+									: actionRow(ts("stylePresets.delete"), () => {
+											resetInline();
+											setMode({ kind: "confirmDelete", id: preset.id });
+										})}
 							</>
 						)}
 						{actionError ? (
@@ -477,8 +502,6 @@ export function StylePresetsMenu() {
 						<div className={styles.presetStatus} role="alert">
 							{ts("stylePresets.loadFailed")}
 						</div>
-					) : presets.length === 0 ? (
-						<div className={styles.presetStatus}>{ts("stylePresets.empty")}</div>
 					) : (
 						presets.map(renderUserPreset)
 					)}

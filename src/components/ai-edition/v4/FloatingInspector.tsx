@@ -82,6 +82,7 @@ import {
 	ChoiceRow,
 	CursorPane,
 	LayoutPane,
+	type SceneActions,
 	SliderCell,
 	Toggle,
 	TranscriptPane,
@@ -177,7 +178,12 @@ export function FloatingInspector({
 					) : audioTrackSelected ? (
 						<AudioTrackPane tl={tl} onClose={() => tl.clearSelection()} />
 					) : (
-						<FacetBody facet={facet} onCollapse={onToggleOpen} transcriptProps={transcriptProps} />
+						<FacetBody
+							facet={facet}
+							onCollapse={onToggleOpen}
+							transcriptProps={transcriptProps}
+							scenes={{ addTitleCard: tl.addTitleCard, addEffect: tl.addBundledEffectAtPlayhead }}
+						/>
 					)}
 				</div>
 			) : null}
@@ -1558,10 +1564,12 @@ function FacetBody({
 	facet,
 	onCollapse,
 	transcriptProps,
+	scenes,
 }: {
 	facet: Facet;
 	onCollapse: () => void;
 	transcriptProps: TranscriptProps;
+	scenes: SceneActions;
 }) {
 	const te = useScopedT("editor");
 	// A small collapse affordance floated over the reused pane header.
@@ -1599,7 +1607,7 @@ function FacetBody({
 	// `effects` is the fallthrough rather than a branch of its own: the union has no
 	// tail left now that captions is a popover, and a `never` check here would only
 	// restate what the type already says.
-	return wrap(collapse, <VideoEffectsPane />);
+	return wrap(collapse, <VideoEffectsPane scenes={scenes} />);
 }
 
 function wrap(collapse: React.ReactNode, body: React.ReactNode) {

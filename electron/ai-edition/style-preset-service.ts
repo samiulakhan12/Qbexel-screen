@@ -10,6 +10,11 @@ import { randomUUID } from "node:crypto";
 import fs, { type FileHandle } from "node:fs/promises";
 import path from "node:path";
 import {
+	BUNDLED_STYLE_PRESETS,
+	findBundledStylePreset,
+	isBundledStylePresetId,
+} from "../../src/lib/ai-edition/bundledStylePresets";
+import {
 	compareStylePresets,
 	FACTORY_STYLE_PRESET_ID,
 	parseStylePresetFile,
@@ -22,7 +27,7 @@ import {
 } from "../../src/lib/ai-edition/stylePresets";
 import { renameWithRetry } from "../atomic-rename";
 
-export type StylePresetErrorCode = "NAME_TAKEN" | "NOT_FOUND" | "INVALID_ID";
+export type StylePresetErrorCode = "NAME_TAKEN" | "NOT_FOUND" | "INVALID_ID" | "BUILT_IN";
 
 export class StylePresetError extends Error {
 	constructor(
@@ -97,9 +102,22 @@ export class StylePresetService {
 	async list(): Promise<StylePreset[]> {
 		await this.ensureDirectory();
 		const [{ presets }, marked] = await Promise.all([this.readEntries(), this.readMarker()]);
-		return presets.map((preset) =>
+		// The user's files, sorted. The bundled themes are renderer data (bundledStylePresets.ts)
+		// and are merged in by the menu, so this stays a listing of the folder — except when
+		// the marked preset IS a bundled theme: then that one entry is appended, flagged, so the
+		// mark reaches the menu through the same field as for a saved preset.
+		const listed = presets.map((preset) =>
 			preset.id === marked ? { ...preset, forNewProjects: true } : preset,
 		);
+		const markedBundled = marked ? findBundledStylePreset(marked) : null;
+		return markedBundled ? [...listed, { ...markedBundled, forNewProjects: true }] : listed;
+	}
+
+	/** A bundled theme is read-only: the file operations below refuse it by id. */
+	private assertNotBuiltIn(id: string): void {
+		if (isBundledStylePresetId(id)) {
+			throw new StylePresetError("BUILT_IN", `Built-in preset ${id} cannot be changed`);
+		}
 	}
 
 	/** Marks the preset new projects start from, or clears the mark with `null`. */
@@ -133,6 +151,12 @@ export class StylePresetService {
 			const json = serializeStylePresetFile({ name: cleanName, appearance });
 			const id = stylePresetFileBaseName(cleanName);
 			this.assertNotFactoryId(id, cleanName);
+			if (
+				isBundledStylePresetId(id) ||
+				BUNDLED_STYLE_PRESETS.some((p) => p.name.toLowerCase() === cleanName.toLowerCase())
+			) {
+				throw new StylePresetError("NAME_TAKEN", `A built-in preset is already named ${cleanName}`);
+			}
 			await this.ensureDirectory();
 			this.assertNameFree(await this.readEntries(), id, cleanName);
 			await this.writeAtomic(this.pathFor(id), json);
@@ -142,6 +166,7 @@ export class StylePresetService {
 
 	rename(id: string, name: string): Promise<StylePreset> {
 		return this.serialise(async () => {
+			this.assertNotBuiltIn(id);
 			const current = await this.read(id);
 			const cleanName = sanitizeStylePresetName(name);
 			const nextId = stylePresetFileBaseName(cleanName);
@@ -174,6 +199,7 @@ export class StylePresetService {
 
 	update(id: string, appearance: StylePresetAppearance): Promise<StylePreset> {
 		return this.serialise(async () => {
+			this.assertNotBuiltIn(id);
 			const current = await this.read(id);
 			await this.writeAtomic(
 				this.pathFor(id),
@@ -185,6 +211,7 @@ export class StylePresetService {
 
 	delete(id: string): Promise<void> {
 		return this.serialise(async () => {
+			this.assertNotBuiltIn(id);
 			await fs.unlink(this.pathFor(id)).catch((error) => {
 				if (!isMissing(error)) throw error;
 			});
@@ -195,6 +222,10 @@ export class StylePresetService {
 	/** What "Show in folder" should open. A preset deleted behind the list's back still
 	 *  opens its folder rather than nothing — `showItemInFolder` is silent on a missing file. */
 	async revealTarget(id: string): Promise<StylePresetRevealTarget> {
+		if (isBundledStylePresetId(id)) {
+			await this.ensureDirectory();
+			return { kind: "folder", path: this.directory };
+		}
 		const filePath = this.pathFor(id);
 		try {
 			await fs.access(filePath);
@@ -230,6 +261,8 @@ export class StylePresetService {
 	}
 
 	private async read(id: string): Promise<StylePreset> {
+		const bundled = findBundledStylePreset(id);
+		if (bundled) return bundled;
 		const filePath = this.pathFor(id);
 		let raw: string;
 		let mtime: Date;

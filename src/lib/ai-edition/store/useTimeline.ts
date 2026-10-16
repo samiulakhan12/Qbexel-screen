@@ -14,6 +14,7 @@ import type {
 import { useScopedT } from "@/contexts/I18nContext";
 import { DEFAULT_TEXT_PLATE } from "../annotations/background";
 import { fitTextBox } from "../annotations/placement";
+import { addBundledEffectRange, type BundledEffectKey } from "../bundledEffects";
 import {
 	collapseTracksToPills,
 	patchAudioTrack,
@@ -62,6 +63,7 @@ import {
 import { dropTrimPillsByIds, resolveTimelineSpanToTrim } from "../timeline/trim-mapping";
 import { MAX_ZOOM_SCALE, MIN_ZOOM_SCALE } from "../timeline/zoom-scale";
 import type { AutoZoomSuggestion } from "../timeline/zoom-suggestions";
+import { addTitleCard as addTitleCardToDocument, type TitleCardKind } from "../titleCards";
 import { getEditorSettings } from "./editorSettings";
 import { saveWithDeadline, useProjectStore, waitForDocumentSaves } from "./projectStore";
 import { currentWriteEpoch } from "./undoStack";
@@ -1527,6 +1529,58 @@ export function useTimeline() {
 		return true;
 	}, [document, saveDocument]);
 
+	/** An intro or outro title card (titleCards.ts): a large centred text over the head or the
+	 *  tail of the programme, named after the project unless told otherwise. */
+	const addTitleCard = useCallback(
+		async (kind: TitleCardKind, text?: string) => {
+			if (!document) return false;
+			const frameAspect = resolveAspectRatioValue(
+				document,
+				getEditorSettings(document).aspectRatio,
+			);
+			let next: AxcutDocument;
+			try {
+				next = addTitleCardToDocument(document, {
+					kind,
+					text: text ?? (kind === "intro" ? document.project.title : ts("effects.outroDefault")),
+					frameAspect,
+					origin: "user",
+				});
+			} catch {
+				return false;
+			}
+			if (!(await saveDocument(next, { history: true }))) return false;
+			const added = next.annotations[next.annotations.length - 1];
+			if (added) {
+				setMultiSelection([{ kind: "annotation", id: added.id }]);
+				setSelection({ kind: "annotation", id: added.id });
+			}
+			return true;
+		},
+		[document, saveDocument, ts],
+	);
+
+	/** One of the bundled shader effects (bundledEffects.ts), posed at the playhead. */
+	const addBundledEffectAtPlayhead = useCallback(
+		async (key: BundledEffectKey, durationSec = DEFAULT_NEW_REGION_SEC) => {
+			if (!document) return false;
+			const startMs = Math.round(playheadSec() * 1000);
+			let next: AxcutDocument;
+			try {
+				next = addBundledEffectRange(
+					document,
+					key,
+					startMs,
+					startMs + Math.round(durationSec * 1000),
+				);
+			} catch {
+				return false;
+			}
+			return saveDocument(next, { history: true });
+		},
+		[document, saveDocument],
+	);
+
 	const removeClip = useCallback(
 		async (clipId: string) => {
 			if (!document) return;
@@ -1799,6 +1853,8 @@ export function useTimeline() {
 		moveClip,
 		duplicateClip,
 		splitClipAtPlayhead,
+		addTitleCard,
+		addBundledEffectAtPlayhead,
 		removeClip,
 		selectClip,
 		updateTrim,

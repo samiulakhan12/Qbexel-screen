@@ -840,7 +840,7 @@ export function registerNativeBridgeHandlers(context: NativeBridgeContext) {
 			if (error instanceof StylePresetError) {
 				return createErrorResponse(
 					requestId,
-					error.code === "INVALID_ID" ? "INVALID_REQUEST" : error.code,
+					error.code === "INVALID_ID" || error.code === "BUILT_IN" ? "INVALID_REQUEST" : error.code,
 					redactPaths(error.message),
 				);
 			}

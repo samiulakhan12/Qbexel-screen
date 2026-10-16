@@ -11,6 +11,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/contexts/I18nContext";
 import { ShortcutsProvider } from "@/contexts/ShortcutsContext";
 import { LOCALE_STORAGE_KEY } from "@/i18n/config";
+import { BUNDLED_STYLE_PRESETS } from "@/lib/ai-edition/bundledStylePresets";
 import {
 	DEFAULT_EDITOR_SETTINGS,
 	type EditorSettingsSnapshot,
@@ -168,17 +169,29 @@ describe("Presets menu in the editor top bar", () => {
 		renderPane();
 		const menu = await openMenu();
 		const rows = within(menu).getAllByRole("menuitemradio");
-		expect(rows.map((row) => row.textContent)).toEqual([`${BRAND.productName}Built-in`, "Warm"]);
+		expect(rows.map((row) => row.textContent)).toEqual([
+			`${BRAND.productName}Built-in`,
+			...BUNDLED_STYLE_PRESETS.map((p) => `${p.name}Built-in`),
+			"Warm",
+		]);
 		expect(state.presets.list).toHaveBeenCalledTimes(1);
-		// The built-in row manages nothing: only the saved one has a "⋯".
-		expect(screen.getAllByRole("button", { name: /^More actions for/ })).toHaveLength(1);
+		// The factory row manages nothing; the bundled themes offer only "use for new projects".
+		expect(screen.getAllByRole("button", { name: /^More actions for/ })).toHaveLength(
+			BUNDLED_STYLE_PRESETS.length + 1,
+		);
 	});
 
 	it("says so when nothing is saved yet", async () => {
 		state.presets.list = vi.fn<Fn>(async () => []);
 		renderPane();
 		const menu = await openMenu();
-		expect(within(menu).getByText("No saved presets yet")).toBeInTheDocument();
+		// The bundled themes are always there, so the list is never empty: only the factory row
+		// and the five themes show, with no saved preset after them.
+		const rows = within(menu).getAllByRole("menuitemradio");
+		expect(rows.map((row) => row.textContent)).toEqual([
+			`${BRAND.productName}Built-in`,
+			...BUNDLED_STYLE_PRESETS.map((p) => `${p.name}Built-in`),
+		]);
 	});
 
 	it("stays usable for the built-in preset and create when the list fails", async () => {
@@ -459,7 +472,9 @@ describe("Presets menu in the editor top bar", () => {
 		fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
 		fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 		await waitFor(() => expect(state.presets.delete).toHaveBeenCalledWith("Warm"));
-		expect(await screen.findByText("No saved presets yet")).toBeInTheDocument();
+		await waitFor(() =>
+			expect(screen.queryByRole("menuitemradio", { name: /^Warm/ })).not.toBeInTheDocument(),
+		);
 	});
 
 	it.each([
