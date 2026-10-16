@@ -39,9 +39,9 @@ of every milestone.
 |---|---|---|
 | 1 | Inspect codebase, verify licence, architecture report | **done** — `ARCHITECTURE.md`, `docs/qbexel/design-notes.md` |
 | 2 | Recording workflow, safe persistence, recovery | **done** (see below) |
-| 3 | Editing timeline and export pipeline | in progress |
-| 4 | Creative presets, cursor effects, editable zooms | pending |
-| 5 | Transcription and AI Tutorial Director | pending |
+| 3 | Editing timeline and export pipeline | **done** (see below) |
+| 4 | Creative presets, cursor effects, editable zooms | **done** (see below) |
+| 5 | Transcription and AI Tutorial Director | in progress |
 | 6 | Privacy Guardian and redaction workflow | pending |
 | 7 | Multi-format compositions and publishing presets | pending |
 | 8 | CLI and MCP interfaces | pending |
@@ -69,6 +69,41 @@ in all 15 locales pending translation; recovery of a macOS take whose
 fragmented file needs the salvage pass goes through the plain manifest path
 (the editor's open then reports an unreadable file rather than salvaging).
 
+## Milestone 3 — what was built and how it was verified
+
+Same verification channel as M2 (unit tests, `tsc`, Biome, locale parity,
+Vite build) plus the headless CLI under `xvfb-run -a npx electron . --no-sandbox`.
+Rendering and export themselves need the Rust compositor binaries, which are
+absent here; the Rust sources were not changed.
+
+| Change | Where | Verified by |
+|---|---|---|
+| Split clip at the playhead (Ctrl/Cmd+B, chat/MCP tool `splitClip`). The right half carries a `cut` marker so the timeline does not fold the halves back together; moving a half clears the marker | `src/lib/ai-edition/document/timeline.ts` (`splitClipAt`, `clipAtRawSec`), `useTimeline.ts`, `electron/ai-edition/agent-tools.ts`, `deep-agent/service.ts` | `document/splitClip.test.ts` (7 tests: both halves keep source ranges, trims clamp per half, 40 ms minimum piece refused, moved halves fold again), tool parity tests |
+| Frame step follows the project frame rate instead of a fixed 30 fps | `src/lib/frameStep.ts`, `NewEditorShell.tsx` | `frameStep.test.ts` |
+| Subtitle sidecar on export (SRT, programme time after trims and speed regions) and the CLI command `qbexel subtitles <project> --format srt\|vtt` | `src/lib/ai-edition/captions/subtitles.ts`, `ExportDialog.tsx`, IPC `write-export-sidecar`, `electron/cli/args.ts`, `projectCommands.ts` | `subtitles.test.ts` (8 tests), CLI arg/command tests; end-to-end run of the CLI on a fixture project produced valid SRT and WebVTT, a bad `--out` extension exits 2 |
+| Rolling project backups (10 kept, at most one per minute) written beside the project before every save | `electron/ai-edition/project-backups.ts`, `document-service.ts` | `project-backups.test.ts` |
+
+Known limitations of M3: the `.srt` sidecar in the dialog is written after the
+compositor reports the export done, so a failed export writes no sidecar (by
+design) but a successful export whose sidecar write fails only shows a toast;
+WebVTT in the dialog is CLI-only for now; the export itself was not run here.
+
+## Milestone 4 — what was built and how it was verified
+
+| Change | Where | Verified by |
+|---|---|---|
+| Five bundled, read-only style themes (Clean documentation, Modern SaaS, Cinematic dark, Editorial, Playful creative) merged into the presets menu; may be set as default for new projects, cannot be renamed or deleted | `src/lib/ai-edition/bundledStylePresets.ts`, `electron/ai-edition/style-preset-service.ts`, `StylePresetsMenu.tsx` | `bundledStylePresets.test.ts` validates every theme through the preset file parser; service tests (`BUILT_IN` refusal); `EditorTopBar.stylePresets.test.tsx` |
+| Intro and outro title cards added from the Effects pane at the playhead (text annotation on a dark plate, intro rises, outro fades) | `src/lib/ai-edition/titleCards.ts`, `useTimeline.addTitleCard`, `RightPanes.tsx` | `titleCards.test.ts`; `documentWriteAudit.test.ts` lists the new writes |
+| Bundled shader effects: Spotlight (follows the cursor) and Focus vignette, added as time ranges at the playhead | `src/lib/ai-edition/bundledEffects.ts`, `useTimeline.addBundledEffectAtPlayhead` | `bundledEffects.test.ts` validates against the shader-effect schema and refuses overlapping ranges |
+
+Known limitations of M4: the WGSL of the two bundled effects is validated by
+schema only, it was not compiled by the compositor on this machine (no GPU, no
+binaries); title cards are text annotations rather than full-frame scene clips,
+so they overlay the recording rather than replacing it; the "editable zooms"
+part of this milestone relies on the upstream zoom regions and auto-zoom
+suggestions, which were inspected but not changed. Translations of new strings
+are English in all 15 locales pending translation.
+
 ## Backlog (needs a Windows/macOS device, native binaries or compositor work)
 
 
@@ -88,5 +123,8 @@ fragmented file needs the salvage pass goes through the plain manifest path
 
 ## Next steps
 
-1. M3: split clip at the playhead; fps-aware frame step; SRT/WebVTT export in
-   the dialog, the CLI and MCP; rolling project backups.
+1. M5 Tutorial Director: `storyboard` field on the document, deterministic
+   analysis (`src/lib/ai-edition/director/analyze.ts`), LLM enrichment with a
+   strict output schema, apply-through-tools, Storyboard facet with
+   approve/reject, silence-removal pass, chat review-before-apply.
+2. M6 Privacy Guardian, M7 compositions, M8 CLI/MCP additions, M9 review.
