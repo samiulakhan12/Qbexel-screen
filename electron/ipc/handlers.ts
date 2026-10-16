@@ -124,6 +124,7 @@ import {
 import { readMacScreenCaptureAccess } from "../native-bridge/screen/macScreenAccess";
 import { CompositorViewService } from "../native-bridge/services/compositorViewService";
 import { getMacPermissions, showPermissionsWindow } from "../permissions";
+import { scanDocumentForSensitiveContent } from "../privacy/scan";
 import { scoreDeviceNameMatch } from "../recording/deviceNameMatching";
 import { recordingStorageProblem } from "../recording/diskSpaceCheck";
 import {
@@ -5231,6 +5232,30 @@ export function registerIpcHandlers(
 		checkShaderEffect: (code, params) => loudnessService.checkShaderEffect(code, params),
 		// The editor's own engine, in this process: `openscreen mcp` transcribes without the app.
 		transcribe: (request) => getSttManager().transcribe(request),
+		// The Privacy Guardian with the app's OCR setup, and where a subtitle file may land:
+		// the user's own media folders, the projects folder, and QBEXEL_ALLOWED_DIRS.
+		privacy: {
+			scan: (document, options) =>
+				scanDocumentForSensitiveContent(document, {
+					...options,
+					ocr: {
+						cachePath: path.join(app.getPath("userData"), "ocr"),
+						bundledLangDir: path.join(process.resourcesPath, "ocr"),
+					},
+					ffmpegPath: resolveFfmpeg(),
+				}),
+		},
+		allowedExportDirs: () => [
+			app.getPath("videos"),
+			app.getPath("downloads"),
+			app.getPath("desktop"),
+			app.getPath("documents"),
+			path.join(app.getPath("userData"), "projects"),
+			...(process.env.QBEXEL_ALLOWED_DIRS ?? "")
+				.split(path.delimiter)
+				.map((dir) => dir.trim())
+				.filter((dir) => dir.length > 0),
+		],
 		version: app.getVersion(),
 		// importMedia: the editor's own probe, and the grant a picked file gets, so the editor
 		// can play a file a client imported into the project it has open.
@@ -5408,7 +5433,7 @@ export function registerIpcHandlers(
 			cachePath: path.join(app.getPath("userData"), "ocr"),
 			bundledLangDir: path.join(process.resourcesPath, "ocr"),
 		}),
-		isFfmpegAvailable: () => resolveFfmpeg() !== null,
+		resolveFfmpegPath: () => resolveFfmpeg(),
 		runAiEditionChat: (projectId, sessionId, message, document, sink) =>
 			runChat(projectId, sessionId, message, getAiEditionLlmConfig(), document, sink, {
 				cursor: agentCursorTelemetryReader,

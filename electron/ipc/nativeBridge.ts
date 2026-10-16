@@ -85,7 +85,8 @@ export interface NativeBridgeContext {
 	cancelAiEditionChat?: (projectId: string, sessionId: string) => boolean;
 	/** The Privacy Guardian's OCR setup (where its model lives); null when OCR is not wired. */
 	getPrivacyOcr?: () => import("../privacy/ocr").OcrEngineOptions | null;
-	isFfmpegAvailable?: () => boolean;
+	/** The ffmpeg executable as the app resolves it, or null; for the Privacy Guardian. */
+	resolveFfmpegPath?: () => string | null;
 	rewindToMessage: (
 		projectId: string,
 		sessionId: string,
@@ -265,7 +266,7 @@ export function registerNativeBridgeHandlers(context: NativeBridgeContext) {
 
 	const privacyService = new PrivacyService({
 		ocr: () => context.getPrivacyOcr?.() ?? null,
-		ffmpegPresent: () => context.isFfmpegAvailable?.() ?? false,
+		ffmpegPath: () => context.resolveFfmpegPath?.() ?? null,
 	});
 
 	const exportJobs = new ExportJobs();

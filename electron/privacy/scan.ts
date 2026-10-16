@@ -44,6 +44,8 @@ export interface PrivacyScanOptions {
 	onProgress?: (progress: PrivacyScanProgress) => void;
 	/** Where the OCR engine keeps its language data. Absent → no OCR, transcript only. */
 	ocr?: OcrEngineOptions | null;
+	/** The ffmpeg executable for the sampler; absent or null → frames cannot be read. */
+	ffmpegPath?: string | null;
 	now?: () => Date;
 	createId?: (prefix: string) => string;
 	/** Test seams. */
@@ -127,6 +129,7 @@ export async function scanDocumentForSensitiveContent(
 					const result = await sampler(asset.originalPath, {
 						everyMs,
 						signal: options.signal,
+						ffmpegPath: options.ffmpegPath ?? null,
 					});
 					warnings.push(...result.warnings);
 					sampled.push({ assetId, result });
@@ -210,7 +213,11 @@ export async function scanVideoFileForSensitiveContent(
 			options.durationSec ?? 0,
 			Math.max(500, options.sampleEveryMs ?? DEFAULT_PRIVACY_SAMPLE_MS),
 		);
-		const result = await sampler(filePath, { everyMs, signal: options.signal });
+		const result = await sampler(filePath, {
+			everyMs,
+			signal: options.signal,
+			ffmpegPath: options.ffmpegPath ?? null,
+		});
 		warnings.push(...result.warnings);
 		try {
 			const progress = { done: 0, total: result.frames.length };

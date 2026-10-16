@@ -46,6 +46,49 @@ describe("parseCliArgs", () => {
 		});
 	});
 
+	it("parses the storyboard, privacy scan and validate commands", () => {
+		expect(
+			parse(["storyboard", "demo.openscreen", "--apply", "cut", "--outro", "Bye", "--json"]),
+		).toMatchObject({
+			kind: "storyboard",
+			projectPath: inCwd("demo.openscreen"),
+			apply: "cut",
+			outroText: "Bye",
+			dryRun: false,
+			json: true,
+		});
+		expect(parse(["storyboard", "demo.openscreen", "--apply", "nope"])).toMatchObject({
+			kind: "error",
+		});
+		expect(
+			parse([
+				"privacy",
+				"scan",
+				"demo.openscreen",
+				"--sample-ms",
+				"4000",
+				"--no-ocr",
+				"--fail-on-findings",
+			]),
+		).toMatchObject({
+			kind: "privacy-scan",
+			projectPath: inCwd("demo.openscreen"),
+			sampleEveryMs: 4000,
+			noOcr: true,
+			failOnFindings: true,
+		});
+		expect(parse(["privacy", "demo.openscreen"])).toMatchObject({ kind: "error" });
+		expect(parse(["privacy", "scan", "demo.openscreen", "--sample-ms", "10"])).toMatchObject({
+			kind: "error",
+		});
+		expect(parse(["validate", "demo.openscreen", "--json"])).toMatchObject({
+			kind: "validate",
+			projectPath: inCwd("demo.openscreen"),
+			json: true,
+		});
+		expect(parse(["validate"])).toMatchObject({ kind: "error" });
+	});
+
 	it("parses a minimal export command and resolves relative paths", () => {
 		const cmd = parse(["export", "demo.openscreen"]);
 		expect(cmd).toMatchObject({

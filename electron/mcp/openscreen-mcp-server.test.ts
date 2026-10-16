@@ -29,6 +29,7 @@ import {
 	type RunningMcpServer,
 	startMcpHttpServer,
 } from "./openscreen-mcp-server";
+import { QBEXEL_TOOL_NAMES } from "./qbexel-tools";
 
 const TOKEN = "test-token-0123456789";
 
@@ -203,6 +204,8 @@ describe("the MCP tool surface", () => {
 			"removeMedia",
 			"createCheckpoint",
 			"restoreCheckpoint",
+			// Qbexel's Director, Guardian, compositions, subtitles and project check.
+			...QBEXEL_TOOL_NAMES,
 			// The same as `openscreen mcp` serves (#1174).
 			"listSources",
 			"startRecording",

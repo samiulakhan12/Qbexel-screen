@@ -44,8 +44,8 @@ of every milestone.
 | 5 | Transcription and AI Tutorial Director | **done** (see below) |
 | 6 | Privacy Guardian and redaction workflow | **done** (see below) |
 | 7 | Multi-format compositions and publishing presets | **done** (see below) |
-| 8 | CLI and MCP interfaces | in progress |
-| 9 | Adversarial review, benchmarks, packaging | pending |
+| 8 | CLI and MCP interfaces | **done** (see below) |
+| 9 | Adversarial review, benchmarks, packaging | in progress |
 
 ## Milestone 2 — what was built and how it was verified
 
@@ -170,6 +170,20 @@ stops at the first failure and reports which composition failed; safe-area guide
 drawn by the preview only (never exported) and nothing warns when a zoom or annotation
 crosses them; the export itself was not run here (no compositor binaries).
 
+## Milestone 8 — what was built and how it was verified
+
+| Change | Where | Verified by |
+|---|---|---|
+| CLI `storyboard`, `privacy scan`, `validate` (plus M7's `export --composition`) with usage, exit codes 0/1/2/3, `--dry-run` and `--json` | `electron/cli/args.ts`, `projectCommands.ts`, `cliMain.ts` | `args.test.ts`; `projectCommands.test.ts` (storyboard analyse + apply cut, dry run, privacy transcript scan masked + exit 3, validate healthy/broken); **headless runs** here under Xvfb: `validate` (exit 0, `ok: true`), `storyboard --dry-run` (scenes and suggestions printed), `privacy scan --no-ocr` (card number masked, exit 3 with `--fail-on-findings`); `privacy scan` with real OCR on the synthetic recording (6 frames read; email, `sk-live…` key and the spoken card number found, all masked). That run first failed — tesseract.js inlined into the ESM main bundle has no `__dirname` — and passed once the package was left external to the bundle (`vite.config.ts`) |
+| Privacy scan decoupled from Electron: the ffmpeg path is passed in, so `electron/privacy/*` and the CLI commands import no Electron module | `frames.ts`, `scan.ts`, `privacyService.ts`, `nativeBridge.ts`, `handlers.ts` | tsc; the CLI tests run in plain Node |
+| MCP tools `getStoryboard`, `analyzeStoryboard`, `applyStoryboard`, `getPrivacyFindings`, `scanPrivacy`, `applyPrivacyFindings`, `listCompositions`, `addComposition`, `exportSubtitles`, `validateProject`, under the edit switch, checkpoint rule and revision guard | `electron/mcp/qbexel-tools.ts`, `openscreen-mcp-server.ts`, deps in `handlers.ts` | `qbexel-tools.test.ts` (10 tests incl. path policy: outside dir refused, `..` escape refused, unconfirmed refused, existing file refused unless overwrite); `openscreen-mcp-server.test.ts` roster |
+| Shared project validator | `src/lib/ai-edition/document/validate.ts` | CLI and MCP tests |
+
+Known limitations of M8: `scanPrivacy` over MCP sends no progress notifications and
+can take a minute on a long recording; the CLI exports one composition per run;
+`qbexel mcp` (stdio, beside the app) has no OCR setup unless the app runs — it scans the
+transcript only and says so in the result.
+
 ## Backlog (needs a Windows/macOS device, native binaries or compositor work)
 
 
@@ -191,9 +205,7 @@ crosses them; the export itself was not run here (no compositor binaries).
 
 ## Next steps
 
-1. M8 CLI: `qbexel storyboard <project> [--apply] [--json]`, `qbexel privacy scan
-   <project> [--json]`, `qbexel validate <project>`; MCP tools `director.*`,
-   `privacy.*`, `exportSubtitles`, `listCompositions`/`exportComposition` with strict
-   schemas, allowed directories, confirmation for writes.
-2. M9: adversarial review of every new input path, SECURITY.md, TESTING.md, README,
-   packaging notes (OCR model, ffmpeg), benchmarks that can run here.
+1. M9: adversarial review of every new input path (bridge payloads, MCP args, CLI
+   flags, file paths), SECURITY.md, TESTING.md, README rewrite, packaging notes (OCR
+   model, ffmpeg), benchmarks that can run here (analyser, detectors, OCR per frame),
+   licence notices for tesseract.js.

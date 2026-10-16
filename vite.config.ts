@@ -32,7 +32,15 @@ export default defineConfig({
 					return startup(["."], { env });
 				},
 				vite: {
-					build: {},
+					build: {
+						rollupOptions: {
+							// tesseract.js is CommonJS and reads `__dirname` to find its worker script
+							// and WebAssembly core; inlined into this ESM bundle it cannot start
+							// ("__dirname is not defined in ES module scope"). Left external, the main
+							// process loads it from node_modules at run time, as a package.
+							external: ["tesseract.js"],
+						},
+					},
 					// The main process runs code from `src/lib` too (the agent's tools, the MCP
 					// server): it resolves `@/` as the renderer does, or every such import fails
 					// the build.

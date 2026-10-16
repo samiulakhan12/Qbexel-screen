@@ -97,6 +97,13 @@ import {
 	SET_PROJECT_INFO_TOOL,
 	setProjectInfo,
 } from "./project-tools";
+import {
+	isQbexelTool,
+	type McpPrivacyScanner,
+	QBEXEL_EDIT_TOOLS,
+	QBEXEL_TOOLS,
+	runQbexelTool,
+} from "./qbexel-tools";
 
 export const MCP_SERVER_NAME = "openscreen";
 export const MCP_ENDPOINT_PATH = "/mcp";
@@ -176,6 +183,10 @@ export interface McpToolDeps extends ImportMediaDeps {
 	checkShaderEffect?: ShaderEffectChecker;
 	/** The main process's on-device Whisper (`SttManager.transcribe`). Absent: no transcribe tool. */
 	transcribe?(request: SttTranscribeRequest): Promise<SttTranscribeResponse>;
+	/** The Privacy Guardian's scan with OCR set up (qbexel-tools.ts). Absent: transcript only. */
+	privacy?: McpPrivacyScanner;
+	/** Where exportSubtitles may write. Absent: it writes nowhere. */
+	allowedExportDirs?: () => string[];
 	version: string;
 }
 
@@ -279,6 +290,9 @@ const CORE_PREAMBLES: Record<McpTransport, readonly string[]> = {
  * projects-and-checkpoints rules of this transport, then the in-app agent's editing
  * guidance, naming this server's edit switch, which holds back recording and export too.
  */
+const QBEXEL_NOTE =
+	"Qbexel tools: analyzeStoryboard/getStoryboard/applyStoryboard are the Tutorial Director (scenes, cuts, zooms, callouts and title cards as proposals, applied through the same edit tools); scanPrivacy/getPrivacyFindings/applyPrivacyFindings are the Privacy Guardian (sensitive text found on screen or spoken, masked, blurred on request); listCompositions/addComposition are output variants exportVideo can render; exportSubtitles writes an .srt/.vtt into an allowed folder with confirm: true; validateProject checks the project and changes nothing.";
+
 export function mcpInstructions(options: {
 	transport: McpTransport;
 	editsAllowed: boolean;
@@ -299,6 +313,7 @@ export function mcpInstructions(options: {
 				]
 			: []),
 		...(options.transcribe ? [TRANSCRIBE_NOTE] : []),
+		QBEXEL_NOTE,
 		EFFECTS_NOTE,
 		"",
 	].join("\n");
@@ -568,10 +583,23 @@ export function createToolRunner(deps: McpToolDeps): McpToolRunner {
 		if (name === "createCheckpoint") return createCheckpoint(document);
 		if (name === "restoreCheckpoint") return restoreCheckpoint(document, args, editsAllowed);
 		// This server's own switch, so the refusal names it rather than the in-app agent's.
-		if ((edit || isMutatingTool(name) || PROJECT_EDIT_TOOLS.has(name)) && !editsAllowed) {
+		if (
+			(edit ||
+				isMutatingTool(name) ||
+				PROJECT_EDIT_TOOLS.has(name) ||
+				QBEXEL_EDIT_TOOLS.has(name)) &&
+			!editsAllowed
+		) {
 			return consentRequired(name, args, MCP_EDITS_SETTING);
 		}
 		if (edit) return edit(document);
+		if (isQbexelTool(name)) {
+			return runQbexelTool(document, name, args, {
+				cursor: deps.cursor,
+				privacy: deps.privacy,
+				allowedExportDirs: deps.allowedExportDirs,
+			});
+		}
 		if (name === SET_PROJECT_INFO_TOOL) return setProjectInfo(document, args);
 		if (name === REMOVE_MEDIA_TOOL) return removeMedia(document, args);
 		const availableByAssetId = await probeCursorTelemetry(document, deps.cursor);
@@ -924,6 +952,21 @@ export function createOpenScreenMcpServer(
 				annotations: {
 					readOnlyHint: !tool.mutating,
 					destructiveHint: tool.mutating,
+					openWorldHint: false,
+				},
+			},
+			(args: unknown) => runTool(tool.name, args),
+		);
+	}
+	for (const tool of QBEXEL_TOOLS) {
+		server.registerTool(
+			tool.name,
+			{
+				description: tool.description,
+				inputSchema: tool.inputSchema.extend({ projectId: projectIdArg }),
+				annotations: {
+					readOnlyHint: !tool.mutating,
+					destructiveHint: tool.destructive,
 					openWorldHint: false,
 				},
 			},

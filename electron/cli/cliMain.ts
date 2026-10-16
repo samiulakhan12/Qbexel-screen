@@ -12,11 +12,19 @@ import { isDiagnosticModeEnabled } from "../diagnostics/main-log-buffer";
 import { getSelectedDesktopSource, registerIpcHandlers } from "../ipc/handlers";
 import { openVideoInHiddenWindow } from "../mcp/hidden-video";
 import { serveMcpOverStdio } from "../mcp/stdio-server";
+import { resolveFfmpeg } from "../media/audioPeaks";
 import { registerSttIpc, shutdownStt } from "../stt";
 import { createRunnerWindow } from "../windows";
 import { CLI_USAGE, type CliCommand } from "./args";
 import { openGuiFromCli } from "./openGui";
-import { runInfoCommand, runPackCommand, runSubtitlesCommand } from "./projectCommands";
+import {
+	runInfoCommand,
+	runPackCommand,
+	runPrivacyScanCommand,
+	runStoryboardCommand,
+	runSubtitlesCommand,
+	runValidateCommand,
+} from "./projectCommands";
 import { createRunnerHost } from "./runnerHost";
 import { isolateCliSessionData } from "./sessionData";
 import { openStdin } from "./stdin";
@@ -319,6 +327,34 @@ export function runCli(command: CliCommand): void {
 						command.json === true,
 						writeStdout,
 					);
+					app.exit(code);
+				} catch (error) {
+					output.error(error instanceof Error ? error.message : String(error));
+					app.exit(1);
+				}
+				return;
+			}
+
+			if (
+				command.kind === "storyboard" ||
+				command.kind === "privacy-scan" ||
+				command.kind === "validate"
+			) {
+				try {
+					const code =
+						command.kind === "storyboard"
+							? await runStoryboardCommand(command, writeStdout)
+							: command.kind === "privacy-scan"
+								? await runPrivacyScanCommand(
+										command,
+										{
+											cachePath: path.join(app.getPath("userData"), "ocr"),
+											bundledLangDir: path.join(process.resourcesPath, "ocr"),
+										},
+										resolveFfmpeg(),
+										writeStdout,
+									)
+								: await runValidateCommand(command, writeStdout);
 					app.exit(code);
 				} catch (error) {
 					output.error(error instanceof Error ? error.message : String(error));

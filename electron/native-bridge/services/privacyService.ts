@@ -23,7 +23,8 @@ import {
 export interface PrivacyServiceOptions {
 	/** Where OCR keeps its model; null when OCR is not available in this build. */
 	ocr: () => OcrEngineOptions | null;
-	ffmpegPresent: () => boolean;
+	/** The ffmpeg executable, as the app resolves it; null when the install has none. */
+	ffmpegPath: () => string | null;
 }
 
 /** Containers the export writes, and so the only files the post-export check reads. */
@@ -41,7 +42,7 @@ export class PrivacyService {
 		return {
 			ocrAvailable: ocr !== null,
 			modelPresent: ocr ? await ocrModelPresent(ocr) : false,
-			ffmpegPresent: this.options.ffmpegPresent(),
+			ffmpegPresent: this.options.ffmpegPath() !== null,
 		};
 	}
 
@@ -62,6 +63,7 @@ export class PrivacyService {
 				signal: controller.signal,
 				onProgress,
 				ocr: this.options.ocr(),
+				ffmpegPath: this.options.ffmpegPath(),
 			});
 			return { success: true, scan, cancelled: controller.signal.aborted };
 		} catch (error) {
@@ -133,6 +135,7 @@ export class PrivacyService {
 				durationSec: input.durationSec,
 				signal: controller.signal,
 				ocr: this.options.ocr(),
+				ffmpegPath: this.options.ffmpegPath(),
 			});
 			return {
 				success: true,

@@ -244,13 +244,35 @@ existing `applyStylePreset` path. Intro/outro title cards are full-frame text
 annotations in frame space over the first/last seconds, so they need no new
 region kind and render identically in preview and export.
 
-## CLI and MCP (M8)
+## CLI and MCP (M8) — as built
 
-File-only commands follow `electron/cli/projectCommands.ts` (no `electron`
-import, unit-testable): `validate`, `storyboard`, `privacy scan`, `preset
-apply`, `zoom list/add/remove`, `compositions list`. Exit codes: 0 success,
-1 failure, 2 usage error, 3 validation failed. MCP tools are added to
-`OPENSCREEN_TOOL_NAMES` so both transports and the in-app agent get them, with
-`readOnlyHint`/`destructiveHint` set, and every path argument goes through the
-existing absolute-path checks plus an allowed-directories list
-(`QBEXEL_ALLOWED_DIRS`, defaulting to the projects and recordings folders).
+CLI (`electron/cli/args.ts`, `projectCommands.ts`, all electron-free and unit-tested;
+exit codes: 0 ok, 1 error, 2 usage, 3 "problems found"):
+
+- `qbexel storyboard <project> [--apply all|approved|cut|zoom|callout|titleCard]
+  [--outro <text>] [--dry-run] [--json]` — the Director's deterministic analysis stored
+  on the project (no model), optionally applying suggestions through the agent tools.
+- `qbexel privacy scan <project> [--sample-ms 500-60000] [--no-ocr] [--fail-on-findings]
+  [--dry-run] [--json]` — frames via ffmpeg + local OCR unless `--no-ocr`, transcript
+  always; findings stored and printed masked; exit 3 with `--fail-on-findings` when
+  findings await a decision.
+- `qbexel validate <project> [--json]` — references and media (`document/validate.ts`);
+  exit 3 on problems.
+- `qbexel export --composition <id|name>` (M7).
+
+MCP (`electron/mcp/qbexel-tools.ts`, registered after the checkpoints, served by the
+HTTP server and `qbexel mcp` alike, under the same edit switch, checkpoint rule and
+revision guard as every other tool): `getStoryboard`, `analyzeStoryboard`,
+`applyStoryboard` (ids, every approved, or every open of given kinds),
+`getPrivacyFindings`, `scanPrivacy` (the app's OCR setup when served by the app;
+transcript only otherwise), `applyPrivacyFindings`, `listCompositions`,
+`addComposition`, `exportSubtitles` (absolute path, right extension, inside the allowed
+directories — the user's Videos/Downloads/Desktop/Documents, the projects folder and
+`QBEXEL_ALLOWED_DIRS` — never over an existing file unless `overwrite`, and only with
+`confirm: true`), `validateProject`. Strict Zod schemas with `.max()` bounds on every list;
+no shell, no arbitrary filesystem access; the privacy scan is bounded to 120 frames and
+a 120 s sampler timeout. The instructions text names the tools.
+
+Not built: CLI batch export of every composition (one per run); MCP progress
+notifications for `scanPrivacy`.
+

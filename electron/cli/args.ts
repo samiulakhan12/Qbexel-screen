@@ -37,6 +37,9 @@ export type CliCommand = (
 	| CliInfoCommand
 	| CliPackCommand
 	| CliSubtitlesCommand
+	| CliStoryboardCommand
+	| CliPrivacyScanCommand
+	| CliValidateCommand
 	| CliMcpCommand
 	| CliHelpCommand
 	| CliErrorCommand
@@ -71,6 +74,9 @@ const SUBCOMMANDS = new Set([
 	"sources",
 	"pack",
 	"subtitles",
+	"storyboard",
+	"privacy",
+	"validate",
 	"captions",
 	"info",
 	"mcp",
@@ -90,6 +96,11 @@ Usage:
                      [--min-words <1-12>] [--max-words <1-12>]
   openscreen subtitles <project.openscreen>          Write the captions as an .srt or .vtt file
                      [--format srt|vtt] [-o <file>] [--json]
+  openscreen storyboard <project.openscreen>         Tutorial Director: analyse scenes and suggestions
+                     [--apply all|approved|cut|zoom|callout|titleCard] [--outro <text>] [--dry-run] [--json]
+  openscreen privacy scan <project.openscreen>       Privacy Guardian: find sensitive text (local OCR)
+                     [--sample-ms <500-60000>] [--no-ocr] [--fail-on-findings] [--dry-run] [--json]
+  openscreen validate <project.openscreen> [--json]  Check the project's references and media (exit 3 on problems)
   openscreen info <project.openscreen> [--json]      Inspect a project file
   openscreen mcp                                     Serve the agent tools over MCP on stdio
   openscreen help                                    Show this help
@@ -188,6 +199,9 @@ export function parseCliArgs(
 		if (sub === "sources") return parseSources(args.slice(1), cwd);
 		if (sub === "pack") return parsePack(args.slice(1), cwd);
 		if (sub === "subtitles") return parseSubtitles(args.slice(1), cwd);
+		if (sub === "storyboard") return parseStoryboard(args.slice(1), cwd);
+		if (sub === "privacy") return parsePrivacy(args.slice(1), cwd);
+		if (sub === "validate") return parseValidate(args.slice(1), cwd);
 		if (sub === "captions") return parseCaptions(args.slice(1), cwd);
 		if (sub === "mcp") {
 			if (args.length > 1) throw new Error(`Unexpected argument for mcp: ${args[1]}`);
@@ -480,12 +494,148 @@ export interface CliPackCommand {
 }
 
 /** Write the project's captions as a subtitle file, on the exported programme's clock. */
+export interface CliStoryboardCommand {
+	kind: "storyboard";
+	projectPath: string;
+	/** Which suggestions to apply after the analysis; none when null. */
+	apply: "all" | "approved" | "cut" | "zoom" | "callout" | "titleCard" | null;
+	outroText: string | null;
+	/** Analyse and print, but write nothing back to the project file. */
+	dryRun: boolean;
+	json?: boolean;
+}
+
+export interface CliPrivacyScanCommand {
+	kind: "privacy-scan";
+	projectPath: string;
+	sampleEveryMs: number | null;
+	/** Read the transcript only; no frames, no OCR. */
+	noOcr: boolean;
+	/** Exit 3 when findings await a decision. */
+	failOnFindings: boolean;
+	dryRun: boolean;
+	json?: boolean;
+}
+
+export interface CliValidateCommand {
+	kind: "validate";
+	projectPath: string;
+	json?: boolean;
+}
+
 export interface CliSubtitlesCommand {
 	kind: "subtitles";
 	projectPath: string;
 	format: "srt" | "vtt";
 	/** Absolute output path; null = beside the project, named after it. */
 	outPath: string | null;
+}
+
+const STORYBOARD_APPLY = new Set(["all", "approved", "cut", "zoom", "callout", "titleCard"]);
+
+function parseStoryboard(args: string[], cwd: string): CliCommand {
+	let projectPath: string | null = null;
+	let apply: CliStoryboardCommand["apply"] = null;
+	let outroText: string | null = null;
+	let dryRun = false;
+	let json = false;
+	for (let i = 0; i < args.length; i++) {
+		const arg = args[i];
+		switch (arg) {
+			case "--apply": {
+				const [value, next] = takeValue(args, i, arg);
+				if (!STORYBOARD_APPLY.has(value)) {
+					throw new Error(
+						`--apply must be all, approved, cut, zoom, callout or titleCard, got "${value}"`,
+					);
+				}
+				apply = value as CliStoryboardCommand["apply"];
+				i = next;
+				break;
+			}
+			case "--outro": {
+				const [value, next] = takeValue(args, i, arg);
+				outroText = value.slice(0, 200);
+				i = next;
+				break;
+			}
+			case "--dry-run":
+				dryRun = true;
+				break;
+			case "--json":
+				json = true;
+				break;
+			default:
+				if (arg.startsWith("-")) throw new Error(`Unknown option for storyboard: ${arg}`);
+				if (projectPath) throw new Error(`Unexpected argument: ${arg}`);
+				projectPath = resolvePath(arg, cwd);
+		}
+	}
+	if (!projectPath)
+		throw new Error("storyboard needs a project file: storyboard <project.openscreen>");
+	return { kind: "storyboard", projectPath, apply, outroText, dryRun, json };
+}
+
+function parsePrivacy(args: string[], cwd: string): CliCommand {
+	if (args[0] !== "scan") {
+		throw new Error("privacy needs a subcommand: privacy scan <project.openscreen>");
+	}
+	let projectPath: string | null = null;
+	let sampleEveryMs: number | null = null;
+	let noOcr = false;
+	let failOnFindings = false;
+	let dryRun = false;
+	let json = false;
+	for (let i = 1; i < args.length; i++) {
+		const arg = args[i];
+		switch (arg) {
+			case "--sample-ms": {
+				const [value, next] = takeValue(args, i, arg);
+				const ms = Number(value);
+				if (!Number.isInteger(ms) || ms < 500 || ms > 60_000) {
+					throw new Error(
+						`--sample-ms must be a whole number of ms between 500 and 60000, got "${value}"`,
+					);
+				}
+				sampleEveryMs = ms;
+				i = next;
+				break;
+			}
+			case "--no-ocr":
+				noOcr = true;
+				break;
+			case "--fail-on-findings":
+				failOnFindings = true;
+				break;
+			case "--dry-run":
+				dryRun = true;
+				break;
+			case "--json":
+				json = true;
+				break;
+			default:
+				if (arg.startsWith("-")) throw new Error(`Unknown option for privacy scan: ${arg}`);
+				if (projectPath) throw new Error(`Unexpected argument: ${arg}`);
+				projectPath = resolvePath(arg, cwd);
+		}
+	}
+	if (!projectPath) {
+		throw new Error("privacy scan needs a project file: privacy scan <project.openscreen>");
+	}
+	return { kind: "privacy-scan", projectPath, sampleEveryMs, noOcr, failOnFindings, dryRun, json };
+}
+
+function parseValidate(args: string[], cwd: string): CliCommand {
+	let projectPath: string | null = null;
+	let json = false;
+	for (const arg of args) {
+		if (arg === "--json") json = true;
+		else if (arg.startsWith("-")) throw new Error(`Unknown option for validate: ${arg}`);
+		else if (projectPath) throw new Error(`Unexpected argument: ${arg}`);
+		else projectPath = resolvePath(arg, cwd);
+	}
+	if (!projectPath) throw new Error("validate needs a project file: validate <project.openscreen>");
+	return { kind: "validate", projectPath, json };
 }
 
 function parseSubtitles(args: string[], cwd: string): CliCommand {

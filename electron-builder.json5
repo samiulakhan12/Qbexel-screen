@@ -112,6 +112,23 @@
     "!dist/fonts/**",
     // Exclude dead-weight node_modules: all frontend and electron code is pre-bundled by Vite (saves ~238 MB)
     "!node_modules/**",
+    // …except the Privacy Guardian's OCR engine, which the main bundle leaves external
+    // (vite.config.ts): tesseract.js is CommonJS and finds its worker script and its
+    // WebAssembly core through `__dirname`, so it must ship as a package, with its own
+    // runtime dependencies. Unpacked from the asar below, because a worker thread and a
+    // .wasm file are loaded by path.
+    "node_modules/tesseract.js/**",
+    "node_modules/tesseract.js-core/**",
+    "node_modules/bmp-js/**",
+    "node_modules/idb-keyval/**",
+    "node_modules/is-url/**",
+    "node_modules/node-fetch/**",
+    "node_modules/whatwg-url/**",
+    "node_modules/tr46/**",
+    "node_modules/webidl-conversions/**",
+    "node_modules/regenerator-runtime/**",
+    "node_modules/wasm-feature-detect/**",
+    "node_modules/zlibjs/**",
     "!*.png",
     "!preview*.png",
     "!*.md",
@@ -119,6 +136,7 @@
     "!CONTRIBUTING.md",
     "!LICENSE"
   ],
+  "asarUnpack": ["node_modules/tesseract.js/**", "node_modules/tesseract.js-core/**"],
   // Asset layout contract: "wallpapers/" and "cursors/" under resourcesPath must
   // align with assetBaseDir in electron/preload.ts (packaged branch).
   // Native capture helpers + whisper-stt-server binaries (and their ggml

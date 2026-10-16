@@ -13,7 +13,6 @@ import { spawn } from "node:child_process";
 import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { resolveFfmpeg } from "../media/audioPeaks";
 
 export interface SampledFrame {
 	/** SOURCE ms of the recording. */
@@ -30,8 +29,10 @@ export interface SampleFramesOptions {
 	maxFrames?: number;
 	timeoutMs?: number;
 	signal?: AbortSignal;
-	/** Test seam: another ffmpeg executable, or none to simulate its absence. */
-	ffmpegPath?: string | null;
+	/** The ffmpeg executable, resolved by the caller as the app does (`resolveFfmpeg`); null
+	 *  when the install has none, which the result then says. Kept out of this module so the
+	 *  privacy code carries no Electron import and the CLI's tests can run it. */
+	ffmpegPath: string | null;
 }
 
 export interface SampleFramesResult {
@@ -67,7 +68,7 @@ export async function sampleFrames(
 	filePath: string,
 	options: SampleFramesOptions,
 ): Promise<SampleFramesResult> {
-	const ffmpeg = options.ffmpegPath === undefined ? resolveFfmpeg() : options.ffmpegPath;
+	const ffmpeg = options.ffmpegPath;
 	const dir = await mkdtemp(path.join(tmpdir(), "qbexel-privacy-"));
 	if (!ffmpeg) {
 		return {

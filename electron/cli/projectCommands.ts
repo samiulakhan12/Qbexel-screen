@@ -11,9 +11,21 @@ import {
 	subtitleCuesForDocument,
 	subtitleExtension,
 } from "../../src/lib/ai-edition/captions/subtitles";
+import { analyzeStoryboard } from "../../src/lib/ai-edition/director/analyze";
+import { storyboardCounts } from "../../src/lib/ai-edition/director/storyboard";
 import { resolveAspectRatioValue } from "../../src/lib/ai-edition/document/outputFormat";
-import { isAxcutDocumentFile, parseDocumentFile } from "../../src/lib/ai-edition/schema";
+import { validateProjectDocument } from "../../src/lib/ai-edition/document/validate";
+import { privacyCounts } from "../../src/lib/ai-edition/privacy/review";
+import {
+	type AxcutDocument,
+	isAxcutDocumentFile,
+	parseDocumentFile,
+} from "../../src/lib/ai-edition/schema";
 import { getEditorSettings } from "../../src/lib/ai-edition/store/editorSettings";
+import { applyStoryboardSuggestions } from "../ai-edition/director/apply";
+import type { OcrEngineOptions } from "../privacy/ocr";
+import { scanDocumentForSensitiveContent } from "../privacy/scan";
+import type { CliPrivacyScanCommand, CliStoryboardCommand, CliValidateCommand } from "./args";
 
 /** Writes one already-newline-terminated chunk of CLI output. */
 export type CliWriter = (text: string) => void;
@@ -303,4 +315,187 @@ function documentInfoFields(doc: ReturnType<typeof parseDocumentFile>): ProjectI
 		annotationRegions: doc.annotations.length,
 		shaderEffectRegions: doc.shaderEffectRanges?.length ?? 0,
 	};
+}
+
+async function readDocumentFile(projectPath: string, command: string): Promise<AxcutDocument> {
+	const raw = await fs.readFile(projectPath, "utf8");
+	const parsed: unknown = JSON.parse(raw);
+	if (!isAxcutDocumentFile(parsed)) {
+		throw new Error(`${command} needs a project saved by the editor (schemaVersion 3 or later)`);
+	}
+	return parseDocumentFile(parsed);
+}
+
+/** Write-then-rename, like every other file this CLI produces. */
+async function writeDocumentFile(projectPath: string, document: AxcutDocument): Promise<void> {
+	const tmp = `${projectPath}.${process.pid}.tmp`;
+	await fs.writeFile(tmp, JSON.stringify(document, null, 2), "utf8");
+	await fs.rename(tmp, projectPath);
+}
+
+/**
+ * The Tutorial Director from the command line: the deterministic analysis stored on the
+ * project (no model is called), and optionally the application of suggestions through the
+ * same tools the editor uses. Exit 0; 3 when `--apply` asked for something that was refused.
+ */
+export async function runStoryboardCommand(
+	command: CliStoryboardCommand,
+	out: CliWriter,
+): Promise<number> {
+	let document = await readDocumentFile(command.projectPath, "storyboard");
+	if (document.timeline.clips.length === 0) {
+		throw new Error("The project's timeline has no footage to analyse.");
+	}
+	const storyboard = analyzeStoryboard(document, {
+		previous: document.storyboard,
+		outroText: command.outroText ?? undefined,
+	});
+	document = { ...document, storyboard };
+	let applied: string[] = [];
+	let failed: Array<{ id: string; error: string }> = [];
+	if (command.apply) {
+		const wanted = command.apply;
+		const ids = storyboard.suggestions
+			.filter((s) => {
+				if (s.status === "applied" || s.status === "rejected") return false;
+				if (wanted === "all") return true;
+				if (wanted === "approved") return s.status === "approved";
+				return s.kind === wanted;
+			})
+			.map((s) => s.id);
+		if (ids.length > 0) {
+			const result = applyStoryboardSuggestions(document, ids);
+			document = result.document;
+			applied = result.applied;
+			failed = result.failed;
+		}
+	}
+	if (!command.dryRun) await writeDocumentFile(command.projectPath, document);
+	const counts = storyboardCounts(document.storyboard);
+	if (command.json) {
+		out(
+			`${JSON.stringify({
+				event: "done",
+				success: failed.length === 0,
+				written: !command.dryRun,
+				scenes: document.storyboard?.scenes.map((scene) => ({
+					id: scene.id,
+					title: scene.title,
+					startSec: scene.startMs / 1000,
+					endSec: scene.endMs / 1000,
+					observed: scene.observed.length,
+					inferred: scene.inferred,
+				})),
+				suggestions: document.storyboard?.suggestions,
+				counts,
+				applied,
+				failed,
+			})}\n`,
+		);
+	} else {
+		out(
+			`${counts.scenes} scene${counts.scenes === 1 ? "" : "s"}, ${counts.proposed + counts.approved} open suggestion${counts.proposed + counts.approved === 1 ? "" : "s"}, ${counts.applied} applied${command.dryRun ? " (dry run, nothing written)" : ""}\n`,
+		);
+		for (const scene of document.storyboard?.scenes ?? []) {
+			out(
+				`  ${scene.order + 1}. ${scene.title} (${(scene.startMs / 1000).toFixed(1)}–${(scene.endMs / 1000).toFixed(1)} s)\n`,
+			);
+		}
+		for (const suggestion of document.storyboard?.suggestions ?? []) {
+			out(`  - [${suggestion.status}] ${suggestion.kind}: ${suggestion.rationale}\n`);
+		}
+		for (const { id, error } of failed) out(`  ! ${id}: ${error}\n`);
+	}
+	return failed.length > 0 ? 3 : 0;
+}
+
+/**
+ * The Privacy Guardian from the command line. Frames are read with ffmpeg and a local OCR
+ * engine unless `--no-ocr`; the transcript is always read. The scan is stored on the project
+ * (masked findings), and printed masked. Exit 0; 3 with `--fail-on-findings` when findings
+ * await a decision.
+ */
+export async function runPrivacyScanCommand(
+	command: CliPrivacyScanCommand,
+	ocr: OcrEngineOptions | null,
+	ffmpegPath: string | null,
+	out: CliWriter,
+): Promise<number> {
+	const document = await readDocumentFile(command.projectPath, "privacy scan");
+	if (document.timeline.clips.length === 0) {
+		throw new Error("The project's timeline has no footage to scan.");
+	}
+	const scan = await scanDocumentForSensitiveContent(document, {
+		sampleEveryMs: command.sampleEveryMs ?? undefined,
+		ocr: command.noOcr ? null : ocr,
+		ffmpegPath,
+	});
+	const previous = document.privacy ?? {
+		version: 1 as const,
+		scan: null,
+		reviewedAt: null,
+		reviewedClipSignature: null,
+	};
+	const next: AxcutDocument = {
+		...document,
+		privacy: { ...previous, scan, reviewedAt: null, reviewedClipSignature: null },
+	};
+	if (!command.dryRun) await writeDocumentFile(command.projectPath, next);
+	const counts = privacyCounts(next.privacy);
+	if (command.json) {
+		out(
+			`${JSON.stringify({
+				event: "done",
+				success: true,
+				written: !command.dryRun,
+				ocrAvailable: scan.ocrAvailable,
+				framesScanned: scan.framesScanned,
+				warnings: scan.warnings,
+				counts,
+				findings: scan.findings.map((f) => ({
+					id: f.id,
+					kind: f.kind,
+					preview: f.preview,
+					confidence: f.confidence,
+					source: f.source,
+					status: f.status,
+					seenAtSec: f.boxes.map((b) => b.timeMs / 1000),
+					spokenStartSec: f.spokenStartSec,
+				})),
+			})}\n`,
+		);
+	} else {
+		out(
+			`${scan.framesScanned} frame${scan.framesScanned === 1 ? "" : "s"} read${scan.ocrAvailable ? "" : " (no OCR)"}, ${counts.total} finding${counts.total === 1 ? "" : "s"}, ${counts.suggested} to decide${command.dryRun ? " (dry run, nothing written)" : ""}\n`,
+		);
+		for (const warning of scan.warnings) out(`  ! ${warning}\n`);
+		for (const f of scan.findings) {
+			const where =
+				f.source === "frame"
+					? `on screen at ${f.boxes.map((b) => (b.timeMs / 1000).toFixed(1)).join(", ")} s`
+					: `spoken at ${(f.spokenStartSec ?? 0).toFixed(1)} s`;
+			out(
+				`  - [${f.status}] ${f.kind} ${f.preview} (${Math.round(f.confidence * 100)}%) ${where}\n`,
+			);
+		}
+	}
+	return command.failOnFindings && counts.suggested > 0 ? 3 : 0;
+}
+
+/** Checks a project's references and media; exit 3 when anything is wrong. */
+export async function runValidateCommand(
+	command: CliValidateCommand,
+	out: CliWriter,
+): Promise<number> {
+	const document = await readDocumentFile(command.projectPath, "validate");
+	const problems = await validateProjectDocument(document, isFile);
+	if (command.json) {
+		out(`${JSON.stringify({ event: "done", success: problems.length === 0, problems })}\n`);
+	} else if (problems.length === 0) {
+		out("OK: every reference resolves and every media file is present.\n");
+	} else {
+		out(`${problems.length} problem${problems.length === 1 ? "" : "s"}:\n`);
+		for (const problem of problems) out(`  - ${problem.kind}: ${problem.message}\n`);
+	}
+	return problems.length === 0 ? 0 : 3;
 }

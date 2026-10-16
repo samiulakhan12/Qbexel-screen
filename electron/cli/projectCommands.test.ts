@@ -12,7 +12,10 @@ import {
 	type PackedProjectData,
 	runInfoCommand,
 	runPackCommand,
+	runPrivacyScanCommand,
+	runStoryboardCommand,
 	runSubtitlesCommand,
+	runValidateCommand,
 } from "./projectCommands";
 
 let root = "";
@@ -329,5 +332,195 @@ describe("runSubtitlesCommand", () => {
 		await expect(runSubtitlesCommand(legacy, "srt", null, false, recorder().write)).rejects.toThrow(
 			/saved by the editor/,
 		);
+	});
+});
+
+/** An editor-saved project with one clip and a transcript saying a card number. */
+async function spokenProject(relative: string, mediaPath: string): Promise<string> {
+	const base = createEmptyDocument({ projectId: "proj_q", title: "Qbexel" });
+	const words = [
+		"my",
+		"card",
+		"is",
+		"4111",
+		"1111",
+		"1111",
+		"1111",
+		"and",
+		"then",
+		"we",
+		"wait",
+		"for",
+		"the",
+		"page",
+	].map((text, i) => ({
+		id: `w${i}`,
+		segmentId: "s1",
+		startSec: 1 + i * 0.5,
+		endSec: 1.4 + i * 0.5,
+		text,
+	}));
+	const document = {
+		...base,
+		project: { ...base.project, primaryAssetId: "asset_1" },
+		assets: [
+			{
+				id: "asset_1",
+				kind: "video",
+				label: "take",
+				originalPath: mediaPath,
+				durationSec: 30,
+				cameraTrack: null,
+			},
+		],
+		transcripts: [{ assetId: "asset_1", language: "en", segments: [], words }],
+		timeline: {
+			...base.timeline,
+			clips: [
+				{
+					id: "clip_1",
+					assetId: "asset_1",
+					sourceStartSec: 0,
+					sourceEndSec: 30,
+					timelineStartSec: 0,
+					timelineEndSec: 30,
+					wordRefs: [],
+					origin: "user",
+					reason: "",
+				},
+			],
+		},
+	};
+	return make(relative, JSON.stringify(document));
+}
+
+describe("runStoryboardCommand", () => {
+	it("stores the analysis on the project and applies the silence cuts when asked", async () => {
+		const media = await make("take.mp4");
+		const project = await spokenProject("sb.openscreen", media);
+		const lines: string[] = [];
+		const code = await runStoryboardCommand(
+			{
+				kind: "storyboard",
+				projectPath: project,
+				apply: null,
+				outroText: null,
+				dryRun: false,
+				json: true,
+			},
+			(text) => lines.push(text),
+		);
+		expect(code).toBe(0);
+		const report = JSON.parse(lines.join(""));
+		expect(report.event).toBe("done");
+		expect(report.scenes.length).toBeGreaterThanOrEqual(1);
+		const saved = JSON.parse(await fs.readFile(project, "utf8"));
+		expect(saved.storyboard.scenes.length).toBe(report.scenes.length);
+		// The 20 s tail after the last word is a cut; applying "cut" writes the trim.
+		expect(saved.storyboard.suggestions.some((s: { kind: string }) => s.kind === "cut")).toBe(true);
+		const applied = await runStoryboardCommand(
+			{
+				kind: "storyboard",
+				projectPath: project,
+				apply: "cut",
+				outroText: null,
+				dryRun: false,
+				json: true,
+			},
+			(text) => lines.push(text),
+		);
+		expect(applied).toBe(0);
+		const after = JSON.parse(await fs.readFile(project, "utf8"));
+		expect(after.timeline.trimRanges.length).toBeGreaterThanOrEqual(1);
+		expect(after.timeline.trimRanges[0].origin).toBe("agent");
+	});
+
+	it("writes nothing on a dry run", async () => {
+		const media = await make("take.mp4");
+		const project = await spokenProject("dry.openscreen", media);
+		const before = await fs.readFile(project, "utf8");
+		const code = await runStoryboardCommand(
+			{
+				kind: "storyboard",
+				projectPath: project,
+				apply: null,
+				outroText: "Bye",
+				dryRun: true,
+				json: false,
+			},
+			() => undefined,
+		);
+		expect(code).toBe(0);
+		expect(await fs.readFile(project, "utf8")).toBe(before);
+	});
+});
+
+describe("runPrivacyScanCommand", () => {
+	it("reads the transcript without OCR, stores masked findings and exits 3 on --fail-on-findings", async () => {
+		const media = await make("take.mp4");
+		const project = await spokenProject("pv.openscreen", media);
+		const lines: string[] = [];
+		const code = await runPrivacyScanCommand(
+			{
+				kind: "privacy-scan",
+				projectPath: project,
+				sampleEveryMs: null,
+				noOcr: true,
+				failOnFindings: true,
+				dryRun: false,
+				json: true,
+			},
+			null,
+			null,
+			(text) => lines.push(text),
+		);
+		expect(code).toBe(3);
+		const report = JSON.parse(lines.join(""));
+		expect(report.ocrAvailable).toBe(false);
+		expect(
+			report.findings.map((f: { kind: string; preview: string }) => [f.kind, f.preview]),
+		).toEqual([["card", "•••• 1111"]]);
+		expect(lines.join("")).not.toContain("4111 1111 1111 1111");
+		const saved = JSON.parse(await fs.readFile(project, "utf8"));
+		expect(saved.privacy.scan.findings[0].source).toBe("transcript");
+	});
+});
+
+describe("runValidateCommand", () => {
+	it("passes a healthy project and reports missing media and dangling anchors", async () => {
+		const media = await make("take.mp4");
+		const project = await spokenProject("ok.openscreen", media);
+		expect(
+			await runValidateCommand(
+				{ kind: "validate", projectPath: project, json: false },
+				() => undefined,
+			),
+		).toBe(0);
+		const broken = JSON.parse(await fs.readFile(project, "utf8"));
+		broken.assets[0].originalPath = path.join(root, "gone.mp4");
+		broken.zoomRanges = [
+			{
+				id: "zoom_1",
+				startMs: 1000,
+				endMs: 2000,
+				clipId: "clip_missing",
+				sourceStartSec: 1,
+				sourceEndSec: 2,
+				depth: 3,
+				focus: { cx: 0.5, cy: 0.5 },
+			},
+		];
+		const brokenPath = await make("broken.openscreen", JSON.stringify(broken));
+		const lines: string[] = [];
+		const code = await runValidateCommand(
+			{ kind: "validate", projectPath: brokenPath, json: true },
+			(text) => lines.push(text),
+		);
+		expect(code).toBe(3);
+		const report = JSON.parse(lines.join(""));
+		expect(report.problems.map((p: { kind: string }) => p.kind).sort()).toEqual([
+			"media-missing",
+			"zoom-anchor",
+		]);
 	});
 });
