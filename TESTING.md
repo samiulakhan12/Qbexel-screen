@@ -17,6 +17,7 @@ in `PROJECT_STATUS.md` only when the check named here ran.
 | Privacy end to end (opt-in) | `QBEXEL_PRIVACY_E2E=1 QBEXEL_OCR_CACHE=<dir> npx vitest run electron/privacy/privacy.e2e.test.ts` | ffmpeg samples a synthetic recording, tesseract.js reads it, the detectors find the drawn email and API key, the blurs land through the agent tools. Needs ffmpeg and the English OCR model (downloaded once into `<dir>`). |
 | Benchmarks | `npx vitest bench --run src/lib/ai-edition/director/analyze.bench.ts src/lib/ai-edition/privacy/patterns.bench.ts` | Timing of the Director's analysis and the privacy detectors (numbers below). |
 | Rust compositor | `cargo check` in `crates/` | Needs the vendored FFmpeg 8 headers (`FFMPEG_DIR`); with the distro's FFmpeg 6 it fails on an API difference, which is a version mismatch, not a defect. Not run in CI here. |
+| Windows x64 installer | GitHub Actions, `.github/workflows/qbexel-windows-installer.yml` (Actions → Run workflow, or push `qbexel/installer/<x>`) | On a real Windows runner: the capture helper (CMake/MSVC), the Rust compositor addon against the pinned FFmpeg SDK, the whisper helper, FFmpeg/ONNX/Visual C++ runtime staging, `tsc`, Vite, licences, and electron-builder's `before-pack` guards (addon fresh and beside its DLLs, no unshipped redistributable import, `onnxruntime.dll` present) all pass and an NSIS installer is produced and published to a prerelease. |
 
 ## What was verified for the Qbexel work (milestones 1–9)
 
@@ -34,6 +35,13 @@ In addition:
 - **MCP over HTTP**: the roster, each Qbexel tool's refusal with edits off, the path
   policy of `exportSubtitles` (outside an allowed directory, `..` escape, no `confirm`,
   existing file without `overwrite` — all refused).
+- **Windows x64 installer built in CI** (run 1 of the workflow, 2026-10-16, `windows-latest`
+  with Visual Studio 2026): `Qbexel Capture Studio.Setup.2.0.0-x64.exe`, 192.8 MB,
+  SHA-256 `6a876186…c11936`, published as prerelease `build-2.0.0-1` with its blockmap,
+  checksum and the full build log. The whisper helper built in 6 minutes, the installer
+  in 10. The packaging change for tesseract.js (external package, unpacked from the asar)
+  went through electron-builder without complaint. The installer was **not** installed or
+  run on a Windows machine here; see below.
 
 ### Benchmarks (this container, Node 22, no GPU)
 
@@ -65,9 +73,12 @@ model. The following were **not** exercised and are documented as such in
 - Transcription (whisper.cpp) and the Director's model pass (needs a configured
   provider). The model pass is exercised through an injected stand-in in
   `electron/ai-edition/director/enrich.test.ts`.
-- Packaging: the installer's inclusion of `tesseract.js` outside the asar
-  (`electron-builder.json5`) and the optional `resources/ocr/eng.traineddata`. Build with
-  `npm run build:<platform>` and run `privacy scan` from the installed executable.
+- Running the installer: the Windows x64 `.exe` was built and published (above) but not
+  installed or started on a Windows machine, so the first launch, recording, the
+  compositor preview, transcription and `privacy scan` from the installed executable
+  (which exercises the unpacked `tesseract.js`) remain to be checked there. The optional
+  `resources/ocr/eng.traineddata` is not shipped. macOS and Linux installers were not
+  built.
 
 ## Writing tests for this codebase
 
