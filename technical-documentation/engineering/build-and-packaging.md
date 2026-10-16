@@ -240,6 +240,17 @@ Diagnosing a suspected stale addon: serde embeds its field-name literals in the 
 
 All renderer application code and Electron main/preload entry points are pre-bundled by Vite into `dist/` and `dist-electron/`. The bundled main process relies solely on Node built-ins and `electron`. As a result, `node_modules/**` is excluded from `files` in `electron-builder.json5`, eliminating ~238 MB of redundant dependencies from `app.asar`.
 
+One exception: the Privacy Guardian's OCR engine. `tesseract.js` is CommonJS and finds its
+worker script and WebAssembly core through `__dirname`, so it cannot be inlined into the ESM
+main bundle (it fails with "`__dirname` is not defined in ES module scope"). `vite.config.ts`
+leaves it external and `electron-builder.json5` re-includes `node_modules/tesseract.js/**`,
+`tesseract.js-core/**` and their runtime dependencies, unpacked from the asar
+(`asarUnpack`) because a worker thread and a `.wasm` file are loaded by path. The English
+OCR model is not shipped by default: the app downloads `eng.traineddata` once into
+`<userData>/ocr/`; a build that places it in `resources/ocr/` runs offline. The Guardian
+also needs the packaged `ffmpeg` executable, resolved like the audio peaks are
+(`resolveFfmpeg`).
+
 ### Asset deduplication and extraResources
 
 Assets requiring direct filesystem access are distributed via `extraResources` rather than bundled inside `app.asar`:

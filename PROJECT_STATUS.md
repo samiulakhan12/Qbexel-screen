@@ -45,7 +45,7 @@ of every milestone.
 | 6 | Privacy Guardian and redaction workflow | **done** (see below) |
 | 7 | Multi-format compositions and publishing presets | **done** (see below) |
 | 8 | CLI and MCP interfaces | **done** (see below) |
-| 9 | Adversarial review, benchmarks, packaging | in progress |
+| 9 | Adversarial review, benchmarks, packaging | **done** (see below) |
 
 ## Milestone 2 — what was built and how it was verified
 
@@ -184,7 +184,42 @@ can take a minute on a long recording; the CLI exports one composition per run;
 `qbexel mcp` (stdio, beside the app) has no OCR setup unless the app runs — it scans the
 transcript only and says so in the result.
 
-## Backlog (needs a Windows/macOS device, native binaries or compositor work)
+## Milestone 9 — review, benchmarks, packaging, documentation
+
+| Change | Where | Verified by |
+|---|---|---|
+| Adversarial review of every new input path (bridge payloads, MCP arguments, CLI flags, file paths) with findings and fixes | `docs/qbexel/security-review.md` | the `chat.cancel` payload guard it added is covered by the bridge tests; the other two findings were fixed in M8 |
+| Security model of the AI features | `SECURITY.md` (new section; upstream's reporting policy kept, marked as upstream's) | — |
+| How the project is verified, what was verified here, benchmarks, what cannot be verified here | `TESTING.md` | numbers from `npx vitest bench --run` on the two `*.bench.ts` files |
+| Benchmarks | `src/lib/ai-edition/director/analyze.bench.ts`, `privacy/patterns.bench.ts` | Director 2 ms (5 min) / 37 ms (30 min); detectors 4 µs per line, 3.5 ms for a full scan's text; OCR ~0.3 s per 1280×720 frame |
+| Packaging: tesseract.js external to the main bundle and shipped unpacked; OCR model location; ffmpeg requirement | `vite.config.ts`, `electron-builder.json5`, `technical-documentation/engineering/build-and-packaging.md` | the headless CLI OCR run passes with the externalised package; the installer itself was **not** built here |
+| Notices for Tesseract (engine, WebAssembly core, language data) | `THIRD-PARTY-NOTICES.md` | — |
+| README for Qbexel Capture Studio with the OpenScreen attribution kept; CLI reference; architecture addendum | `README.md`, `docs/cli.md`, `ARCHITECTURE.md` §10 | — |
+
+## Where things stand
+
+All nine milestones are implemented and documented. The branch `qbexel/main` holds one
+commit per milestone (plus documentation commits); every commit passed the full unit
+suite, both typechecks, Biome and the locale check at the time it was made. Nothing in
+this environment could record, render, export or transcribe, so those paths are verified
+by unit tests and headless CLI runs only — `TESTING.md` says exactly which, and how to
+verify the rest on a real machine.
+
+## How to continue
+
+1. On a Windows or macOS machine with the native binaries: run
+   `technical-documentation/testing/manual-e2e-checklist.md`, plus the Qbexel items in
+   `TESTING.md` ("What cannot be verified here").
+2. Build an installer (`npm run build:<platform>`) and run `privacy scan` from it to
+   confirm the unpacked tesseract.js loads; optionally ship `resources/ocr/eng.traineddata`.
+3. Point `branding.json` at the vendor's repository and update feed, and `SECURITY.md`'s
+   reporting link at the vendor's channel.
+4. Work the backlog below, highest value first: translations of the new strings, a Stop
+   for the Director's model pass, per-composition caption style, CLI batch export.
+
+## Backlog
+
+Needs a Windows/macOS device, native binaries or compositor work unless noted.
 
 
 - Scroll-wheel and right/middle-click telemetry in the three capture helpers.
@@ -198,6 +233,11 @@ transcript only and says so in the result.
 - Fragmented MP4 on Linux (crash-safe recording parity).
 - Windows and macOS end-to-end passes and export benchmarks (`technical-documentation/testing/manual-e2e-checklist.md`).
 - Ship the OCR model (`resources/ocr/eng.traineddata`) in the installer and add more OCR languages.
+- Translations: every string added in M2–M8 is English in all 15 locales (no device needed).
+- A Stop button for the Director's model pass (bounded by its 60 s timeout today); MCP progress notifications for `scanPrivacy` (no device needed).
+- Per-composition caption style, a thumbnail per composition, CLI batch export of all compositions (no device needed).
+- Per-task model selection for the Director's model pass (uses the chat's provider today).
+- Token usage of the Director's model pass shown in the pane (returned over the bridge already).
 - Detect masked password fields visually (the design's `password-field` kind).
 - Licence notice gaps found in M1: Linux/macOS FFmpeg libraries and the symbol
   rename, `cpp-httplib` and `nlohmann/json` in the Whisper helper, the PipeWire
@@ -205,7 +245,5 @@ transcript only and says so in the result.
 
 ## Next steps
 
-1. M9: adversarial review of every new input path (bridge payloads, MCP args, CLI
-   flags, file paths), SECURITY.md, TESTING.md, README rewrite, packaging notes (OCR
-   model, ffmpeg), benchmarks that can run here (analyser, detectors, OCR per frame),
-   licence notices for tesseract.js.
+See "How to continue" above. There is no unfinished code path: every feature listed is
+either verified as stated or recorded as not verifiable here.

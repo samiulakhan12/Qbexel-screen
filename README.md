@@ -2,9 +2,11 @@
   <img src="public/openscreen.png" alt="OpenScreen Logo" width="64" />
 </p>
 
-# <p align="center">OpenScreen</p>
+# <p align="center">Qbexel Capture Studio</p>
 
-<p align="center"><strong>A free, open-source desktop app for recording your screen and turning the result into polished product demos and walkthroughs.</strong></p>
+<p align="center"><strong>An AI-native desktop studio for recording your screen and turning the take into a finished SaaS tutorial: scenes, cuts, zooms, callouts, captions, privacy blurs and one edit published in every format.</strong></p>
+
+<p align="center"><em>Built on <a href="https://github.com/getopenscreen/openscreen">OpenScreen</a>, MIT licensed. The product name, vendor, update feed and telemetry are configured in <code>branding.json</code>; the recording, rendering and export engines are OpenScreen's and are credited below.</em></p>
 
 <p align="center">
   <img src="docs/assets/demo.gif" alt="Editing a recording in OpenScreen: one click restyles the whole video, deleting a sentence in the transcript cuts it from the video, and the editor's agent adds a zoom on every click" width="100%" />
@@ -24,7 +26,7 @@
   <a href="https://trendshift.io/repositories/57147?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-57147" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/57147" alt="getopenscreen/openscreen | Trendshift" width="250" height="55" /></a></p>
 
 > [!NOTE]
-> **This is OpenScreen, continued.** [Siddharth Vaddem](https://github.com/siddharthvaddem) created the project and [archived the original repository](https://github.com/siddharthvaddem/openscreen) after v1.5.0. Development moved here with his approval, under the same name and the same MIT license.
+> **Origin.** Qbexel Capture Studio extends OpenScreen. OpenScreen was created by [Siddharth Vaddem](https://github.com/siddharthvaddem), who [archived the original repository](https://github.com/siddharthvaddem/openscreen) after v1.5.0; development continued at [getopenscreen/openscreen](https://github.com/getopenscreen/openscreen) with his approval, under the MIT license. Everything below the "What Qbexel Capture Studio adds" section describes that shared engine; the installers and links in it are the upstream project's until a Qbexel release pipeline publishes its own (`npm run build:<platform>` builds one from this repository).
 
 A raw capture goes in and comes out ready to post — on X, Reddit, YouTube, a docs page, or a landing page. That is the category Screen Studio defined; OpenScreen is the open-source entry in it, and not a clone.
 
@@ -49,6 +51,37 @@ A raw capture goes in and comes out ready to post — on X, Reddit, YouTube, a d
 - Export to MP4 or GIF in multiple aspect ratios and resolutions, rendered and encoded on the GPU (Metal on macOS, D3D11 on Windows, Vulkan on Linux) with an automatic CPU fallback.
 - Languages supported: Arabic, Czech, English, Spanish, French, German, Italian, Japanese, Korean, Portuguese (Brazil), Russian, Turkish, Vietnamese, Simplified Chinese, and Traditional Chinese.
 
+## What Qbexel Capture Studio adds
+
+Everything below runs on your computer unless it says otherwise, and nothing an AI
+proposes changes the video until you approve it. The full design is in
+`docs/qbexel/design-notes.md`; what was verified, and how, is in `PROJECT_STATUS.md` and
+`TESTING.md`.
+
+- **Tutorial Director** (Director facet): reads the transcript and the recorded clicks and
+  proposes a storyboard — scenes, silence/retake cuts, zooms on click clusters, callouts
+  naming each step, intro and outro cards. Observed facts and AI inferences are shown
+  apart; a one-click silence-removal pass; an optional model pass (your provider, with a
+  per-run consent toggle) only names the scenes.
+- **Privacy Guardian** (Privacy facet): finds keys, tokens, emails, card numbers, phones
+  and IP addresses shown on screen (local OCR over sampled frames) or spoken, stores them
+  masked, blurs them on accept, and gates the export until the findings are reviewed; an
+  optional check of the exported file.
+- **Compositions** (Compositions facet): YouTube, Shorts/Reels, Square, Docs GIF and
+  LinkedIn presets — frame, fill, caption placement, safe-area guides and export
+  settings per deliverable — previewed in the project and exported one by one or as a
+  batch.
+- **Five bundled themes**, intro/outro **title cards**, **spotlight** and **focus
+  vignette** effects.
+- **Recording**: global start/stop and pause hotkeys, a countdown you can set, a take
+  journal with recovery of a take interrupted by a crash, a stop before the disk runs out.
+- **Editing**: split at the playhead, frame step that follows the project frame rate,
+  subtitle (.srt/.vtt) export, rolling project backups.
+- **Chat**: a Stop button and a stall watchdog for the editing assistant.
+- **CLI and MCP**: `storyboard`, `privacy scan`, `validate`, `export --composition`, and
+  MCP tools for the Director, the Guardian, compositions and subtitles — strict schemas,
+  allowed directories, explicit confirmation for file output.
+
 ## Command-line interface (headless)
 
 OpenScreen ships a CLI for scripts, CI, and AI coding agents: record the screen
@@ -59,6 +92,11 @@ visible windows, NDJSON output with `--json`.
 ```bash
 openscreen record --duration 20 --project demo.openscreen --json
 openscreen export demo.openscreen -o demo.mp4 --json
+# Qbexel additions (docs/cli.md):
+openscreen storyboard demo.openscreen --apply cut --json
+openscreen privacy scan demo.openscreen --fail-on-findings --json
+openscreen validate demo.openscreen --json
+openscreen export demo.openscreen --composition "Shorts / Reels" -o demo-shorts.mp4
 ```
 
 See the [CLI reference](https://getopenscreen.com/docs/cli/).
@@ -240,3 +278,10 @@ OpenScreen is community-driven. If you need help, want to report a bug, or just 
 ## License
 
 This project is licensed under the [MIT License](./LICENSE). By using this software, you agree that the authors are not liable for any issues, damages, or claims arising from its use.
+
+Qbexel Capture Studio is a derivative of OpenScreen (© 2025–2026 OpenScreen contributors;
+originally created by Siddharth Vaddem; helper code from Recordly, MIT). The original
+copyright notices are kept in `LICENSE`, and the bundled third-party components — FFmpeg
+(LGPL), whisper.cpp, MediaPipe (Apache-2.0), Tesseract OCR (Apache-2.0), the fonts (OFL)
+and the Rust and npm dependencies — are credited in `THIRD-PARTY-NOTICES.md` and the
+generated `THIRD-PARTY-LICENSES.txt`.

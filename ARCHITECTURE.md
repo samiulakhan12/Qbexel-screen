@@ -489,3 +489,24 @@ anything that captures a screen, renders a frame, encodes video or transcribes
 audio, because the native binaries are built on each platform's CI and are not
 in the repository. Every later claim of "verified" in `PROJECT_STATUS.md`
 names which of these two categories it belongs to.
+
+## 10. Qbexel additions, as built (milestones 2–8)
+
+The report above described the upstream code. What was added on top, where it lives and
+what it plugs into (design in `docs/qbexel/design-notes.md`, verification in
+`PROJECT_STATUS.md` and `TESTING.md`):
+
+| Capability | Code | Plugs into |
+|---|---|---|
+| Configurable branding | `branding.json`, `src/lib/branding.ts`, i18n default variables | `electron-builder.json5`, `package.json`, about/update/telemetry gates |
+| Global hotkeys, take journal, interrupted-take recovery, countdown, disk watch | `electron/globalShortcut.ts`, `electron/recording/{takeJournal,diskSpaceWatch}.ts`, `useInterruptedTakesNotice.ts` | `electron/ipc/handlers.ts` start/stop, launch window |
+| Split clip, fps-aware step, subtitles, backups | `document/timeline.ts` (`splitClipAt`), `captions/subtitles.ts`, `project-backups.ts` | agent tool `splitClip`, export dialog sidecar, CLI `subtitles` |
+| Themes, title cards, bundled effects | `bundledStylePresets.ts`, `titleCards.ts`, `bundledEffects.ts` | presets menu, Effects pane, agent tool `addTitleCard` |
+| Tutorial Director | `src/lib/ai-edition/director/*` (pure), `electron/ai-edition/director/{enrich,apply}.ts` | document field `storyboard`; bridge `director.*`; Director facet; MCP `*Storyboard`; CLI `storyboard` |
+| Privacy Guardian | `src/lib/ai-edition/privacy/*` (pure), `electron/privacy/{frames,ocr,scan,apply}.ts` | document field `privacy`; bridge domain `privacy`; Privacy facet; export gate; MCP `*Privacy*`; CLI `privacy scan` |
+| Compositions | `src/lib/ai-edition/compositions/*` | document field `compositions`; Compositions facet; export dialog single/batch; CLI `export --composition`; MCP `*Composition*` |
+| Chat Stop and stall watchdog | `chat-service.ts` (`cancelChat`), `deep-agent/service.ts` (AbortSignal) | bridge `chat.cancel`, LeftPanel |
+| CLI / MCP | `electron/cli/{args,projectCommands}.ts`, `electron/mcp/qbexel-tools.ts` | `cliMain.ts`, `openscreen-mcp-server.ts` |
+
+Three new optional, additive document fields (`storyboard`, `privacy`, `compositions`) and
+no schema-version bump: an older build drops them on save and loses nothing else.

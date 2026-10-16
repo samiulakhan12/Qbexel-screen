@@ -273,3 +273,20 @@ and are covered by [LICENSE](LICENSE).
 
 To report an omission or request source for anything bundled here, open an issue
 at <https://github.com/getopenscreen/openscreen/issues>.
+
+## Tesseract OCR — engine and language data (Privacy Guardian)
+
+- **Components**: `tesseract.js` and `tesseract.js-core` (the Tesseract OCR engine compiled
+  to WebAssembly), shipped as packages under `node_modules/` inside the application
+  (`electron-builder.json5` keeps them out of the Vite bundle; see `vite.config.ts`), and the
+  English language model `eng.traineddata`, which is **not** shipped: the Privacy Guardian
+  looks for it in `resources/ocr/` and otherwise downloads it once into the user-data cache
+  (`<userData>/ocr/`) on the first scan, after telling the user. A build may ship it by
+  placing the file in `resources/ocr/`.
+- **Used by**: the Privacy Guardian (`electron/privacy/`), which reads text off sampled
+  frames of a recording on this computer. No frame leaves the machine.
+- **License**: `tesseract.js` and `tesseract.js-core` — **Apache License 2.0**
+  (<https://github.com/naptha/tesseract.js>); their full licence texts are in the generated
+  `THIRD-PARTY-LICENSES.txt`. The Tesseract engine itself and the `tessdata` language models
+  — **Apache License 2.0** (<https://github.com/tesseract-ocr/tesseract>,
+  <https://github.com/tesseract-ocr/tessdata>).

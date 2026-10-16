@@ -682,11 +682,21 @@ export function registerNativeBridgeHandlers(context: NativeBridgeContext) {
 								),
 							);
 						}
-						case "chat.cancel":
+						case "chat.cancel": {
+							const { projectId, sessionId } = request.payload ?? {};
+							if (
+								typeof projectId !== "string" ||
+								!projectId ||
+								typeof sessionId !== "string" ||
+								!sessionId
+							) {
+								return createErrorResponse(requestId, "INVALID_REQUEST", "Invalid chat session.");
+							}
 							return createSuccessResponse(
 								requestId,
-								aiEditionService.chatCancel(request.payload.projectId, request.payload.sessionId),
+								aiEditionService.chatCancel(projectId, sessionId),
 							);
+						}
 						case "chat.undoLastBatch":
 							return createSuccessResponse(
 								requestId,
