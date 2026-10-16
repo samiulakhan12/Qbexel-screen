@@ -224,6 +224,10 @@ export const clipSchema = z
 		// that as the identity region {x:0,y:0,width:1,height:1} rather than
 		// storing the identity explicitly, so untouched clips stay lean.
 		cropRegion: clipCropRegionSchema.optional(),
+		// This clip begins with a deliberate cut (`splitClipAt`): the clip-edit pass never joins it
+		// back to a media-contiguous neighbour. Cleared when the clip is moved, since it then no
+		// longer sits at the boundary it was cut on. Additive: absent on every older document.
+		cut: z.boolean().optional(),
 	})
 	.refine((data) => data.timelineEndSec >= data.timelineStartSec, {
 		message: "timelineEndSec must be greater than or equal to timelineStartSec",

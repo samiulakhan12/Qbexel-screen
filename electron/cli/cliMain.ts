@@ -16,7 +16,7 @@ import { registerSttIpc, shutdownStt } from "../stt";
 import { createRunnerWindow } from "../windows";
 import { CLI_USAGE, type CliCommand } from "./args";
 import { openGuiFromCli } from "./openGui";
-import { runInfoCommand, runPackCommand } from "./projectCommands";
+import { runInfoCommand, runPackCommand, runSubtitlesCommand } from "./projectCommands";
 import { createRunnerHost } from "./runnerHost";
 import { isolateCliSessionData } from "./sessionData";
 import { openStdin } from "./stdin";
@@ -307,6 +307,23 @@ export function runCli(command: CliCommand): void {
 			if (command.kind === "info") {
 				const code = await runInfoCommand(command.projectPath, command.json === true, writeStdout);
 				app.exit(code);
+				return;
+			}
+
+			if (command.kind === "subtitles") {
+				try {
+					const code = await runSubtitlesCommand(
+						command.projectPath,
+						command.format,
+						command.outPath,
+						command.json === true,
+						writeStdout,
+					);
+					app.exit(code);
+				} catch (error) {
+					output.error(error instanceof Error ? error.message : String(error));
+					app.exit(1);
+				}
 				return;
 			}
 

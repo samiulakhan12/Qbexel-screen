@@ -71,6 +71,7 @@ const ARGS: Record<string, unknown> = {
 	moveClip: { clipId: "clip_1", beforeClipId: null },
 	insertClip: { assetId: "asset_1", sourceStartSec: 2, sourceEndSec: 4 },
 	duplicateClip: { clipId: "clip_1" },
+	splitClip: { atSec: 5 },
 	replaceTimeline: { intervals: [{ startSec: 0, endSec: 10 }] },
 	addZoom: { startSec: 1, endSec: 2 },
 	addZooms: { regions: [{ startSec: 1, endSec: 2 }] },

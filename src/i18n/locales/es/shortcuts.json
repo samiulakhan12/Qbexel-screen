@@ -26,6 +26,7 @@
 		"addVoiceover": "Grabar voz en off",
 		"addKeyframe": "Agregar fotograma clave",
 		"addCameraFullscreen": "Agregar cámara a pantalla completa",
+		"splitClip": "Split Clip",
 		"deleteSelected": "Eliminar seleccionado",
 		"playPause": "Reproducir / Pausar",
 		"copySelected": "Copiar selección",

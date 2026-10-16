@@ -30,6 +30,7 @@ import {
 import { renameSyncWithFallback, renameWithRetry } from "../atomic-rename";
 import { ensureDocumentExtensions } from "../media/extensionClip";
 import { relinkProjectMedia } from "../media/projectMediaRelinker";
+import { backupsDirFor, rotateBackup } from "./project-backups";
 
 const PROJECT_FILE_EXTENSION = ".openscreen";
 // Older builds stored these same v3/v4 AxcutDocuments under `.axcut`. We read
@@ -682,6 +683,10 @@ export class DocumentService {
 			);
 		}
 		await handle.close();
+
+		// The file about to be replaced is kept as a rolling backup (project-backups.ts): the
+		// atomic write below protects against a torn file, this against a whole wrong one.
+		await rotateBackup(filePath, backupsDirFor(this.projectsRoot, doc.project.id));
 
 		try {
 			await renameWithRetry(tempPath, filePath);

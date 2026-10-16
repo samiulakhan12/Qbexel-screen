@@ -5,7 +5,15 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
+import {
+	renderSubtitles,
+	type SubtitleFormat,
+	subtitleCuesForDocument,
+	subtitleExtension,
+} from "../../src/lib/ai-edition/captions/subtitles";
+import { resolveAspectRatioValue } from "../../src/lib/ai-edition/document/outputFormat";
 import { isAxcutDocumentFile, parseDocumentFile } from "../../src/lib/ai-edition/schema";
+import { getEditorSettings } from "../../src/lib/ai-edition/store/editorSettings";
 
 /** Writes one already-newline-terminated chunk of CLI output. */
 export type CliWriter = (text: string) => void;
@@ -127,6 +135,53 @@ export async function runPackCommand(
 		emit(
 			"The folder is self-contained: if the stored paths go stale after moving it, the loader falls back to files next to the project.",
 		);
+	}
+	return 0;
+}
+
+/**
+ * Writes the project's captions as a subtitle file on the exported programme's clock (trims
+ * removed, speed applied), so it lines up with `openscreen export`'s output. The project
+ * needs a transcript; `openscreen captions` makes one.
+ */
+export async function runSubtitlesCommand(
+	projectPath: string,
+	format: SubtitleFormat,
+	outPath: string | null,
+	json: boolean,
+	out: CliWriter,
+): Promise<number> {
+	const raw = await fs.readFile(projectPath, "utf8");
+	const parsed: unknown = JSON.parse(raw);
+	if (!isAxcutDocumentFile(parsed)) {
+		throw new Error("subtitles needs a project saved by the editor (schemaVersion 3 or later)");
+	}
+	const document = parseDocumentFile(parsed);
+	if (document.transcripts.length === 0) {
+		throw new Error(
+			"The project has no transcript yet. Run `captions` on it first, or transcribe it in the editor.",
+		);
+	}
+	const aspect = resolveAspectRatioValue(document, getEditorSettings(document).aspectRatio);
+	const cues = subtitleCuesForDocument(document, aspect);
+	const target =
+		outPath ??
+		path.join(
+			path.dirname(path.resolve(projectPath)),
+			`${path.parse(projectPath).name}${subtitleExtension(format)}`,
+		);
+	const text = renderSubtitles(cues, format);
+	// Write-then-rename, like every other file this CLI produces: a failure leaves no half file.
+	const tmp = `${target}.${process.pid}.tmp`;
+	await fs.mkdir(path.dirname(target), { recursive: true });
+	await fs.writeFile(tmp, text, "utf8");
+	await fs.rename(tmp, target);
+	if (json) {
+		out(
+			`${JSON.stringify({ event: "done", success: true, outputPath: target, format, cues: cues.length })}\n`,
+		);
+	} else {
+		out(`Wrote ${cues.length} cue${cues.length === 1 ? "" : "s"} → ${target}\n`);
 	}
 	return 0;
 }

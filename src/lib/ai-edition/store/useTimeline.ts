@@ -36,6 +36,7 @@ import {
 	removeRegion as removeRegionInDocument,
 	resequenceClips,
 	setClipSourceRange,
+	splitClipAtRawSec,
 } from "../document/timeline";
 import type {
 	AxcutAudioTrack,
@@ -1508,6 +1509,24 @@ export function useTimeline() {
 		[document, saveDocument],
 	);
 
+	/** Cut the clip under the playhead in two (the editor's split, shared with the agent's
+	 *  `splitClip`). Refused silently at an edge or off the clips: there is nothing to cut. */
+	const splitClipAtPlayhead = useCallback(async () => {
+		if (!document) return false;
+		const rawSec = useProjectStore.getState().currentTimeSec;
+		let next: AxcutDocument;
+		try {
+			next = splitClipAtRawSec(document, rawSec, "user");
+		} catch {
+			return false;
+		}
+		if (!(await saveDocument(next, { history: true }))) return false;
+		// The right piece is the new clip: select it, as a cut leaves the playhead on it.
+		const before = new Set(document.timeline.clips.map((c) => c.id));
+		setClipSelection(next.timeline.clips.find((c) => !before.has(c.id))?.id ?? null);
+		return true;
+	}, [document, saveDocument]);
+
 	const removeClip = useCallback(
 		async (clipId: string) => {
 			if (!document) return;
@@ -1779,6 +1798,7 @@ export function useTimeline() {
 		insertClipAt,
 		moveClip,
 		duplicateClip,
+		splitClipAtPlayhead,
 		removeClip,
 		selectClip,
 		updateTrim,

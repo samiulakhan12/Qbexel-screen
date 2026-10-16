@@ -9,6 +9,7 @@ export const SHORTCUT_ACTIONS = [
 	"addAnnotation",
 	"addAudio",
 	"addVoiceover",
+	"splitClip",
 	"deleteSelected",
 	"playPause",
 	"copySelected",
@@ -128,6 +129,8 @@ export const DEFAULT_SHORTCUTS: ShortcutsConfig = {
 	addAudio: { key: "m" },
 	// Record a voiceover over the timeline from the playhead.
 	addVoiceover: { key: "v" },
+	// Cut the clip under the playhead in two.
+	splitClip: { key: "b", ctrl: true },
 	deleteSelected: { key: "d", ctrl: true },
 	playPause: { key: " " },
 	copySelected: { key: "c", ctrl: true },
@@ -145,6 +148,7 @@ export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
 	addAnnotation: "Add Annotation",
 	addAudio: "Add Audio",
 	addVoiceover: "Record Voiceover",
+	splitClip: "Split Clip",
 	deleteSelected: "Delete Selected",
 	playPause: "Play / Pause",
 	copySelected: "Copy Selected",

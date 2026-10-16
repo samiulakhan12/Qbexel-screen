@@ -280,3 +280,39 @@ describe("parseCliArgs", () => {
 		expect(parse(["--help"])).toMatchObject({ kind: "help" });
 	});
 });
+
+describe("subtitles", () => {
+	it("defaults to SRT beside the project", () => {
+		expect(parse(["subtitles", "demo.openscreen"])).toEqual({
+			kind: "subtitles",
+			projectPath: inCwd("demo.openscreen"),
+			format: "srt",
+			outPath: null,
+			json: false,
+		});
+	});
+
+	it("takes a format and an output path that agree", () => {
+		expect(
+			parse(["subtitles", "demo.openscreen", "--format", "vtt", "-o", "captions.vtt", "--json"]),
+		).toEqual({
+			kind: "subtitles",
+			projectPath: inCwd("demo.openscreen"),
+			format: "vtt",
+			outPath: inCwd("captions.vtt"),
+			json: true,
+		});
+	});
+
+	it("refuses an unknown format, a mismatched extension and a missing project", () => {
+		expect(parse(["subtitles", "demo.openscreen", "--format", "ass"])).toMatchObject({
+			kind: "error",
+		});
+		expect(parse(["subtitles", "demo.openscreen", "--format", "vtt", "-o", "x.srt"])).toMatchObject(
+			{
+				kind: "error",
+			},
+		);
+		expect(parse(["subtitles"])).toMatchObject({ kind: "error" });
+	});
+});

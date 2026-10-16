@@ -71,6 +71,7 @@ import { DocumentService } from "../ai-edition/document-service";
 import { LlmConfigStore } from "../ai-edition/llm-config-store";
 import { StylePresetService } from "../ai-edition/style-preset-service";
 import { AppSettingsStore } from "../app-settings";
+import { renameWithRetry } from "../atomic-rename";
 import { createRunnerHost } from "../cli/runnerHost";
 import { hideCountdownOverlay } from "../countdownOverlay";
 import { isDiagnosticModeEnabled, mainLogBuffer } from "../diagnostics/main-log-buffer";
@@ -4310,6 +4311,37 @@ export function registerIpcHandlers(
 	ipcMain.handle("get-asset-base-path", () => {
 		return resolveAssetBasePath();
 	});
+
+	// Subtitles beside an export. The target is DERIVED from the export path (same folder,
+	// same name) and the extension is one of two, so a renderer cannot write anywhere else.
+	ipcMain.handle(
+		"write-export-sidecar",
+		async (_, exportPath: unknown, extension: unknown, contents: unknown) => {
+			try {
+				if (typeof exportPath !== "string" || !path.isAbsolute(exportPath)) {
+					throw new Error("The export path must be absolute");
+				}
+				if (extension !== "srt" && extension !== "vtt") {
+					throw new Error("Only .srt and .vtt sidecars can be written");
+				}
+				if (typeof contents !== "string" || contents.length > 16 * 1024 * 1024) {
+					throw new Error("Sidecar contents must be text under 16 MB");
+				}
+				const parsed = path.parse(exportPath);
+				if (![".mp4", ".gif"].includes(parsed.ext.toLowerCase())) {
+					throw new Error("Sidecars are written beside an .mp4 or .gif export only");
+				}
+				await fs.access(parsed.dir);
+				const target = path.join(parsed.dir, `${parsed.name}.${extension}`);
+				const tmp = `${target}.${process.pid}.tmp`;
+				await fs.writeFile(tmp, contents, "utf8");
+				await renameWithRetry(tmp, target);
+				return { success: true, path: target };
+			} catch (error) {
+				return { success: false, error: error instanceof Error ? error.message : String(error) };
+			}
+		},
+	);
 
 	ipcMain.handle(
 		"pick-export-save-path",

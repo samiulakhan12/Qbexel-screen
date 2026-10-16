@@ -32,6 +32,7 @@ import {
 import { createId } from "../../src/lib/ai-edition/document/ids";
 import { resolveAspectRatioValue } from "../../src/lib/ai-edition/document/outputFormat";
 import {
+	clipAtRawSec,
 	duplicateClip,
 	insertAssetClip,
 	moveClip,
@@ -42,6 +43,7 @@ import {
 	replaceTimeline,
 	setClipCrop,
 	setClipSourceRange,
+	splitClipAt,
 } from "../../src/lib/ai-edition/document/timeline";
 import { setDocumentWordText } from "../../src/lib/ai-edition/document/transcript";
 import {
@@ -717,6 +719,13 @@ export const duplicateClipArgs = z.object({
 	clipId: z.string().min(1),
 });
 
+export const splitClipArgs = z.object({
+	/** The clip to cut. Omitted, the clip under `atSec` is cut. */
+	clipId: z.string().min(1).optional(),
+	/** Where to cut, in edited-timeline (virtual) seconds, as the ruler shows them. */
+	atSec: z.number().nonnegative(),
+});
+
 export const addAutoZoomsArgs = z.object({});
 
 export const setAspectRatioArgs = z.object({
@@ -1106,6 +1115,7 @@ export const OPENSCREEN_TOOL_NAMES = [
 	"moveClip",
 	"insertClip",
 	"duplicateClip",
+	"splitClip",
 	"replaceTimeline",
 	"addZoom",
 	"addZooms",
@@ -1189,6 +1199,7 @@ export const MUTATING_TOOL_NAMES: ReadonlySet<string> = new Set([
 	"moveClip",
 	"insertClip",
 	"duplicateClip",
+	"splitClip",
 	"replaceTimeline",
 	"addZoom",
 	"addAutoZooms",
@@ -2712,6 +2723,40 @@ export function executeAgentTool(
 						.map((t) => t.id),
 				}),
 				summary: `duplicated ${clipId}`,
+			};
+		}
+
+		case "splitClip": {
+			const parsed = splitClipArgs.safeParse(args);
+			if (!parsed.success) return failure(parsed.error.message);
+			const { clipId, atSec } = parsed.data;
+			const hit = clipAtRawSec(document.timeline.clips, atSec);
+			if (!hit) return failure(`No clip under ${atSec}s. ${clipRoster(document)}`);
+			if (clipId && hit.clip.id !== clipId) {
+				return failure(
+					`${atSec}s is on clip ${hit.clip.id}, not ${clipId} (${hit.clip.timelineStartSec}s to ${hit.clip.timelineEndSec}s). ${clipRoster(document)}`,
+				);
+			}
+			let next: AxcutDocument;
+			try {
+				next = splitClipAt(document, hit.clip.id, hit.sourceSec, "agent");
+			} catch (error) {
+				return failure(error instanceof Error ? error.message : String(error));
+			}
+			const before = new Set(document.timeline.clips.map((c) => c.id));
+			const right = next.timeline.clips.find((c) => !before.has(c.id));
+			if (!right) return failure(`Clip ${hit.clip.id} could not be split. Nothing was modified.`);
+			return {
+				ok: true,
+				document: next,
+				resultJson: JSON.stringify({
+					leftClipId: hit.clip.id,
+					rightClipId: right.id,
+					atSec,
+					sourceSec: hit.sourceSec,
+					clipOrder: next.timeline.clips.map((c) => c.id),
+				}),
+				summary: `split ${hit.clip.id} at ${atSec}s`,
 			};
 		}
 

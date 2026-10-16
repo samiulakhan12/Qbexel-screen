@@ -49,6 +49,7 @@ import {
 	ventilateTimelineSpanToTrims,
 } from "@/lib/ai-edition/timeline/trim-mapping";
 import { firstTimelineBusyView } from "@/lib/ai-edition/transcription/status";
+import { fpsAtTime, frameDurationSec } from "@/lib/frameStep";
 import { matchesShortcut } from "@/lib/shortcuts";
 import { nativeBridgeClient } from "@/native";
 import type { AiEditionProjectSummary } from "@/native/contracts";
@@ -1390,6 +1391,11 @@ export function NewEditorShell() {
 				void tl.addTrim(newRegionDurationSec());
 				return;
 			}
+			if (matchesShortcut(e, shortcuts.splitClip, isMac)) {
+				e.preventDefault();
+				void tl.splitClipAtPlayhead();
+				return;
+			}
 			if (matchesShortcut(e, shortcuts.addAnnotation, isMac)) {
 				e.preventDefault();
 				void tl.addAnnotation(newRegionDurationSec());
@@ -1438,9 +1444,14 @@ export function NewEditorShell() {
 			}
 			if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
 				e.preventDefault();
-				const frameStepSec = 1 / 60;
 				const direction = e.key === "ArrowLeft" ? -1 : 1;
-				const playhead = useProjectStore.getState().currentTimeSec;
+				const state = useProjectStore.getState();
+				const playhead = state.currentTimeSec;
+				// One frame of the footage under the playhead, not a fixed 1/60 s: a 30 fps take
+				// stepped at 1/60 landed on the same frame twice before moving.
+				const frameStepSec = frameDurationSec(
+					state.document ? fpsAtTime(state.document, playhead) : null,
+				);
 				handleSeek(Math.max(0, playhead + direction * frameStepSec));
 				return;
 			}

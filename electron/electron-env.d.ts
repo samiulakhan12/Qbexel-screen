@@ -312,6 +312,11 @@ interface Window {
 		starPromptExportFinished: () => Promise<{ offer: boolean; store: boolean }>;
 		dismissStarPrompt: () => Promise<void>;
 		openStoreReview: () => Promise<{ success: boolean }>;
+		writeExportSidecar: (
+			exportPath: string,
+			extension: "srt" | "vtt",
+			contents: string,
+		) => Promise<{ success: boolean; path?: string; error?: string }>;
 		pickExportSavePath: (
 			fileName: string,
 			exportFolder?: string,

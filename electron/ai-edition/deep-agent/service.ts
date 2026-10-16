@@ -91,6 +91,7 @@ import {
 	setZoomArgs,
 	shaderEffectCheckLookup,
 	shaderEffectToCheck,
+	splitClipArgs,
 } from "../agent-tools";
 import {
 	getCaptionsArgs,
@@ -167,7 +168,7 @@ const BASE_SYSTEM_PROMPT = [
 	"- Silences, pauses and dead stretches are removed as trims INSIDE the placed clip. Send them together with addTrims once you know the ranges; addTrim is for a single cut or a correction. The placed clip stays the canonical cut; it is not rebuilt to drop them.",
 	"- Cutting specific spoken words (fillers, a repeated or flubbed phrase, a false start, a duplicate take) is removeWords: read getTranscriptWords, choose the occurrences from their surrounding speech, then pass that assetId and ONLY those word IDs. Word IDs restart for each asset, so keep the read's assetId. Consecutive words become one cut. Do not cut every occurrence of a word just because its text matches one you were asked to remove.",
 	"- Changing where a clip starts or ends within its source is setClipRange — the clip's in/out, distinct from a trim. It also crops the clip (cropRegion).",
-	"- insertClip places footage of any video asset at a position on the timeline; duplicateClip copies a clip right after itself. addAutoZooms plans zooms on the recorded clicks, as the timeline's Automatic zooms does.",
+	"- insertClip places footage of any video asset at a position on the timeline; duplicateClip copies a clip right after itself; splitClip cuts the clip under a ruler second in two. addAutoZooms plans zooms on the recorded clicks, as the timeline's Automatic zooms does.",
 	`- addZoom takes a virtual-timeline span (depth is an ordinal 1–6 selecting from a fixed table — ${ZOOM_DEPTH_LEGEND} — never a multiplier; focus in 0–1 frame fractions). addSpeed changes pacing over a span. addAnnotation puts text, an arrow or a privacy blur on screen: a blur is how an email address, a token or any private detail the recording shows is hidden. addCameraFullscreen enlarges the webcam, and only does something where assets[].hasCameraTrack is true.`,
 	"- setEditorSettings sets the look of the whole video: the background (wallpaper, its motion and blur), padding, rounded corners, shadow, a device frame, motion blur, depth of field, the shape of the video (aspectRatio: auto follows the recording) and how a recording of another shape fills it, the camera's layout (picture-in-picture, side by side, stacked, its shape, size, position, framing and background cutout), the cursor, and the master volume. getCurrentDocument returns all of them under settings, in the shape this tool takes, and settingsContext.inactive names each one the editor hides in the current state and why: setting one of those changes nothing, so say so instead of reporting the look as changed. setAspectRatio is the same write for the shape alone.",
 	"- A zoom animates in just before its span and out just after it (zoomInFromSec, zoomOutUntilSec in getCurrentDocument). Leave those windows untrimmed, or the export jumps at the cut.",
@@ -241,6 +242,8 @@ export const TOOL_DESCRIPTIONS: Record<string, string> = {
 		"Reorder a placed clip: move `clipId` so it plays just before `beforeClipId` (pass null, or omit it, to move it last). Ids come from getCurrentDocument, where each clip carries its `index` and its label in `reason`. This preserves every clip id, every source range, every trim, and the zooms / speed regions / annotations anchored to each clip. This is the tool for 'swap these clips', 'put X first' and 'change the clip order' — replaceTimeline cannot reorder anything.",
 	insertClip:
 		"Place a clip of a video asset on the timeline, just before `beforeClipId` (null, or omitted, places it last): another take, or footage imported in the editor. Any video asset of getCurrentDocument works, the primary one too. sourceStartSec/sourceEndSec pick the stretch of the asset in its source seconds, the whole asset by default. Clips stay back to back, so the clips after it shift. Its media continuing the clip before it makes the two one clip (joinedIntoNeighbour). An audio asset is not footage: use addAudio. Nothing here imports a file from disk.",
+	splitClip:
+		"Cut the clip under `atSec` (edited-timeline seconds, as the ruler shows them) in two. The left piece keeps its clipId; the right piece is a new clip right after it. Zooms, speed regions, annotations, effects and trims that span the cut are kept on both pieces, each clamped to its own side, so the picture plays unchanged until one piece is edited, moved or deleted. Refused within 0.04 s of a clip edge. Pass clipId to insist on which clip; a mismatch with the clip under atSec is refused rather than guessed.",
 	duplicateClip:
 		"Copy a clip, placed right after it: the same footage, crop and source range, with its own copy of the clip's trims and of the zooms, speed regions, annotations and camera-fullscreen regions on it. Edits to one no longer touch the other. Returns the copy's clipId; moveClip puts it somewhere else.",
 	replaceTimeline:
@@ -547,6 +550,7 @@ export const TOOL_ARG_SCHEMAS: ReadonlyArray<readonly [string, z.ZodObject]> = [
 	["moveClip", moveClipArgs],
 	["insertClip", insertClipArgs],
 	["duplicateClip", duplicateClipArgs],
+	["splitClip", splitClipArgs],
 	["replaceTimeline", replaceTimelineArgs],
 	["addZoom", addZoomArgs],
 	["addZooms", addZoomsArgs],

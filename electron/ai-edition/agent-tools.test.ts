@@ -202,6 +202,7 @@ describe("the mutating-tool table", () => {
 				"addZooms",
 				"addAutoZooms",
 				"duplicateClip",
+				"splitClip",
 				"insertClip",
 				"moveClip",
 				"removeClip",

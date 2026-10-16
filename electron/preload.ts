@@ -367,6 +367,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	openStoreReview: () => {
 		return ipcRenderer.invoke("star-prompt:open-store-review");
 	},
+	// A small text file beside an export (subtitles). Main derives the path from the export's
+	// and allows only subtitle extensions, so the renderer names no path of its own.
+	writeExportSidecar: (exportPath: string, extension: "srt" | "vtt", contents: string) => {
+		return ipcRenderer.invoke("write-export-sidecar", exportPath, extension, contents);
+	},
 	pickExportSavePath: (fileName: string, exportFolder?: string) => {
 		return ipcRenderer.invoke("pick-export-save-path", fileName, exportFolder);
 	},

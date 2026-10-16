@@ -36,6 +36,7 @@ export type CliCommand = (
 	| CliRequest
 	| CliInfoCommand
 	| CliPackCommand
+	| CliSubtitlesCommand
 	| CliMcpCommand
 	| CliHelpCommand
 	| CliErrorCommand
@@ -69,6 +70,7 @@ const SUBCOMMANDS = new Set([
 	"record",
 	"sources",
 	"pack",
+	"subtitles",
 	"captions",
 	"info",
 	"mcp",
@@ -86,6 +88,8 @@ Usage:
   openscreen pack <project.openscreen> --out <dir>   Copy project + media into one portable folder
   openscreen captions <project.openscreen>           Transcribe (on-device Whisper) and turn captions on
                      [--min-words <1-12>] [--max-words <1-12>]
+  openscreen subtitles <project.openscreen>          Write the captions as an .srt or .vtt file
+                     [--format srt|vtt] [-o <file>] [--json]
   openscreen info <project.openscreen> [--json]      Inspect a project file
   openscreen mcp                                     Serve the agent tools over MCP on stdio
   openscreen help                                    Show this help
@@ -181,6 +185,7 @@ export function parseCliArgs(
 		if (sub === "record") return parseRecord(args.slice(1), cwd);
 		if (sub === "sources") return parseSources(args.slice(1), cwd);
 		if (sub === "pack") return parsePack(args.slice(1), cwd);
+		if (sub === "subtitles") return parseSubtitles(args.slice(1), cwd);
 		if (sub === "captions") return parseCaptions(args.slice(1), cwd);
 		if (sub === "mcp") {
 			if (args.length > 1) throw new Error(`Unexpected argument for mcp: ${args[1]}`);
@@ -461,6 +466,53 @@ export interface CliPackCommand {
 	kind: "pack";
 	projectPath: string;
 	outDir: string;
+}
+
+/** Write the project's captions as a subtitle file, on the exported programme's clock. */
+export interface CliSubtitlesCommand {
+	kind: "subtitles";
+	projectPath: string;
+	format: "srt" | "vtt";
+	/** Absolute output path; null = beside the project, named after it. */
+	outPath: string | null;
+}
+
+function parseSubtitles(args: string[], cwd: string): CliCommand {
+	let projectPath = "";
+	let format: "srt" | "vtt" = "srt";
+	let outPath: string | null = null;
+	let json = false;
+	for (let i = 0; i < args.length; i++) {
+		const arg = args[i];
+		if (arg === "-o" || arg === "--out") {
+			const [value, next] = takeValue(args, i, arg);
+			outPath = resolvePath(value, cwd);
+			i = next;
+		} else if (arg === "--format") {
+			const [value, next] = takeValue(args, i, arg);
+			if (value !== "srt" && value !== "vtt") {
+				throw new Error(`--format must be srt or vtt, got "${value}"`);
+			}
+			format = value;
+			i = next;
+		} else if (arg === "--json") {
+			json = true;
+		} else if (arg.startsWith("-")) {
+			throw new Error(`Unknown subtitles option: ${arg}`);
+		} else if (projectPath) {
+			throw new Error(`Unexpected extra argument: ${arg}`);
+		} else {
+			projectPath = resolvePath(arg, cwd);
+		}
+	}
+	if (!projectPath) throw new Error("subtitles requires a <project.openscreen> path");
+	if (outPath) {
+		const ext = path.extname(outPath).toLowerCase();
+		if (ext !== `.${format}`) {
+			throw new Error(`--out must end in .${format} to match --format ${format}`);
+		}
+	}
+	return { kind: "subtitles", projectPath, format, outPath, json };
 }
 
 function parsePack(args: string[], cwd: string): CliCommand {

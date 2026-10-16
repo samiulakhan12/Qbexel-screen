@@ -10,6 +10,7 @@ import { Download, FileVideo, FolderOpen, Loader2, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useScopedT } from "@/contexts/I18nContext";
+import { renderSubtitles, subtitleCuesForDocument } from "@/lib/ai-edition/captions/subtitles";
 import { prepareClickSound } from "@/lib/ai-edition/clickSound";
 import {
 	collectEffectiveClipDims,
@@ -162,6 +163,8 @@ export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
 	// just runs on the software encoder and takes minutes instead of seconds.
 	const cpuCompositor = useIsCpuCompositor();
 	const [format, setFormat] = useState<ExportFormat>("mp4");
+	// Write the captions as an .srt beside the MP4, whether or not they are burnt in.
+	const [writeSubtitles, setWriteSubtitles] = useState(false);
 	const [quality, setQuality] = useState<ExportQuality>("good");
 	const [fps, setFps] = useState<Mp4FrameRate>(60);
 	const [gifFrameRate, setGifFrameRate] = useState<GifFrameRate>(15);
@@ -242,6 +245,8 @@ export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
 		() => resolveAspectRatioValue(document, getEditorSettings(document).aspectRatio),
 		[document],
 	);
+	// The subtitle option needs words to write; without a transcript it is shown off and inert.
+	const hasTranscript = (document?.transcripts.length ?? 0) > 0;
 	// Output dimensions the export will produce for a given tier, from the (crop-aware)
 	// SMALLEST clip on the timeline — see `smallestSource` above for why. Only "Source"
 	// quality actually uses these as its target size; 720p/1080p target a fixed short side
@@ -460,6 +465,23 @@ export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
 				if (activeExport.current !== job) return;
 				setSavedPath(pickedPath);
 				setPhase("done");
+				if (writeSubtitles && format === "mp4") {
+					// On the programme clock, so the file lines up with the MP4 just written. The
+					// main process writes it beside the export and refuses any other extension.
+					const cues = subtitleCuesForDocument(document, EXPORT_ASPECT);
+					void window.electronAPI
+						?.writeExportSidecar?.(pickedPath, "srt", renderSubtitles(cues, "srt"))
+						.then((result) => {
+							if (!result?.success) {
+								toast.error(t("exportDialog.subtitlesFailed"), { description: result?.error });
+							} else {
+								toast.success(t("exportDialog.subtitlesWritten", { count: cues.length }));
+							}
+						})
+						.catch((err) =>
+							toast.error(t("exportDialog.subtitlesFailed"), { description: String(err) }),
+						);
+				}
 				// Reported after the export succeeded, so a cancelled or failed run never counts.
 				// Main owns the whole decision; a failure here simply means no ask, which is the
 				// safe direction for something that may only ever happen once.
@@ -540,6 +562,18 @@ export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
 						disabled={isBusy}
 					/>
 				</div>
+
+				{format === "mp4" ? (
+					<div className={styles.paneRow} style={{ margin: 0 }}>
+						<span className={styles.label}>{t("exportDialog.subtitles")}</span>
+						<Toggle
+							checked={writeSubtitles}
+							ariaLabel={t("exportDialog.subtitles")}
+							disabled={isBusy || !hasTranscript}
+							onChange={setWriteSubtitles}
+						/>
+					</div>
+				) : null}
 
 				{format === "mp4" ? (
 					<section>

@@ -1001,8 +1001,11 @@ export function moveClip(
 	if (index < 0) {
 		throw new Error(`Unknown clip ${clipId}.`);
 	}
+	const { cut: _cut, ...movedClip } = document.timeline.clips[index];
+	// A moved clip no longer sits at the boundary it was cut on, so the marker that kept it
+	// apart from its old neighbour goes with the move; back at that boundary later, it folds.
 	const movingClip = {
-		...document.timeline.clips[index],
+		...movedClip,
 		origin,
 		reason: reason || document.timeline.clips[index].reason,
 	};
@@ -1114,6 +1117,97 @@ export function setClipCrop(
 			c.id === clipId ? { ...c, cropRegion: cropRegion ?? undefined } : c,
 		),
 	);
+}
+
+/** The clip whose RAW ruler span holds `rawSec`, with the source second it maps to. Inside a
+ *  clip, RAW and source time differ by a constant shift (speed is never baked into the
+ *  geometry), so the mapping is a subtraction. The clip's closing edge belongs to it. */
+export function clipAtRawSec(
+	clips: AxcutClip[],
+	rawSec: number,
+): { clip: AxcutClip; sourceSec: number } | null {
+	const clip =
+		clips.find((c) => rawSec >= c.timelineStartSec && rawSec < c.timelineEndSec) ??
+		clips.find((c) => rawSec === c.timelineEndSec) ??
+		null;
+	if (!clip) return null;
+	return { clip, sourceSec: clip.sourceStartSec + (rawSec - clip.timelineStartSec) };
+}
+
+/** Pieces shorter than this cannot be split off: they would hold no whole frame at any rate. */
+export const MIN_SPLIT_PIECE_SEC = 0.04;
+
+/**
+ * Cut a clip in two at `sourceSec` of its media. The left piece keeps the clip's id; the right
+ * piece is a new clip right after it, marked `cut` so the clip-edit pass does not fold the two
+ * back into one (their media is contiguous by construction, which is exactly what the fold
+ * looks for). Every anchored row — zooms, speed, annotations, camera, effects, trims and audio
+ * takes — is copied to the right piece and each piece then keeps the part inside its own
+ * source window (`rederiveRegionMs` clamps and drops), so a zoom drawn across the cut becomes
+ * one fragment per piece and plays unchanged. Refused at or too near either edge. Pure.
+ */
+export function splitClipAt(
+	document: AxcutDocument,
+	clipId: string,
+	sourceSec: number,
+	origin: "system" | "agent" | "user" = "user",
+): AxcutDocument {
+	const original = document.timeline.clips.find((c) => c.id === clipId);
+	if (!original) throw new Error(`Unknown clip ${clipId}.`);
+	if (original.sourceEndSec === undefined) {
+		throw new Error(`Clip ${clipId} has no measured length yet; it cannot be split.`);
+	}
+	if (
+		!Number.isFinite(sourceSec) ||
+		sourceSec - original.sourceStartSec < MIN_SPLIT_PIECE_SEC ||
+		original.sourceEndSec - sourceSec < MIN_SPLIT_PIECE_SEC
+	) {
+		throw new Error(
+			`A split must leave at least ${MIN_SPLIT_PIECE_SEC}s on each side; ${sourceSec}s is too close to an edge of clip ${clipId} (${original.sourceStartSec}s to ${original.sourceEndSec}s).`,
+		);
+	}
+	const duplicated = duplicateClip(document, clipId, origin, "Split clip");
+	const before = new Set(document.timeline.clips.map((c) => c.id));
+	const copy = duplicated.timeline.clips.find((c) => !before.has(c.id));
+	if (!copy) throw new Error(`Clip ${clipId} could not be split.`);
+	// The marker first, so the range edits below never see two joinable neighbours.
+	const marked: AxcutDocument = {
+		...duplicated,
+		timeline: {
+			...duplicated.timeline,
+			clips: duplicated.timeline.clips.map((c) => (c.id === copy.id ? { ...c, cut: true } : c)),
+		},
+	};
+	const left = setClipSourceRange(marked, clipId, original.sourceStartSec, sourceSec);
+	const both = setClipSourceRange(left, copy.id, sourceSec, original.sourceEndSec);
+	// Trims are not in `mapAllRegionCollections`: trim each piece's copies to its window.
+	return {
+		...both,
+		timeline: {
+			...both.timeline,
+			trimRanges: both.timeline.trimRanges.flatMap((trim) => {
+				if (trim.clipId !== clipId && trim.clipId !== copy.id) return [trim];
+				const window =
+					trim.clipId === clipId
+						? { start: original.sourceStartSec, end: sourceSec }
+						: { start: sourceSec, end: original.sourceEndSec as number };
+				const startSec = Math.max(trim.startSec, window.start);
+				const endSec = Math.min(trim.endSec, window.end);
+				return endSec - startSec > 1e-6 ? [{ ...trim, startSec, endSec }] : [];
+			}),
+		},
+	};
+}
+
+/** `splitClipAt` for the clip under a RAW ruler second, the playhead's clock. */
+export function splitClipAtRawSec(
+	document: AxcutDocument,
+	rawSec: number,
+	origin: "system" | "agent" | "user" = "user",
+): AxcutDocument {
+	const hit = clipAtRawSec(document.timeline.clips, rawSec);
+	if (!hit) throw new Error(`No clip under ${rawSec}s.`);
+	return splitClipAt(document, hit.clip.id, hit.sourceSec, origin);
 }
 
 /**
@@ -1348,6 +1442,9 @@ function joinContiguous(clips: AxcutClip[]): {
  *  carries that two otherwise-identical neighbours could legitimately disagree on, so it is
  *  the whole of the guard. */
 function joinable(left: AxcutClip, right: AxcutClip): boolean {
+	// A clip the user cut off its neighbour stays cut: the fold is for clips that met by
+	// accident, never for a split the user made on purpose (`splitClipAt`).
+	if (right.cut === true) return false;
 	return (
 		left.assetId === right.assetId &&
 		left.sourceEndSec !== undefined &&

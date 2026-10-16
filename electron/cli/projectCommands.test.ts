@@ -7,7 +7,13 @@ import {
 	PROJECT_VERSION,
 } from "../../src/components/video-editor/projectPersistence";
 import { migrateProjectDataToAxcutDocument } from "../../src/lib/ai-edition/document/migrate";
-import { type PackedProjectData, runInfoCommand, runPackCommand } from "./projectCommands";
+import { createEmptyDocument } from "../../src/lib/ai-edition/schema";
+import {
+	type PackedProjectData,
+	runInfoCommand,
+	runPackCommand,
+	runSubtitlesCommand,
+} from "./projectCommands";
 
 let root = "";
 
@@ -210,5 +216,118 @@ describe("a project the editor saved", () => {
 		await expect(
 			runPackCommand(project, path.join(root, "packed"), false, recorder().write),
 		).rejects.toThrow("pack does not support projects saved by the editor yet");
+	});
+});
+
+describe("runSubtitlesCommand", () => {
+	function transcribed(mediaPath: string) {
+		const doc = createEmptyDocument({ projectId: "proj_sub", title: "Subtitles" });
+		return {
+			...doc,
+			project: { ...doc.project, primaryAssetId: "asset_1" },
+			assets: [
+				{
+					id: "asset_1",
+					kind: "video",
+					label: "take",
+					originalPath: mediaPath,
+					durationSec: 20,
+					cameraTrack: null,
+				},
+			],
+			timeline: {
+				...doc.timeline,
+				clips: [
+					{
+						id: "clip_1",
+						assetId: "asset_1",
+						sourceStartSec: 0,
+						sourceEndSec: 20,
+						timelineStartSec: 0,
+						timelineEndSec: 20,
+						wordRefs: [],
+						origin: "user",
+						reason: "",
+					},
+				],
+				trimRanges: [
+					{
+						id: "trim_1",
+						assetId: "asset_1",
+						clipId: "clip_1",
+						startSec: 4,
+						endSec: 6,
+						reason: "",
+						origin: "user",
+					},
+				],
+			},
+			transcripts: [
+				{
+					assetId: "asset_1",
+					language: "en",
+					segments: [
+						{
+							id: "s1",
+							kind: "speech",
+							startSec: 1,
+							endSec: 3,
+							text: "Hello there",
+							wordIds: ["w1", "w2"],
+						},
+						{
+							id: "s2",
+							kind: "speech",
+							startSec: 8,
+							endSec: 9,
+							text: "Click save",
+							wordIds: ["w3", "w4"],
+						},
+					],
+					words: [
+						{ id: "w1", segmentId: "s1", startSec: 1, endSec: 1.8, text: "Hello" },
+						{ id: "w2", segmentId: "s1", startSec: 2, endSec: 3, text: "there" },
+						{ id: "w3", segmentId: "s2", startSec: 8, endSec: 8.4, text: "Click" },
+						{ id: "w4", segmentId: "s2", startSec: 8.5, endSec: 9, text: "save" },
+					],
+				},
+			],
+		};
+	}
+
+	it("writes an SRT beside the project on the programme clock", async () => {
+		const media = await make("take.mp4");
+		const project = await make("sub/demo.openscreen", JSON.stringify(transcribed(media)));
+		const out = recorder();
+		expect(await runSubtitlesCommand(project, "srt", null, true, out.write)).toBe(0);
+		const written = path.join(root, "sub", "demo.srt");
+		const srt = await fs.readFile(written, "utf8");
+		// The cut at 4–6 s pulls the second line two seconds earlier.
+		expect(srt).toContain("00:00:01,000 --> 00:00:03,000");
+		expect(srt).toContain("00:00:06,000 --> 00:00:07,000");
+		expect(JSON.parse(out.text().trim())).toMatchObject({ event: "done", success: true, cues: 2 });
+	});
+
+	it("writes WebVTT to the path asked for", async () => {
+		const media = await make("take.mp4");
+		const project = await make("demo.openscreen", JSON.stringify(transcribed(media)));
+		const target = path.join(root, "out", "captions.vtt");
+		const out = recorder();
+		expect(await runSubtitlesCommand(project, "vtt", target, false, out.write)).toBe(0);
+		expect(await fs.readFile(target, "utf8")).toMatch(/^WEBVTT\n\n00:00:01\.000 --> /);
+		expect(out.text()).toContain("Wrote 2 cues");
+	});
+
+	it("refuses a project without a transcript and a legacy v2 file", async () => {
+		const media = await make("take.mp4");
+		const bare = transcribed(media);
+		const project = await make("bare.openscreen", JSON.stringify({ ...bare, transcripts: [] }));
+		await expect(
+			runSubtitlesCommand(project, "srt", null, false, recorder().write),
+		).rejects.toThrow(/no transcript/);
+		const legacy = await writeProject("legacy.openscreen", { version: 2, videoPath: media });
+		await expect(runSubtitlesCommand(legacy, "srt", null, false, recorder().write)).rejects.toThrow(
+			/saved by the editor/,
+		);
 	});
 });
