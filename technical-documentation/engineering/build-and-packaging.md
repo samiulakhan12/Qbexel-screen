@@ -24,6 +24,33 @@ OpenScreen builds its renderer, Electron main process, preload bridge, native he
 
 `vite.config.ts` uses `vite-plugin-electron` to compile `electron/main.ts` and `electron/preload.ts` into `dist-electron/` while Vite emits the renderer to `dist/`. The main `tsconfig.json` is strict, covers `src` and `electron`, and has `noEmit`; TypeScript is therefore a check while Vite performs emission. `build-vite` is the renderer/Electron-bundle build used when an installer is not needed, whereas `build` continues through electron-builder.
 
+## The Qbexel Windows installer workflow
+
+`.github/workflows/qbexel-windows-installer.yml` builds the Windows x64 installer of
+Qbexel Capture Studio on GitHub's `windows-latest` runner and publishes it as a
+prerelease of the repository that runs it. It exists beside `build.yml` because that
+workflow is upstream's release matrix: it still looks for installers named after the
+upstream product (`Openscreen.Setup.*`) and stages the speech helper from a run of
+`build-whisper-stt.yml` found through the Actions API of the repository it runs in, so
+in a repository with no such run it fails before packaging.
+
+The workflow has two jobs. The first is the Windows leg of `build-whisper-stt.yml`
+(Vulkan SDK, SPIRV-Headers from vcpkg, the whisper.cpp build tree cached under
+`C:/wstbuild`), uploaded as the `whisper-stt-win32-x64` artifact. The second downloads
+it into `electron/native/bin/win32-x64/`, lets `scripts/stage-whisper-stt.sh` confirm it,
+and runs `npm run build:win -- --publish never` with the whole log kept. It then finds
+the installer by shape (`*.Setup.*-x64.exe`), writes a `.sha256` beside it, and
+publishes installer, blockmap, checksum and log to a release tagged
+`build-<version>-<run number>` (or the `release_tag` input). The release is created as a
+draft holding the log and published only when the installer exists, so a failed run
+leaves a draft visible to collaborators and nothing public. Releases created with
+`GITHUB_TOKEN` do not trigger the release-driven workflows (AUR, Homebrew, winget, the
+announcement), which is intended.
+
+It runs by hand (`workflow_dispatch`) or on a push to a `qbexel/installer/**` branch,
+and needs no secret. Keep its first job in step with `build-whisper-stt.yml` when that
+changes.
+
 ## AppImage updates
 
 Linux packaging also requires `zsync` (`sudo apt-get install zsync`), which supplies `zsyncmake`. Each AppImage ships a `.zsync` sidecar for external tools such as AppImageUpdate, alongside the embedded blockmap and `latest-linux.yml` used by electron-updater.

@@ -26,7 +26,7 @@
   <a href="https://trendshift.io/repositories/57147?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-57147" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/57147" alt="getopenscreen/openscreen | Trendshift" width="250" height="55" /></a></p>
 
 > [!NOTE]
-> **Origin.** Qbexel Capture Studio extends OpenScreen. OpenScreen was created by [Siddharth Vaddem](https://github.com/siddharthvaddem), who [archived the original repository](https://github.com/siddharthvaddem/openscreen) after v1.5.0; development continued at [getopenscreen/openscreen](https://github.com/getopenscreen/openscreen) with his approval, under the MIT license. Everything below the "What Qbexel Capture Studio adds" section describes that shared engine; the installers and links in it are the upstream project's until a Qbexel release pipeline publishes its own (`npm run build:<platform>` builds one from this repository).
+> **Origin.** Qbexel Capture Studio extends OpenScreen. OpenScreen was created by [Siddharth Vaddem](https://github.com/siddharthvaddem), who [archived the original repository](https://github.com/siddharthvaddem/openscreen) after v1.5.0; development continued at [getopenscreen/openscreen](https://github.com/getopenscreen/openscreen) with his approval, under the MIT license. Everything below the "What Qbexel Capture Studio adds" section describes that shared engine. The installers and links in the "Installation" section are the upstream project's; Qbexel Capture Studio's own Windows installer is described in "Installing Qbexel Capture Studio".
 
 A raw capture goes in and comes out ready to post — on X, Reddit, YouTube, a docs page, or a landing page. That is the category Screen Studio defined; OpenScreen is the open-source entry in it, and not a clone.
 
@@ -81,6 +81,35 @@ proposes changes the video until you approve it. The full design is in
 - **CLI and MCP**: `storyboard`, `privacy scan`, `validate`, `export --composition`, and
   MCP tools for the Director, the Guardian, compositions and subtitles — strict schemas,
   allowed directories, explicit confirmation for file output.
+
+## Installing Qbexel Capture Studio
+
+**Windows (x64).** Download the newest `Qbexel.Capture.Studio.Setup.<version>-x64.exe`
+from this repository's [Releases](https://github.com/samiulakhan12/Qbexel-screen/releases)
+page and run it. The builds are marked as pre-releases and are not code-signed, so
+SmartScreen shows "Windows protected your PC": choose **More info**, then **Run anyway**.
+The installer carries native screen capture, the GPU compositor, the speech-to-text
+helper and the Privacy Guardian; the English speech model and the OCR model download on
+first use. Hardware and Windows-version requirements are those of OpenScreen, in
+"System requirements" below.
+
+Every installer is built by the "Qbexel Windows installer" workflow
+(`.github/workflows/qbexel-windows-installer.yml`) from the commit named in its release
+notes, with the complete build log, a `.sha256` checksum and the updater's `.blockmap`
+attached. To build a new one from the current code: **Actions → Qbexel Windows installer
+→ Run workflow**, or push a branch named `qbexel/installer/<anything>`. The run takes
+about an hour; the first job compiles the speech helper, the second the installer.
+
+**macOS and Linux.** No ready-made installer yet. `npm run build:mac` (full Xcode and
+rustup required) and `npm run build:linux` build one from a checkout; see
+`CONTRIBUTING.md` and `technical-documentation/engineering/build-and-packaging.md`.
+
+**Building the Windows installer on your own PC** needs Node 22.22.1 with npm 10.9.4,
+Visual Studio 2022 Build Tools with the "Desktop development with C++" workload, CMake
+and Ninja on `PATH`, Rust installed with rustup, and LLVM in `C:\Program Files\LLVM`.
+Then `npm install` and `npm run build:win`; the installer lands in `release/<version>/`.
+Speech-to-text additionally needs `npm run build:whisper-binaries` (Git Bash and CMake)
+before the build, or the installer ships without it and says so when asked to transcribe.
 
 ## Command-line interface (headless)
 
