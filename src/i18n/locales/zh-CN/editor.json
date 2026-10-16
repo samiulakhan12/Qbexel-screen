@@ -52,6 +52,8 @@
 		"restartFailed": "无法开始新的录制。之前的录制已被删除。",
 		"permissionDenied": "录屏权限被拒绝。请允许屏幕录制。",
 		"accessibilityAllowAndRetry": "允许 {{product}} 使用辅助功能权限，然后再次按录制以开始倒计时。",
+		"diskLow": "Disk space is running low ({{free}} free). The recording stops by itself if it runs out, keeping what was captured.",
+		"diskCritical": "The disk is nearly full, so the recording was stopped to keep what was captured. Free some space before recording again.",
 		"cursorAccessibilityUnavailable": "辅助功能权限未开启。录制将继续，但光标效果可能受限。请在系统设置中开启此权限以使用完整的光标效果。",
 		"selectSource": "请选择要录制的源"
 	},
@@ -119,6 +121,8 @@
 		"editableCursor": "可编辑光标",
 		"editableCursorTip": "开启后可修改光标样式并使用自动缩放；关闭后，系统光标将直接录制到视频中",
 		"autoZoom": "录制后自动缩放",
+		"countdown": "Countdown",
+		"countdownSeconds": "{{seconds}} s",
 		"hideDesktopIcons": "隐藏桌面图标",
 		"hideDesktopIconsHintMac": "录制画面中不显示桌面图标，桌面上的图标不受影响",
 		"hideDesktopIconsHintWindows": "录制时遮住桌面图标，录制结束后恢复",

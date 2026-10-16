@@ -9,6 +9,7 @@ import {
 	Mic as MicOn,
 	MonitorSmartphone,
 	MousePointer2,
+	Timer,
 	Volume2,
 	VolumeX,
 	ZoomIn,
@@ -25,6 +26,7 @@ import { useEditableCursorAvailable } from "@/hooks/useEditableCursorAvailable";
 import { useMicrophoneDevices } from "@/hooks/useMicrophoneDevices";
 import { usePortalOwnsSource } from "@/hooks/usePortalOwnsSource";
 import { canTurnCameraOn } from "@/lib/cameraAvailability";
+import { COUNTDOWN_SECONDS, type CountdownSeconds } from "@/lib/countdown";
 import { canTurnMicrophoneOn } from "@/lib/microphoneAvailability";
 import { canRecordMicrophone, getPlatform } from "@/utils/platformUtils";
 import styles from "./EditorShellV4.module.css";
@@ -40,6 +42,7 @@ interface RecordingPrefsState {
 	cursorCaptureMode: "editable-overlay" | "system";
 	hideDesktopIcons: boolean;
 	autoZoomEnabled: boolean;
+	countdownSeconds: CountdownSeconds;
 }
 
 const DEFAULT_PREFS: RecordingPrefsState = {
@@ -53,6 +56,7 @@ const DEFAULT_PREFS: RecordingPrefsState = {
 	cursorCaptureMode: "editable-overlay",
 	hideDesktopIcons: false,
 	autoZoomEnabled: true,
+	countdownSeconds: 3,
 };
 
 /** The last segment of a Windows or POSIX path; a drive root keeps its letter. */
@@ -613,6 +617,32 @@ export function RecStage({
 							</button>
 						</div>
 					) : null}
+
+					<div className={styles.recRow}>
+						<div id={rowLabelId("countdown")} className={styles.recRowLabel}>
+							<Timer size={15} />
+							{t("rec.countdown")}
+						</div>
+						<div
+							role="radiogroup"
+							aria-labelledby={rowLabelId("countdown")}
+							className={styles.recChoices}
+						>
+							{COUNTDOWN_SECONDS.map((seconds) => (
+								<button
+									key={seconds}
+									type="button"
+									role="radio"
+									data-testid={`rec-countdown-${seconds}`}
+									className={`${styles.recToggleBtn}${prefs.countdownSeconds === seconds ? ` ${styles.on}` : ""}`}
+									aria-checked={prefs.countdownSeconds === seconds}
+									onClick={() => updatePrefs({ countdownSeconds: seconds })}
+								>
+									{seconds === 0 ? t("rec.off") : t("rec.countdownSeconds", { seconds })}
+								</button>
+							))}
+						</div>
+					</div>
 
 					{desktopIconsHint ? (
 						<div className={styles.recRow}>

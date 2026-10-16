@@ -50,6 +50,8 @@
 		"restartFailed": "Le nouvel enregistrement n'a pas pu démarrer. Le précédent a été supprimé.",
 		"permissionDenied": "Permission d'enregistrement refusée. Veuillez autoriser l'enregistrement d'écran.",
 		"accessibilityAllowAndRetry": "Autorisez l'accès Accessibilité pour {{product}}, puis appuyez de nouveau sur enregistrer pour lancer le compte à rebours.",
+		"diskLow": "Disk space is running low ({{free}} free). The recording stops by itself if it runs out, keeping what was captured.",
+		"diskCritical": "The disk is nearly full, so the recording was stopped to keep what was captured. Free some space before recording again.",
 		"cursorAccessibilityUnavailable": "L'accès à Accessibilité est désactivé. L'enregistrement continue, mais les effets du curseur peuvent être limités. Activez-le dans Réglages Système pour profiter de tous les effets du curseur.",
 		"selectSource": "Veuillez sélectionner une source à enregistrer"
 	},
@@ -119,6 +121,8 @@
 		"editableCursor": "Curseur éditable",
 		"editableCursorTip": "Activé : curseur éditable, avec changement de style et zoom automatique. Désactivé : curseur système, enregistré dans la vidéo.",
 		"autoZoom": "Zoom automatique après l'enregistrement",
+		"countdown": "Countdown",
+		"countdownSeconds": "{{seconds}} s",
 		"hideDesktopIcons": "Masquer les icônes du bureau",
 		"hideDesktopIconsHintMac": "Retire les icônes du bureau des enregistrements d'écran. Elles restent sur votre bureau.",
 		"hideDesktopIconsHintWindows": "Recouvre les icônes du bureau pendant l'enregistrement. Elles reviennent à la fin.",

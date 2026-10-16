@@ -59,6 +59,7 @@ type ShimRecordingPrefs = {
 	systemAudioEnabled: boolean;
 	cursorCaptureMode: "editable-overlay" | "system";
 	autoZoomEnabled: boolean;
+	countdownSeconds: number;
 };
 const recordingPrefsStorageKey = "browser-shim-recording-prefs";
 let shimRecordingPrefs: ShimRecordingPrefs = {
@@ -71,6 +72,7 @@ let shimRecordingPrefs: ShimRecordingPrefs = {
 	systemAudioEnabled: false,
 	cursorCaptureMode: "editable-overlay",
 	autoZoomEnabled: true,
+	countdownSeconds: 3,
 };
 const shimRecordingPrefsListeners = new Set<(prefs: ShimRecordingPrefs) => void>();
 const shimSelectedSourceListeners = new Set<(source: ShimDesktopSource | null) => void>();

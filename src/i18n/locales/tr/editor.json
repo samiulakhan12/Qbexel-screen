@@ -44,6 +44,8 @@
 		"microphoneUnavailable": "Bu macOS sürümü mikrofonu kaydedemiyor. Mikrofonsuz kaydediliyor.",
 		"restartFailed": "Yeni kayıt başlatılamadı. Önceki kayıt silindi.",
 		"accessibilityAllowAndRetry": "{{product}} için Erişilebilirlik erişimine izin verin, ardından geri sayımı başlatmak için tekrar kayda basın.",
+		"diskLow": "Disk space is running low ({{free}} free). The recording stops by itself if it runs out, keeping what was captured.",
+		"diskCritical": "The disk is nearly full, so the recording was stopped to keep what was captured. Free some space before recording again.",
 		"cursorAccessibilityUnavailable": "Erişilebilirlik erişimi kapalı. Kayıt devam edecek ancak imleç efektleri sınırlı olabilir. Tüm imleç efektlerini kullanmak için Sistem Ayarları'ndan erişimi açın.",
 		"selectSource": "Lütfen kayıt için bir kaynak seçin"
 	},
@@ -119,6 +121,8 @@
 		"editableCursor": "Düzenlenebilir imleç",
 		"editableCursorTip": "Açık: düzenlenebilir imleç, stil değiştirme ve otomatik yakınlaştırma ile. Kapalı: sistem imleci, videoya kaydedilir.",
 		"autoZoom": "Kayıttan sonra otomatik yakınlaştırma",
+		"countdown": "Countdown",
+		"countdownSeconds": "{{seconds}} s",
 		"hideDesktopIcons": "Masaüstü simgelerini gizle",
 		"hideDesktopIconsHintMac": "Masaüstü simgelerini ekran kayıtlarının dışında bırakır. Masaüstünüzde kalırlar.",
 		"hideDesktopIconsHintWindows": "Kayıt sırasında masaüstü simgelerini örter. Kayıt bitince geri gelirler.",

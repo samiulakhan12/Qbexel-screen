@@ -70,6 +70,7 @@ import {
 	showPermissionsWindowIfNeeded,
 } from "./permissions";
 import { describeChildProcessGone, describeRenderProcessGone } from "./processGoneLog";
+import { type DiskSpaceWatch, watchDiskSpace } from "./recording/diskSpaceWatch";
 import { setDisplaySleepBlocked } from "./recording/displaySleepBlocker";
 import { RecordingsDirManager } from "./recording/recordingsDirManager";
 import { offersStarPrompt, REPO_URL, storeReviewUrl } from "./star-prompt";
@@ -606,6 +607,32 @@ async function presentAboutDialog() {
 function runAboutDialog() {
 	showAboutDialog().catch((error) => {
 		console.error("[about] dialog failed", error);
+	});
+}
+
+/** Free space on the recordings volume, polled while a take runs (recording/diskSpaceWatch.ts).
+ *  Low: the HUD warns. Critical: the take is stopped the way the tray stops it, so the file is
+ *  finalised while there is still room to close it, and the HUD says why. */
+let recordingDiskWatch: DiskSpaceWatch | null = null;
+function watchRecordingDiskSpace(recording: boolean) {
+	recordingDiskWatch?.stop();
+	recordingDiskWatch = null;
+	if (!recording) return;
+	const report = (level: "low" | "critical", availableBytes: number) => {
+		if (mainWindow && !mainWindow.isDestroyed()) {
+			mainWindow.webContents.send("recording-disk-space", { level, availableBytes });
+		}
+	};
+	recordingDiskWatch = watchDiskSpace({
+		dir: recordingsDirManager.dir,
+		onLow: (availableBytes) => report("low", availableBytes),
+		onCritical: (availableBytes) => {
+			console.warn("[recording] disk space critical, stopping the take", { availableBytes });
+			report("critical", availableBytes);
+			if (mainWindow && !mainWindow.isDestroyed()) {
+				mainWindow.webContents.send("stop-recording-from-tray");
+			}
+		},
 	});
 }
 
@@ -1502,6 +1529,7 @@ appReady?.then(async () => {
 			selectedSourceName = sourceName;
 			isRecording = recording;
 			setDisplaySleepBlocked(recording);
+			watchRecordingDiskSpace(recording);
 			if (!tray) createTray();
 			updateTrayMenu(recording);
 			// `canOfferUpdateCheck()` now answers "not mid-take" too, and the app/Help menus are

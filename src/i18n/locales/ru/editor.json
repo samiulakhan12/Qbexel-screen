@@ -52,6 +52,8 @@
 		"restartFailed": "Не удалось начать новую запись. Предыдущая удалена.",
 		"permissionDenied": "Разрешение на запись запрещено. Пожалуйста, разрешите запись экрана.",
 		"accessibilityAllowAndRetry": "Разрешите {{product}} доступ к Универсальному доступу, затем снова нажмите запись, чтобы начать обратный отсчет.",
+		"diskLow": "Disk space is running low ({{free}} free). The recording stops by itself if it runs out, keeping what was captured.",
+		"diskCritical": "The disk is nearly full, so the recording was stopped to keep what was captured. Free some space before recording again.",
 		"cursorAccessibilityUnavailable": "Универсальный доступ выключен. Запись продолжится, но эффекты курсора могут быть ограничены. Включите его в Системных настройках, чтобы использовать все эффекты курсора.",
 		"selectSource": "Пожалуйста, выберите источник для записи"
 	},
@@ -119,6 +121,8 @@
 		"editableCursor": "Редактируемый курсор",
 		"editableCursorTip": "Вкл.: редактируемый курсор, с изменением стиля и автозумом. Выкл.: системный курсор, записанный в видео.",
 		"autoZoom": "Автомасштабирование после записи",
+		"countdown": "Countdown",
+		"countdownSeconds": "{{seconds}} s",
 		"hideDesktopIcons": "Скрыть значки рабочего стола",
 		"hideDesktopIconsHintMac": "Убирает значки рабочего стола из записи экрана. На рабочем столе они остаются.",
 		"hideDesktopIconsHintWindows": "Закрывает значки рабочего стола во время записи. После неё они возвращаются.",

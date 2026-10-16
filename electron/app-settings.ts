@@ -6,6 +6,11 @@ import {
 	type WebcamQualityId,
 	webcamQualityFrom,
 } from "../src/hooks/webcamCaptureTarget";
+import {
+	type CountdownSeconds,
+	countdownSecondsFrom,
+	isCountdownSeconds,
+} from "../src/lib/countdown";
 import type { CursorCaptureMode } from "../src/lib/recordingSession";
 import { renameSyncWithFallback } from "./atomic-rename";
 
@@ -30,6 +35,8 @@ export interface RecordingPreferences {
 	 * behaviour it gates has been on for every such installation.
 	 */
 	autoZoomEnabled: boolean;
+	/** Seconds the pre-roll countdown shows before capture starts; 0 starts at once. */
+	countdownSeconds: CountdownSeconds;
 }
 
 export const DEFAULT_RECORDING_PREFERENCES: RecordingPreferences = {
@@ -44,6 +51,7 @@ export const DEFAULT_RECORDING_PREFERENCES: RecordingPreferences = {
 	cursorCaptureMode: "editable-overlay",
 	hideDesktopIcons: false,
 	autoZoomEnabled: true,
+	countdownSeconds: 3,
 };
 
 export interface RecordingSourceDescriptor {
@@ -123,6 +131,7 @@ function parseRecording(raw: RawSettings): RecordingPreferences {
 				: DEFAULT_RECORDING_PREFERENCES.cursorCaptureMode,
 		hideDesktopIcons: bool(raw.hideDesktopIcons, DEFAULT_RECORDING_PREFERENCES.hideDesktopIcons),
 		autoZoomEnabled: bool(raw.autoZoomEnabled, DEFAULT_RECORDING_PREFERENCES.autoZoomEnabled),
+		countdownSeconds: countdownSecondsFrom(raw.countdownSeconds),
 	};
 }
 
@@ -185,6 +194,9 @@ function validateRecordingPatch(patch: Partial<RecordingPreferences>): void {
 		// one the caller asked for.
 		if (key === "camQuality" && !WEBCAM_QUALITY_IDS.includes(value as WebcamQualityId)) {
 			throw new TypeError("camQuality is invalid");
+		}
+		if (key === "countdownSeconds" && !isCountdownSeconds(value)) {
+			throw new TypeError("countdownSeconds is invalid");
 		}
 	}
 }

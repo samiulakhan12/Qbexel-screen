@@ -336,6 +336,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	forgetInterruptedTake: (markerPath: string) => {
 		return ipcRenderer.invoke("forget-interrupted-take", markerPath);
 	},
+	onRecordingDiskSpace: (
+		callback: (report: { level: "low" | "critical"; availableBytes: number }) => void,
+	) => {
+		const listener = (_: unknown, report: { level: "low" | "critical"; availableBytes: number }) =>
+			callback(report);
+		ipcRenderer.on("recording-disk-space", listener);
+		return () => ipcRenderer.removeListener("recording-disk-space", listener);
+	},
 	onStopRecordingFromTray: (callback: () => void) => {
 		const listener = () => callback();
 		ipcRenderer.on("stop-recording-from-tray", listener);

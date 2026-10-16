@@ -52,6 +52,8 @@
 		"microphoneUnavailable": "이 버전의 macOS에서는 마이크를 녹음할 수 없습니다. 마이크 없이 녹화합니다.",
 		"restartFailed": "새 녹화를 시작할 수 없습니다. 이전 녹화는 삭제되었습니다.",
 		"accessibilityAllowAndRetry": "{{product}}의 손쉬운 사용 접근을 허용한 다음, 카운트다운을 시작하려면 다시 녹화를 누르세요.",
+		"diskLow": "Disk space is running low ({{free}} free). The recording stops by itself if it runs out, keeping what was captured.",
+		"diskCritical": "The disk is nearly full, so the recording was stopped to keep what was captured. Free some space before recording again.",
 		"cursorAccessibilityUnavailable": "손쉬운 사용 권한이 꺼져 있습니다. 녹화는 계속되지만 커서 효과가 제한될 수 있습니다. 모든 커서 효과를 사용하려면 시스템 설정에서 권한을 켜세요.",
 		"selectSource": "녹화할 소스를 선택해 주세요"
 	},
@@ -119,6 +121,8 @@
 		"editableCursor": "편집 가능한 커서",
 		"editableCursorTip": "켜짐: 편집 가능한 커서, 스타일 변경과 자동 줌 가능. 꺼짐: 시스템 커서, 영상에 녹화됩니다.",
 		"autoZoom": "녹화 후 자동 확대",
+		"countdown": "Countdown",
+		"countdownSeconds": "{{seconds}} s",
 		"hideDesktopIcons": "바탕화면 아이콘 숨기기",
 		"hideDesktopIconsHintMac": "화면 녹화에서 바탕화면 아이콘을 제외합니다. 바탕화면에는 그대로 남아 있습니다.",
 		"hideDesktopIconsHintWindows": "녹화하는 동안 바탕화면 아이콘을 가립니다. 녹화가 끝나면 다시 나타납니다.",

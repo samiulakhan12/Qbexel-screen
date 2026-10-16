@@ -303,6 +303,9 @@ interface Window {
 		>;
 		recoverInterruptedTake: (markerPath: string) => Promise<{ success: boolean; error?: string }>;
 		forgetInterruptedTake: (markerPath: string) => Promise<{ success: boolean; error?: string }>;
+		onRecordingDiskSpace: (
+			callback: (report: { level: "low" | "critical"; availableBytes: number }) => void,
+		) => () => void;
 		onStopRecordingFromTray: (callback: () => void) => () => void;
 		openExternalUrl: (url: string) => Promise<{ success: boolean; error?: string }>;
 		openRepoPage: () => Promise<void>;

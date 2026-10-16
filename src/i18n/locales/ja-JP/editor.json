@@ -52,6 +52,8 @@
 		"microphoneUnavailable": "このバージョンの macOS ではマイクを録音できません。マイクなしで録画します。",
 		"restartFailed": "新しい録画を開始できませんでした。前の録画は削除されました。",
 		"accessibilityAllowAndRetry": "{{product}}にアクセシビリティアクセスを許可してから、もう一度録画を押してカウントダウンを開始してください。",
+		"diskLow": "Disk space is running low ({{free}} free). The recording stops by itself if it runs out, keeping what was captured.",
+		"diskCritical": "The disk is nearly full, so the recording was stopped to keep what was captured. Free some space before recording again.",
 		"cursorAccessibilityUnavailable": "アクセシビリティが許可されていません。録画は続行されますが、カーソル効果が制限される場合があります。すべてのカーソル効果を使うには、システム設定で許可してください。",
 		"selectSource": "録画するソースを選択してください"
 	},
@@ -119,6 +121,8 @@
 		"editableCursor": "編集可能なカーソル",
 		"editableCursorTip": "オン：編集可能なカーソル。スタイル変更と自動ズームが使えます。オフ：システムカーソル。動画に録画されます。",
 		"autoZoom": "録画後に自動ズーム",
+		"countdown": "Countdown",
+		"countdownSeconds": "{{seconds}} s",
 		"hideDesktopIcons": "デスクトップアイコンを隠す",
 		"hideDesktopIconsHintMac": "画面収録からデスクトップアイコンを除外します。デスクトップ上には残ります。",
 		"hideDesktopIconsHintWindows": "録画中はデスクトップアイコンを覆います。録画が終わると元に戻ります。",

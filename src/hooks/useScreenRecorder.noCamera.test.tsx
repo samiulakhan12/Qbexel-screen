@@ -35,6 +35,7 @@ function prefs(camEnabled: boolean): RecordingPrefs {
 		cursorCaptureMode: "editable-overlay",
 		hideDesktopIcons: false,
 		autoZoomEnabled: true,
+		countdownSeconds: 3,
 	};
 }
 

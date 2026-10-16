@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useScopedT } from "@/contexts/I18nContext";
 import { mixAudioTracks, nativeMicrophoneGain } from "@/lib/audioMix";
 import { canTurnCameraOn } from "@/lib/cameraAvailability";
+import { type CountdownSeconds, countdownSecondsFrom, countdownValues } from "@/lib/countdown";
 import { shouldRecordMicrophone } from "@/lib/microphoneAvailability";
 import {
 	type NativeLinuxRecordingRequest,
@@ -268,6 +269,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	const [microphoneDeviceName, setMicrophoneDeviceName] = useState<string | undefined>(undefined);
 	const [webcamDeviceId, setWebcamDeviceId] = useState<string | undefined>(undefined);
 	const [webcamQuality, setWebcamQuality] = useState<WebcamQualityId>(DEFAULT_WEBCAM_QUALITY);
+	// Read through a ref inside the countdown, which runs in a callback that may be stale.
+	const countdownSecondsRef = useRef<CountdownSeconds>(3);
 	const [webcamDeviceName, setWebcamDeviceName] = useState<string | undefined>(undefined);
 	const [systemAudioEnabled, setSystemAudioEnabled] = useState(false);
 	const [webcamEnabled, setWebcamEnabledState] = useState(false);
@@ -295,6 +298,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			camQuality?: WebcamQualityId | null;
 			systemAudioEnabled: boolean;
 			cursorCaptureMode: CursorCaptureMode;
+			countdownSeconds?: number | null;
 		}) => {
 			if (cancelled) return;
 			// Not applied where a take cannot record the microphone (#700): it would ask
@@ -311,6 +315,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 				setWebcamDeviceName(prefs.camDeviceName ?? undefined);
 			}
 			setWebcamQuality(webcamQualityFrom(prefs.camQuality));
+			countdownSecondsRef.current = countdownSecondsFrom(prefs.countdownSeconds);
 			setSystemAudioEnabled(prefs.systemAudioEnabled);
 			setCursorCaptureMode(prefs.cursorCaptureMode);
 			setRecordingPrefsLoaded(true);
@@ -1087,6 +1092,15 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 				stopRecording.current();
 			});
 		}
+		// Free space on the recordings volume, watched by the main process while a take runs.
+		const cleanupDisk = window.electronAPI?.onRecordingDiskSpace?.((report) => {
+			const free = `${Math.max(0, Math.round(report.availableBytes / (1024 * 1024)))} MB`;
+			if (report.level === "critical") {
+				toast.error(tRef.current("recording.diskCritical"), { duration: 15_000 });
+			} else {
+				toast.warning(tRef.current("recording.diskLow", { free }), { duration: 15_000 });
+			}
+		});
 		// Global hotkeys (Ctrl/Cmd+Shift+R, Ctrl/Cmd+Shift+P by default) arrive from the main
 		// process while another app has the focus. The controls are read through a ref: this
 		// effect runs once, and the callbacks it would otherwise close over are rebuilt every render.
@@ -1104,6 +1118,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			const activeRunId = countdownRunId.current;
 			if (cleanup) cleanup();
 			cleanupShortcut?.();
+			cleanupDisk?.();
 			countdownRunId.current += 1;
 			void safeHideCountdownOverlay(activeRunId);
 			allowAutoFinalize.current = false;
@@ -1753,8 +1768,10 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 
 		let overlayHiddenBeforeStart = false;
 		try {
-			const values = [3, 2, 1];
-			const overlayShown = await safeShowCountdownOverlay(values[0], runId);
+			const values = countdownValues(countdownSecondsRef.current);
+			// A countdown of 0 shows no overlay and starts at once.
+			const overlayShown =
+				values.length > 0 ? await safeShowCountdownOverlay(values[0], runId) : false;
 
 			if (countdownRunId.current !== runId) {
 				return;

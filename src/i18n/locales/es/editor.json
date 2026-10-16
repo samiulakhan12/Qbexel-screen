@@ -44,6 +44,8 @@
 		"restartFailed": "No se pudo iniciar la nueva grabación. La anterior se eliminó.",
 		"permissionDenied": "Permiso de grabación denegado. Por favor permite la grabación de pantalla.",
 		"accessibilityAllowAndRetry": "Permite el acceso de accesibilidad para {{product}} y luego pulsa grabar de nuevo para iniciar la cuenta atrás.",
+		"diskLow": "Disk space is running low ({{free}} free). The recording stops by itself if it runs out, keeping what was captured.",
+		"diskCritical": "The disk is nearly full, so the recording was stopped to keep what was captured. Free some space before recording again.",
 		"cursorAccessibilityUnavailable": "Accesibilidad está desactivada. La grabación continuará, pero los efectos del cursor pueden ser limitados. Actívala en Ajustes del Sistema para usar todos los efectos del cursor.",
 		"selectSource": "Por favor selecciona una fuente para grabar"
 	},
@@ -119,6 +121,8 @@
 		"editableCursor": "Cursor editable",
 		"editableCursorTip": "Activado: cursor editable, con cambio de estilo y zoom automático. Desactivado: cursor del sistema, grabado en el video.",
 		"autoZoom": "Zoom automático tras grabar",
+		"countdown": "Countdown",
+		"countdownSeconds": "{{seconds}} s",
 		"hideDesktopIcons": "Ocultar iconos del escritorio",
 		"hideDesktopIconsHintMac": "Deja fuera los iconos del escritorio en las grabaciones de pantalla. Siguen en tu escritorio.",
 		"hideDesktopIconsHintWindows": "Cubre los iconos del escritorio mientras grabas. Vuelven al terminar.",

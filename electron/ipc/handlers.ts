@@ -26,6 +26,7 @@ import {
 } from "../../src/lib/ai-edition/schema";
 import type { CliSourcesResult } from "../../src/lib/cliContracts";
 import { pickRecordingSource } from "../../src/lib/cliSourcePick";
+import type { CountdownSeconds } from "../../src/lib/countdown";
 import {
 	type NativeLinuxRecordingRequest,
 	portalCursorMode,
@@ -705,6 +706,8 @@ export interface RecordingPrefs {
 	hideDesktopIcons: boolean;
 	/** Whether a fresh take gets automatic zooms on import. Persisted; defaults on. */
 	autoZoomEnabled: boolean;
+	/** Seconds the pre-roll countdown shows; 0 starts at once. */
+	countdownSeconds: CountdownSeconds;
 }
 const defaultRecordingPrefs: RecordingPrefs = {
 	micEnabled: false,
@@ -718,6 +721,7 @@ const defaultRecordingPrefs: RecordingPrefs = {
 	cursorCaptureMode: "editable-overlay",
 	hideDesktopIcons: false,
 	autoZoomEnabled: true,
+	countdownSeconds: 3,
 };
 
 // Cached source from the user's pick. Used by setDisplayMediaRequestHandler in main.ts for cursor-free capture.

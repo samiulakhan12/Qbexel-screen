@@ -236,6 +236,7 @@ describe("RecStage controls", () => {
 			micEnabled: false,
 			cursorCaptureMode: "editable-overlay",
 			autoZoomEnabled: true,
+			countdownSeconds: 3,
 		});
 		renderRecStage();
 		await waitFor(() => expect(getRecordingPrefs).toHaveBeenCalled());
@@ -369,6 +370,7 @@ describe("RecStage controls", () => {
 			micEnabled: false,
 			cursorCaptureMode: "system",
 			autoZoomEnabled: true,
+			countdownSeconds: 3,
 		});
 		renderRecStage();
 		await waitFor(() => expect(screen.queryByTestId("rec-auto-zoom-button")).toBeNull());
@@ -391,6 +393,7 @@ describe("RecStage controls", () => {
 			micEnabled: false,
 			cursorCaptureMode: "editable-overlay",
 			autoZoomEnabled: true,
+			countdownSeconds: 3,
 		});
 		const api = window.electronAPI as unknown as Record<string, unknown>;
 		const setRecordingPrefs = vi.fn(async () => {
@@ -423,6 +426,7 @@ describe("RecStage controls", () => {
 			cursorCaptureMode: "editable-overlay",
 			hideDesktopIcons: false,
 			autoZoomEnabled: true,
+			countdownSeconds: 3,
 		};
 		stubRecordingPrefs();
 		let answerReread: ((prefs: RecordingPrefs) => void) | undefined;
@@ -635,6 +639,7 @@ describe("RecStage controls", () => {
 			cursorCaptureMode: "editable-overlay",
 			hideDesktopIcons: false,
 			autoZoomEnabled: true,
+			countdownSeconds: 3,
 		};
 		act(() => {
 			recordingPrefsListeners.forEach((listener) => listener(resetPrefs));

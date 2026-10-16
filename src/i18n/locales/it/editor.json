@@ -52,6 +52,8 @@
 		"restartFailed": "Impossibile avviare la nuova registrazione. Quella precedente è stata eliminata.",
 		"permissionDenied": "Autorizzazione di registrazione negata. Consenti la registrazione dello schermo.",
 		"accessibilityAllowAndRetry": "Consenti l'accesso all'accessibilità per {{product}}, poi premi di nuovo registra per avviare il conto alla rovescia.",
+		"diskLow": "Disk space is running low ({{free}} free). The recording stops by itself if it runs out, keeping what was captured.",
+		"diskCritical": "The disk is nearly full, so the recording was stopped to keep what was captured. Free some space before recording again.",
 		"cursorAccessibilityUnavailable": "L'accesso all'accessibilità è disattivato. La registrazione continuerà, ma gli effetti del cursore potrebbero essere limitati. Attivalo nelle Impostazioni di Sistema per usare tutti gli effetti del cursore.",
 		"selectSource": "Seleziona una sorgente da registrare"
 	},
@@ -119,6 +121,8 @@
 		"editableCursor": "Cursore modificabile",
 		"editableCursorTip": "Attivo: cursore modificabile, con cambio di stile e zoom automatico. Disattivo: cursore di sistema, registrato nel video.",
 		"autoZoom": "Zoom automatico dopo la registrazione",
+		"countdown": "Countdown",
+		"countdownSeconds": "{{seconds}} s",
 		"hideDesktopIcons": "Nascondi icone della scrivania",
 		"hideDesktopIconsHintMac": "Esclude le icone della scrivania dalle registrazioni dello schermo. Restano sulla tua scrivania.",
 		"hideDesktopIconsHintWindows": "Copre le icone della scrivania durante la registrazione. Tornano alla fine.",

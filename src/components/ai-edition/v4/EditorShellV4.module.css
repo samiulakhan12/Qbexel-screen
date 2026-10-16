@@ -957,6 +957,11 @@
 	padding: 13px 16px;
 	border-bottom: 1px solid var(--border-soft);
 }
+.recChoices {
+	display: inline-flex;
+	gap: 6px;
+	flex-shrink: 0;
+}
 .recRow:last-child {
 	border-bottom: 0;
 }

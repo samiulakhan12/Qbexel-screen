@@ -52,6 +52,8 @@
 		"restartFailed": "Không thể bắt đầu bản ghi hình mới. Bản trước đã bị xóa.",
 		"permissionDenied": "Quyền ghi hình bị từ chối. Vui lòng cho phép ghi màn hình.",
 		"accessibilityAllowAndRetry": "Cho phép {{product}} truy cập Trợ năng, sau đó nhấn ghi lại để bắt đầu đếm ngược.",
+		"diskLow": "Disk space is running low ({{free}} free). The recording stops by itself if it runs out, keeping what was captured.",
+		"diskCritical": "The disk is nearly full, so the recording was stopped to keep what was captured. Free some space before recording again.",
 		"cursorAccessibilityUnavailable": "Quyền Trợ năng đang tắt. Quá trình ghi vẫn tiếp tục nhưng hiệu ứng con trỏ có thể bị hạn chế. Hãy bật quyền này trong Cài đặt hệ thống để dùng đầy đủ hiệu ứng con trỏ.",
 		"selectSource": "Vui lòng chọn một nguồn để ghi"
 	},
@@ -119,6 +121,8 @@
 		"editableCursor": "Con trỏ có thể chỉnh sửa",
 		"editableCursorTip": "Bật: con trỏ có thể chỉnh sửa, có đổi kiểu và thu phóng tự động. Tắt: con trỏ hệ thống, được ghi vào video.",
 		"autoZoom": "Tự động phóng to sau khi ghi",
+		"countdown": "Countdown",
+		"countdownSeconds": "{{seconds}} s",
 		"hideDesktopIcons": "Ẩn biểu tượng màn hình nền",
 		"hideDesktopIconsHintMac": "Loại các biểu tượng màn hình nền khỏi bản ghi màn hình. Chúng vẫn ở trên màn hình nền của bạn.",
 		"hideDesktopIconsHintWindows": "Che các biểu tượng màn hình nền khi ghi. Chúng trở lại khi dừng.",

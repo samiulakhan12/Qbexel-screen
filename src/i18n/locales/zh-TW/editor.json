@@ -52,6 +52,8 @@
 		"microphoneUnavailable": "此版本的 macOS 無法錄製麥克風，將在沒有麥克風的情況下錄製。",
 		"restartFailed": "無法開始新的錄製。先前的錄製已被刪除。",
 		"accessibilityAllowAndRetry": "允許 {{product}} 使用輔助使用權限，然後再次按下錄製以開始倒數。",
+		"diskLow": "Disk space is running low ({{free}} free). The recording stops by itself if it runs out, keeping what was captured.",
+		"diskCritical": "The disk is nearly full, so the recording was stopped to keep what was captured. Free some space before recording again.",
 		"cursorAccessibilityUnavailable": "輔助使用權限尚未開啟。錄影會繼續，但游標效果可能受限。請在系統設定中開啟此權限，以使用完整的游標效果。",
 		"selectSource": "請選擇要錄製的來源"
 	},
@@ -119,6 +121,8 @@
 		"editableCursor": "可編輯游標",
 		"editableCursorTip": "開：可編輯游標，可修改樣式並使用自動縮放。關：系統游標，直接錄進影片。",
 		"autoZoom": "錄製後自動縮放",
+		"countdown": "Countdown",
+		"countdownSeconds": "{{seconds}} s",
 		"hideDesktopIcons": "隱藏桌面圖示",
 		"hideDesktopIconsHintMac": "在螢幕錄製中略去桌面圖示。它們仍會留在你的桌面上。",
 		"hideDesktopIconsHintWindows": "錄製時遮住桌面圖示。停止後會恢復。",
