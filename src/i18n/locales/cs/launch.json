@@ -81,6 +81,15 @@
 		"switch": "Přepnout na {{language}}",
 		"keepDefault": "Ponechat aktuální jazyk"
 	},
+	"interruptedTakes": {
+		"title": "A recording was interrupted",
+		"description": "{{product}} found a take from {{when}} that was never saved ({{size}}).",
+		"emptyDescription": "{{product}} found an interrupted take from {{when}} whose video file is empty.",
+		"recover": "Recover",
+		"discard": "Discard",
+		"recovered": "The recovered take is opening in the editor",
+		"failed": "Could not recover the take: {{error}}"
+	},
 	"softwareEncoderFallback": {
 		"title": "Přepnuto na softwarové kódování",
 		"description": "Výchozí GPU enkodér se nepodařilo spustit, takže {{product}} přepnul na softwarové kódování H.264. Nahrávání by mělo pokračovat normálně, ale využití CPU může být vyšší.",

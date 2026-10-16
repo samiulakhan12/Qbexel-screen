@@ -81,6 +81,15 @@
 		"switch": "{{language}} diline geç",
 		"keepDefault": "Mevcut dili koru"
 	},
+	"interruptedTakes": {
+		"title": "A recording was interrupted",
+		"description": "{{product}} found a take from {{when}} that was never saved ({{size}}).",
+		"emptyDescription": "{{product}} found an interrupted take from {{when}} whose video file is empty.",
+		"recover": "Recover",
+		"discard": "Discard",
+		"recovered": "The recovered take is opening in the editor",
+		"failed": "Could not recover the take: {{error}}"
+	},
 	"softwareEncoderFallback": {
 		"title": "Yazılım kodlamasına geçildi",
 		"description": "Varsayılan GPU kodlayıcı başlatılamadığı için {{product}} yazılım tabanlı H.264 kodlamasına geçti. Kayıt normal şekilde devam eder, ancak CPU kullanımı daha yüksek olabilir.",

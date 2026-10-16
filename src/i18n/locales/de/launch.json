@@ -81,6 +81,15 @@
 		"switch": "Zu {{language}} wechseln",
 		"keepDefault": "Aktuelle Sprache behalten"
 	},
+	"interruptedTakes": {
+		"title": "A recording was interrupted",
+		"description": "{{product}} found a take from {{when}} that was never saved ({{size}}).",
+		"emptyDescription": "{{product}} found an interrupted take from {{when}} whose video file is empty.",
+		"recover": "Recover",
+		"discard": "Discard",
+		"recovered": "The recovered take is opening in the editor",
+		"failed": "Could not recover the take: {{error}}"
+	},
 	"softwareEncoderFallback": {
 		"title": "Auf Software-Encoding umgestellt",
 		"description": "Der Standard-GPU-Encoder konnte nicht gestartet werden, deshalb ist {{product}} auf Software-H.264-Encoding zurückgefallen. Die Aufnahme läuft normal weiter, die CPU-Auslastung kann aber höher sein.",

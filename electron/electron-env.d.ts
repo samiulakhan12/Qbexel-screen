@@ -291,6 +291,18 @@ interface Window {
 			message?: string;
 			error?: string;
 		}>;
+		scanInterruptedTakes: () => Promise<
+			Array<{
+				markerPath: string;
+				startedAt: string;
+				screenVideoPath: string;
+				screenBytes: number;
+				webcamExists: boolean;
+				backend: string;
+			}>
+		>;
+		recoverInterruptedTake: (markerPath: string) => Promise<{ success: boolean; error?: string }>;
+		forgetInterruptedTake: (markerPath: string) => Promise<{ success: boolean; error?: string }>;
 		onStopRecordingFromTray: (callback: () => void) => () => void;
 		openExternalUrl: (url: string) => Promise<{ success: boolean; error?: string }>;
 		openRepoPage: () => Promise<void>;

@@ -81,6 +81,15 @@
 		"switch": "Cambiar a {{language}}",
 		"keepDefault": "Mantener idioma actual"
 	},
+	"interruptedTakes": {
+		"title": "A recording was interrupted",
+		"description": "{{product}} found a take from {{when}} that was never saved ({{size}}).",
+		"emptyDescription": "{{product}} found an interrupted take from {{when}} whose video file is empty.",
+		"recover": "Recover",
+		"discard": "Discard",
+		"recovered": "The recovered take is opening in the editor",
+		"failed": "Could not recover the take: {{error}}"
+	},
 	"softwareEncoderFallback": {
 		"title": "Se cambió a codificación por software",
 		"description": "El codificador GPU predeterminado no pudo iniciarse, por lo que {{product}} pasó a la codificación H.264 por software. La grabación debería continuar con normalidad, pero el uso de CPU puede ser mayor.",

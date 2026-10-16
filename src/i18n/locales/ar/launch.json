@@ -81,6 +81,15 @@
 		"editableTip": "مؤشر قابل للتحرير: يُسجَّل بشكل منفصل، فيمكنك تغيير شكله واستخدام التكبير التلقائي في المحرر",
 		"systemTip": "مؤشر النظام: مؤشرك الفعلي، يُسجَّل داخل الفيديو. بلا تغيير للشكل وبلا تكبير تلقائي."
 	},
+	"interruptedTakes": {
+		"title": "A recording was interrupted",
+		"description": "{{product}} found a take from {{when}} that was never saved ({{size}}).",
+		"emptyDescription": "{{product}} found an interrupted take from {{when}} whose video file is empty.",
+		"recover": "Recover",
+		"discard": "Discard",
+		"recovered": "The recovered take is opening in the editor",
+		"failed": "Could not recover the take: {{error}}"
+	},
 	"softwareEncoderFallback": {
 		"title": "تم التبديل إلى الترميز البرمجي",
 		"description": "تعذّر تشغيل مرمّز GPU الافتراضي، لذا تحوّل {{product}} إلى ترميز H.264 البرمجي. سيستمر التسجيل كالمعتاد، لكن استخدام المعالج قد يكون أعلى.",

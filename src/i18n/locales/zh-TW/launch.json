@@ -81,6 +81,15 @@
 		"switch": "切換為 {{language}}",
 		"keepDefault": "保持目前語言"
 	},
+	"interruptedTakes": {
+		"title": "A recording was interrupted",
+		"description": "{{product}} found a take from {{when}} that was never saved ({{size}}).",
+		"emptyDescription": "{{product}} found an interrupted take from {{when}} whose video file is empty.",
+		"recover": "Recover",
+		"discard": "Discard",
+		"recovered": "The recovered take is opening in the editor",
+		"failed": "Could not recover the take: {{error}}"
+	},
 	"softwareEncoderFallback": {
 		"title": "已切換至軟體編碼",
 		"description": "預設 GPU 編碼器啟動失敗，{{product}} 已改用軟體 H.264 編碼。錄製會照常繼續，但 CPU 使用率可能較高。",

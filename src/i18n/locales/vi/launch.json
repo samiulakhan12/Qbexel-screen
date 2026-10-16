@@ -81,6 +81,15 @@
 		"editableTip": "Con trỏ có thể chỉnh sửa: được ghi riêng, nên bạn có thể đổi kiểu và dùng thu phóng tự động trong trình chỉnh sửa",
 		"systemTip": "Con trỏ hệ thống: con trỏ thật của bạn, được ghi vào video. Không đổi kiểu, không thu phóng tự động."
 	},
+	"interruptedTakes": {
+		"title": "A recording was interrupted",
+		"description": "{{product}} found a take from {{when}} that was never saved ({{size}}).",
+		"emptyDescription": "{{product}} found an interrupted take from {{when}} whose video file is empty.",
+		"recover": "Recover",
+		"discard": "Discard",
+		"recovered": "The recovered take is opening in the editor",
+		"failed": "Could not recover the take: {{error}}"
+	},
 	"softwareEncoderFallback": {
 		"title": "Đã chuyển sang mã hóa bằng phần mềm",
 		"description": "Bộ mã hóa GPU mặc định không khởi động được, nên {{product}} đã chuyển sang mã hóa H.264 bằng phần mềm. Quá trình ghi vẫn tiếp tục bình thường, nhưng mức sử dụng CPU có thể cao hơn.",

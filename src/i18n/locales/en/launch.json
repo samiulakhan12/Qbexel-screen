@@ -81,6 +81,15 @@
 		"switch": "Switch to {{language}}",
 		"keepDefault": "Keep current language"
 	},
+	"interruptedTakes": {
+		"title": "A recording was interrupted",
+		"description": "{{product}} found a take from {{when}} that was never saved ({{size}}).",
+		"emptyDescription": "{{product}} found an interrupted take from {{when}} whose video file is empty.",
+		"recover": "Recover",
+		"discard": "Discard",
+		"recovered": "The recovered take is opening in the editor",
+		"failed": "Could not recover the take: {{error}}"
+	},
 	"softwareEncoderFallback": {
 		"title": "Switched to a backup encoder",
 		"description": "Your graphics card's encoder didn't start, so {{product}} switched to a backup. Your recording is fine, though your computer may work a little harder.",

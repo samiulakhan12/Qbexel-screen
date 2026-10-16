@@ -81,6 +81,15 @@
 		"editableTip": "Редактируемый курсор: записывается отдельно, поэтому в редакторе можно менять его стиль и использовать автозум",
 		"systemTip": "Системный курсор: ваш настоящий курсор, записанный в видео. Без смены стиля и без автозума."
 	},
+	"interruptedTakes": {
+		"title": "A recording was interrupted",
+		"description": "{{product}} found a take from {{when}} that was never saved ({{size}}).",
+		"emptyDescription": "{{product}} found an interrupted take from {{when}} whose video file is empty.",
+		"recover": "Recover",
+		"discard": "Discard",
+		"recovered": "The recovered take is opening in the editor",
+		"failed": "Could not recover the take: {{error}}"
+	},
 	"softwareEncoderFallback": {
 		"title": "Выполнен переход на программное кодирование",
 		"description": "Стандартный GPU-кодировщик не запустился, поэтому {{product}} перешёл на программное кодирование H.264. Запись продолжится как обычно, но нагрузка на процессор может быть выше.",

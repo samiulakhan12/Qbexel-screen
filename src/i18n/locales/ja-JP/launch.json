@@ -81,6 +81,15 @@
 		"switch": "{{language}}に切り替え",
 		"keepDefault": "現在の言語を保持"
 	},
+	"interruptedTakes": {
+		"title": "A recording was interrupted",
+		"description": "{{product}} found a take from {{when}} that was never saved ({{size}}).",
+		"emptyDescription": "{{product}} found an interrupted take from {{when}} whose video file is empty.",
+		"recover": "Recover",
+		"discard": "Discard",
+		"recovered": "The recovered take is opening in the editor",
+		"failed": "Could not recover the take: {{error}}"
+	},
 	"softwareEncoderFallback": {
 		"title": "ソフトウェアエンコードに切り替えました",
 		"description": "既定のGPUエンコーダーを開始できなかったため、{{product}}はソフトウェアH.264エンコードに切り替えました。録画はそのまま続行されますが、CPU使用率が高くなる場合があります。",

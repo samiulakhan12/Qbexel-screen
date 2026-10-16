@@ -325,6 +325,17 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	discardCursorTelemetry: (recordingId: number) => {
 		return ipcRenderer.invoke("discard-cursor-telemetry", recordingId);
 	},
+	// Interrupted takes (electron/recording/takeJournal.ts): list them, recover one into the
+	// editor, or drop its marker.
+	scanInterruptedTakes: () => {
+		return ipcRenderer.invoke("scan-interrupted-takes");
+	},
+	recoverInterruptedTake: (markerPath: string) => {
+		return ipcRenderer.invoke("recover-interrupted-take", markerPath);
+	},
+	forgetInterruptedTake: (markerPath: string) => {
+		return ipcRenderer.invoke("forget-interrupted-take", markerPath);
+	},
 	onStopRecordingFromTray: (callback: () => void) => {
 		const listener = () => callback();
 		ipcRenderer.on("stop-recording-from-tray", listener);

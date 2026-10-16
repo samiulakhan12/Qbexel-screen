@@ -15,8 +15,25 @@ export interface ProjectMedia {
 
 export type CursorCaptureMode = "editable-overlay" | "system";
 
+/** One moment of a take's lifecycle, on two clocks. */
+export interface RecordingEvent {
+	type: "start" | "pause" | "resume" | "stop";
+	/** Recording time, ms since the first frame with pauses removed: the video's own clock. */
+	atMs: number;
+	/** When it happened, ISO 8601. */
+	wallClock: string;
+	/** On `resume`: how long the pause lasted in wall-clock ms. */
+	pausedForMs?: number;
+	/** On `stop`: the stop was synthesised when an interrupted take was recovered. */
+	recovered?: boolean;
+}
+
 export interface RecordingSession extends ProjectMedia {
 	createdAt: number;
+	/** The take's start, pauses, resumes and stop, when the recorder journaled them. */
+	events?: RecordingEvent[];
+	/** The take was recovered at a later launch from an in-progress marker. */
+	recovered?: boolean;
 }
 
 export interface RecordedVideoAssetInput {

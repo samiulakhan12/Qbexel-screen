@@ -55,6 +55,7 @@ import {
 	HUD_STACK_GAP,
 } from "./hudGeometry";
 import styles from "./LaunchWindow.module.css";
+import { useInterruptedTakesNotice } from "./useInterruptedTakesNotice";
 
 // Locale list is computed once at module load; keeping the reference stable lets
 // the language menu sit behind a memo boundary.
@@ -177,6 +178,8 @@ export function LaunchWindow() {
 	const popoverRef = useRef<HTMLDivElement | null>(null);
 	const hudNoticesRef = useRef<HTMLDivElement | null>(null);
 	const hudToasterRef = useRef<HTMLDivElement | null>(null);
+	// Takes a previous run never finished are offered back as toasts, once per mount.
+	useInterruptedTakesNotice();
 	// Height of the toasts on screen (0 when none), and where they sit: see the toaster at the
 	// end of the render.
 	const hudToastsHeightRef = useRef(0);

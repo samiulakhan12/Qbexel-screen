@@ -147,6 +147,12 @@ import {
 	waitForNativeWindowsCaptureStop,
 } from "../recording/nativeWindowsCaptureStop";
 import { removeEmptyCaptureOutput } from "../recording/removeEmptyCaptureOutput";
+import {
+	forgetInterruptedTake,
+	recoverInterruptedTake,
+	scanInterruptedTakes,
+	TakeJournal,
+} from "../recording/takeJournal";
 import { patchWebmDurationOnDisk } from "../recording/webm-duration";
 import { reindexRecordingOnDisk } from "../recording/webm-seek-index";
 import {
@@ -768,6 +774,8 @@ let nativeWindowsCursorRecordingStartMs = 0;
 let nativeWindowsPauseStartedAtMs: number | null = null;
 let nativeWindowsPauseRanges: Array<{ startMs: number; endMs: number }> = [];
 let nativeWindowsIsPaused = false;
+/** The take on disk right now: its in-progress marker and its start/pause/resume/stop events. */
+const takeJournal = new TakeJournal();
 /**
  * The MP4 flavour the helper reported for THIS run, or null if it never said.
  * Read at stop, not for reporting: it is what decides whether a capture that
@@ -2522,6 +2530,67 @@ export function registerIpcHandlers(
 		createEditorWindow();
 	});
 
+	// Takes whose in-progress marker survived the last run (electron/recording/takeJournal.ts).
+	// The HUD asks at mount and offers each one back. The renderer names a take by its marker
+	// path, which is checked against the recordings folder and re-read from disk: nothing the
+	// renderer sends is trusted beyond "which one".
+	const findInterruptedTake = async (markerPath: unknown) => {
+		if (typeof markerPath !== "string" || !isPathWithinDir(markerPath, RECORDINGS_DIR)) {
+			throw new Error("Not an interrupted take of the recordings folder");
+		}
+		const take = (await scanInterruptedTakes(RECORDINGS_DIR)).find(
+			(candidate) => path.resolve(candidate.markerPath) === path.resolve(markerPath),
+		);
+		if (!take) throw new Error("This take is no longer interrupted");
+		return take;
+	};
+
+	ipcMain.handle("scan-interrupted-takes", async () => {
+		const takes = await scanInterruptedTakes(RECORDINGS_DIR);
+		return takes.map((take) => ({
+			markerPath: take.markerPath,
+			startedAt: take.marker.startedAt,
+			screenVideoPath: take.marker.screenVideoPath,
+			screenBytes: take.screenBytes,
+			webcamExists: take.webcamExists,
+			backend: take.marker.backend,
+		}));
+	});
+
+	ipcMain.handle("recover-interrupted-take", async (_, markerPath: unknown) => {
+		try {
+			const take = await findInterruptedTake(markerPath);
+			if (take.screenBytes === 0) {
+				throw new Error("The recording's video file is empty; nothing can be recovered");
+			}
+			const session = await recoverInterruptedTake(RECORDINGS_DIR, take);
+			setCurrentRecordingSessionState(session);
+			currentProjectPath = null;
+			await registerRecordingMediaLinks(session.screenVideoPath, {
+				webcamVideoPath: session.webcamVideoPath,
+				cursorCaptureMode: session.cursorCaptureMode,
+			});
+			createEditorWindow();
+			return { success: true, session };
+		} catch (error) {
+			return { success: false, error: error instanceof Error ? error.message : String(error) };
+		}
+	});
+
+	ipcMain.handle("forget-interrupted-take", async (_, markerPath: unknown) => {
+		try {
+			const take = await findInterruptedTake(markerPath);
+			await forgetInterruptedTake(take);
+			if (take.screenBytes === 0) {
+				// An empty file is a leftover, not a take: take it with the marker.
+				await fs.rm(take.marker.screenVideoPath, { force: true }).catch(() => undefined);
+			}
+			return { success: true };
+		} catch (error) {
+			return { success: false, error: error instanceof Error ? error.message : String(error) };
+		}
+	});
+
 	ipcMain.handle("switch-to-hud", () => {
 		_switchToHud?.();
 		return { success: true };
@@ -2788,6 +2857,13 @@ export function registerIpcHandlers(
 				linuxNativeCaptureSession = session;
 				linuxNativeCaptureRecordingId = recordingId;
 				linuxNativeCaptureCursorMode = cursorCaptureMode;
+				await takeJournal.begin({
+					recordingId,
+					backend: "linux-pipewire",
+					recordingsDir: RECORDINGS_DIR,
+					screenVideoPath: outputPath,
+					cursorCaptureMode,
+				});
 
 				// The portal's answer, not an in-app selection — on Wayland there
 				// is none to have. This used to read `selectedSource || { name:
@@ -2817,6 +2893,7 @@ export function registerIpcHandlers(
 			return { success: false, error: "Native Linux capture is not running." };
 		}
 		linuxNativeCaptureSession.pause();
+		void takeJournal.pause();
 		return { success: true };
 	});
 
@@ -2825,6 +2902,7 @@ export function registerIpcHandlers(
 			return { success: false, error: "Native Linux capture is not running." };
 		}
 		linuxNativeCaptureSession.resume();
+		void takeJournal.resume();
 		return { success: true };
 	});
 
@@ -2845,6 +2923,7 @@ export function registerIpcHandlers(
 					fs.rm(discarded, { force: true }),
 					fs.rm(`${discarded}.cursor.json`, { force: true }),
 				]);
+				await takeJournal.discard();
 				return { success: true, discarded: true };
 			}
 
@@ -2861,10 +2940,12 @@ export function registerIpcHandlers(
 				);
 			}
 
+			const take = await takeJournal.finish();
 			const session_: RecordingSession = {
 				screenVideoPath: result.path,
 				createdAt: recordingId,
 				cursorCaptureMode,
+				...(take ? { events: take.events } : {}),
 			};
 			setCurrentRecordingSessionState(session_);
 			currentProjectPath = null;
@@ -3046,6 +3127,14 @@ export function registerIpcHandlers(
 				nativeWindowsPauseStartedAtMs = null;
 				nativeWindowsPauseRanges = [];
 				nativeWindowsIsPaused = false;
+				await takeJournal.begin({
+					recordingId,
+					backend: "windows-wgc",
+					recordingsDir: RECORDINGS_DIR,
+					screenVideoPath: outputPath,
+					...(request.webcam.enabled ? { webcamVideoPath: webcamOutputPath } : {}),
+					cursorCaptureMode,
+				});
 
 				const cursorStartTimeMs = Date.now();
 				if (cursorCaptureMode === "editable-overlay") {
@@ -3286,6 +3375,13 @@ export function registerIpcHandlers(
 			nativeMacStopInFlight = false;
 			nativeMacRecordingWarning = null;
 			activeMacCaptureBounds = null;
+			await takeJournal.begin({
+				recordingId,
+				backend: "macos-sck",
+				recordingsDir: RECORDINGS_DIR,
+				screenVideoPath: outputPath,
+				cursorCaptureMode,
+			});
 
 			const cursorStartTimeMs = Date.now();
 			if (cursorCaptureMode === "editable-overlay") {
@@ -3404,6 +3500,7 @@ export function registerIpcHandlers(
 		try {
 			proc.stdin.write("pause\n");
 			nativeMacIsPaused = true;
+			void takeJournal.pause();
 			nativeMacPauseStartedAtMs = Date.now();
 			return { success: true };
 		} catch (error) {
@@ -3431,6 +3528,7 @@ export function registerIpcHandlers(
 			proc.stdin.write("resume\n");
 			completeNativeMacCursorPauseRange();
 			nativeMacIsPaused = false;
+			void takeJournal.resume();
 			return { success: true };
 		} catch (error) {
 			return { success: false, error: error instanceof Error ? error.message : String(error) };
@@ -3452,6 +3550,7 @@ export function registerIpcHandlers(
 		try {
 			proc.stdin.write("pause\n");
 			nativeWindowsIsPaused = true;
+			void takeJournal.pause();
 			nativeWindowsPauseStartedAtMs = Date.now();
 			return { success: true };
 		} catch (error) {
@@ -3475,6 +3574,7 @@ export function registerIpcHandlers(
 			proc.stdin.write("resume\n");
 			completeNativeWindowsCursorPauseRange();
 			nativeWindowsIsPaused = false;
+			void takeJournal.resume();
 			return { success: true };
 		} catch (error) {
 			return { success: false, error: error instanceof Error ? error.message : String(error) };
@@ -3508,6 +3608,7 @@ export function registerIpcHandlers(
 					detachNativeWindowsCaptureOutputDrain();
 				}
 				await removeNativeWindowsCaptureOutputs(preferredPath, preferredWebcamPath);
+				await takeJournal.discard();
 				return { success: true, discarded: true };
 			} finally {
 				// Unconditional. Killing a wedged helper can itself throw, and
@@ -3637,9 +3738,14 @@ export function registerIpcHandlers(
 					webcamVideoPath = undefined;
 				}
 			}
-			const session: RecordingSession = webcamVideoPath
-				? { screenVideoPath, webcamVideoPath, createdAt: recordingId, cursorCaptureMode }
-				: { screenVideoPath, createdAt: recordingId, cursorCaptureMode };
+			const take = await takeJournal.finish();
+			const session: RecordingSession = {
+				screenVideoPath,
+				...(webcamVideoPath ? { webcamVideoPath } : {}),
+				createdAt: recordingId,
+				cursorCaptureMode,
+				...(take ? { events: take.events } : {}),
+			};
 			setCurrentRecordingSessionState(session);
 			currentProjectPath = null;
 
@@ -3717,6 +3823,7 @@ export function registerIpcHandlers(
 						fs.rm(target, { force: true }),
 					),
 				);
+				await takeJournal.discard();
 				if (!stopResult.ok) {
 					console.warn("[native-sck] discarded a take whose stop did not complete", {
 						reason: stopResult.reason,
@@ -3795,10 +3902,12 @@ export function registerIpcHandlers(
 				);
 			}
 
+			const take = await takeJournal.finish();
 			const session: RecordingSession = {
 				screenVideoPath,
 				createdAt: recordingId,
 				cursorCaptureMode,
+				...(take ? { events: take.events } : {}),
 			};
 			setCurrentRecordingSessionState(session);
 			currentProjectPath = null;
