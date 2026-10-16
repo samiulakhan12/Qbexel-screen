@@ -62,8 +62,8 @@
 		"screens": "Obrazovky ({{count}})",
 		"windows": "Okna ({{count}})",
 		"emptyTitle": "Žádné obrazovky ani okna nenalezena",
-		"emptyDescription": "Pokud jste právě udělili oprávnění pro záznam obrazovky, znovu načtěte tento výběr. Na macOS může být nutné znovu otevřít OpenScreen.",
-		"loadFailedDescription": "OpenScreen nemohl načíst zdroje záznamu. Znovu načtěte tento výběr a zkuste to znovu.",
+		"emptyDescription": "Pokud jste právě udělili oprávnění pro záznam obrazovky, znovu načtěte tento výběr. Na macOS může být nutné znovu otevřít {{product}}.",
+		"loadFailedDescription": "{{product}} nemohl načíst zdroje záznamu. Znovu načtěte tento výběr a zkuste to znovu.",
 		"defaultSourceName": "Obrazovka"
 	},
 	"recording": {
@@ -77,13 +77,13 @@
 	"languageWithName": "Jazyk: {{language}}",
 	"systemLanguagePrompt": {
 		"title": "Použít jazyk systému?",
-		"description": "Detekovali jsme {{language}} jako jazyk vašeho systému. Chcete přepnout OpenScreen na {{language}}?",
+		"description": "Detekovali jsme {{language}} jako jazyk vašeho systému. Chcete přepnout {{product}} na {{language}}?",
 		"switch": "Přepnout na {{language}}",
 		"keepDefault": "Ponechat aktuální jazyk"
 	},
 	"softwareEncoderFallback": {
 		"title": "Přepnuto na softwarové kódování",
-		"description": "Výchozí GPU enkodér se nepodařilo spustit, takže OpenScreen přepnul na softwarové kódování H.264. Nahrávání by mělo pokračovat normálně, ale využití CPU může být vyšší.",
+		"description": "Výchozí GPU enkodér se nepodařilo spustit, takže {{product}} přepnul na softwarové kódování H.264. Nahrávání by mělo pokračovat normálně, ale využití CPU může být vyšší.",
 		"dismiss": "Rozumím",
 		"dontShowAgain": "Již nezobrazovat"
 	},
@@ -100,7 +100,7 @@
 		"checkingForUpdates": "Kontrola…"
 	},
 	"permissions": {
-		"title": "OpenScreen potřebuje několik oprávnění",
+		"title": "{{product}} potřebuje několik oprávnění",
 		"subtitle": "macOS vás o každé požádá jen jednou. Kdykoli je můžete změnit v Nastavení systému.",
 		"level": {
 			"required": "Povinné",
@@ -137,17 +137,17 @@
 			"continue": "Pokračovat",
 			"allow": "Povolit",
 			"openSettings": "Otevřít Nastavení",
-			"restart": "Restartovat OpenScreen",
+			"restart": "Restartovat {{product}}",
 			"start": "Začít"
 		},
 		"help": {
-			"screenPrompt": "macOS vás pak požádá, abyste OpenScreen zapnuli v Nastavení systému.",
-			"screenSettings": "V Nastavení systému zapněte OpenScreen. Pokud macOS nabídne aplikaci ukončit a znovu otevřít, přijměte: toto okno se vrátí.",
-			"screenNotListed": "OpenScreen v seznamu chybí? Klikněte na + a vyberte OpenScreen ve složce Aplikace.",
-			"screenRestart": "Povoleno. OpenScreen se musí restartovat, aby oprávnění mohl použít.",
-			"screenRecurring": "Při prvním nahrávání se vás macOS zeptá, zda smí OpenScreen přistupovat k obrazovce přímo, bez systémového výběru. Klikněte na Povolit. macOS se čas od času zeptá znovu, to je v pořádku.",
-			"systemAudioPrompt": "macOS se vás zeptá, zda smí OpenScreen nahrávat zvuk z vašeho Macu.",
-			"systemAudioRequested": "Pokud jste odmítli, zapněte OpenScreen v části „Jen záznam systémového zvuku“ v Nastavení systému."
+			"screenPrompt": "macOS vás pak požádá, abyste {{product}} zapnuli v Nastavení systému.",
+			"screenSettings": "V Nastavení systému zapněte {{product}}. Pokud macOS nabídne aplikaci ukončit a znovu otevřít, přijměte: toto okno se vrátí.",
+			"screenNotListed": "{{product}} v seznamu chybí? Klikněte na + a vyberte {{product}} ve složce Aplikace.",
+			"screenRestart": "Povoleno. {{product}} se musí restartovat, aby oprávnění mohl použít.",
+			"screenRecurring": "Při prvním nahrávání se vás macOS zeptá, zda smí {{product}} přistupovat k obrazovce přímo, bez systémového výběru. Klikněte na Povolit. macOS se čas od času zeptá znovu, to je v pořádku.",
+			"systemAudioPrompt": "macOS se vás zeptá, zda smí {{product}} nahrávat zvuk z vašeho Macu.",
+			"systemAudioRequested": "Pokud jste odmítli, zapněte {{product}} v části „Jen záznam systémového zvuku“ v Nastavení systému."
 		},
 		"footer": {
 			"screenRequired": "K nahrávání je potřeba nahrávání obrazovky.",

@@ -12,10 +12,12 @@
 import { randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { BRAND } from "../src/lib/branding";
 import type { InstallChannel } from "./install-channel";
 
-// A project token is public by design: it can only send events, not read them.
-const POSTHOG_TOKEN = "phc_zhJDJHBBRDAJBwSb7zf2JuQ59v6RwBN96ZksM2y4oq8C";
+// A project token is public by design: it can only send events, not read them. `null` in
+// branding.json means this build sends nothing, ever: no token, no ping.
+const POSTHOG_TOKEN: string | null = BRAND.telemetry.posthogToken;
 const CAPTURE_URL = "https://eu.i.posthog.com/i/v0/e/";
 
 /** Often enough that an app left running in the tray for days still counts every day. */
@@ -120,7 +122,10 @@ export async function sendUsagePing(
 	env: Readonly<Record<string, string | undefined>> = process.env,
 	now: Date = new Date(),
 	fetchImpl: Fetch = fetch,
+	token: string | null = POSTHOG_TOKEN,
 ): Promise<void> {
+	// No token, no ping: a build whose branding.json carries none is silent by construction.
+	if (token === null) return;
 	const state = loadUsagePingState(userData);
 	const plan = planUsagePing(state, facts.channel, env, now);
 	if (!plan) return;
@@ -129,7 +134,7 @@ export async function sendUsagePing(
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
-				api_key: POSTHOG_TOKEN,
+				api_key: token,
 				event: "app_active",
 				distinct_id: randomUUID(),
 				properties: {

@@ -1,9 +1,9 @@
 {
-	"name": "openscreen",
+	"name": "qbexelcapturestudio",
 	"private": true,
 	"version": "2.0.0",
-	"description": "Record your screen and polish the demo",
-	"homepage": "https://getopenscreen.com/",
+	"description": "Qbexel Capture Studio: record your screen and turn it into a polished SaaS tutorial",
+	"homepage": "https://qbexel.com/",
 	"license": "MIT",
 	"type": "module",
 	"packageManager": "npm@10.9.4",

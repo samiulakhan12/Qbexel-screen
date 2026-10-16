@@ -43,7 +43,7 @@
 		"microphoneUnavailable": "Esta versión de macOS no puede grabar el micrófono. Grabando sin él.",
 		"restartFailed": "No se pudo iniciar la nueva grabación. La anterior se eliminó.",
 		"permissionDenied": "Permiso de grabación denegado. Por favor permite la grabación de pantalla.",
-		"accessibilityAllowAndRetry": "Permite el acceso de accesibilidad para OpenScreen y luego pulsa grabar de nuevo para iniciar la cuenta atrás.",
+		"accessibilityAllowAndRetry": "Permite el acceso de accesibilidad para {{product}} y luego pulsa grabar de nuevo para iniciar la cuenta atrás.",
 		"cursorAccessibilityUnavailable": "Accesibilidad está desactivada. La grabación continuará, pero los efectos del cursor pueden ser limitados. Actívala en Ajustes del Sistema para usar todos los efectos del cursor.",
 		"selectSource": "Por favor selecciona una fuente para grabar"
 	},
@@ -178,7 +178,7 @@
 		"detectedLanguage": "Idioma detectado: {{language}}",
 		"noAudioTrack": "Sin pista de audio",
 		"noAudioTrackHint": "Este medio no tiene pista de audio: no hay nada que transcribir.",
-		"mediaUnreadableHint": "No se pudo leer el audio de este medio. Asegúrate de que OpenScreen puede acceder a la carpeta que lo contiene y vuelve a generar.",
+		"mediaUnreadableHint": "No se pudo leer el audio de este medio. Asegúrate de que {{product}} puede acceder a la carpeta que lo contiene y vuelve a generar.",
 		"noSpeechDetected": "No se detectó voz"
 	},
 	"exportDialog": {
@@ -208,7 +208,7 @@
 		"exportedGif": "GIF exportado",
 		"exportedVideo": "Vídeo exportado",
 		"showInFolder": "Mostrar en la carpeta",
-		"starPrompt": "OpenScreen es gratuito y tiene licencia MIT. Una estrella en GitHub ayuda a que otras personas lo encuentren.",
+		"starPrompt": "{{product}} es gratuito y tiene licencia MIT. Una estrella en GitHub ayuda a que otras personas lo encuentren.",
 		"starPromptNoThanks": "No, gracias",
 		"rateOnStore": "Valorar en Microsoft Store",
 		"exportFailed": "Error al exportar",
@@ -291,7 +291,7 @@
 			"disclaimer": "La transcripción de tu vídeo se enviará al proveedor que elijas. No se comparte nada hasta que conectes uno."
 		},
 		"authorUser": "Tú",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "{{product}}",
 		"rewindToMessage": "Rebobinar a este mensaje",
 		"rewindTip": "Rebobinar a este mensaje. Los cambios posteriores se deshacen.",
 		"copyMessage": "Copiar mensaje",
@@ -413,7 +413,7 @@
 	},
 	"mcpServer": {
 		"title": "Servidor MCP",
-		"description": "Permite que los clientes MCP que ejecutas tú mismo, como Claude Code o Codex, usen las herramientas de edición con IA en cualquiera de tus proyectos, no solo en el abierto en el editor. Inician sesión con sus propias cuentas; OpenScreen nunca las ve.",
+		"description": "Permite que los clientes MCP que ejecutas tú mismo, como Claude Code o Codex, usen las herramientas de edición con IA en cualquiera de tus proyectos, no solo en el abierto en el editor. Inician sesión con sus propias cuentas; {{product}} nunca las ve.",
 		"enableLabel": "Servidor",
 		"enable": "Activar servidor MCP",
 		"editsLabel": "Ediciones por MCP",

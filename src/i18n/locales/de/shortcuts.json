@@ -15,6 +15,8 @@
 	"resetToast": "Auf Standardkürzel zurückgesetzt — klicke auf Speichern, um sie zu übernehmen",
 	"registrationFailed": "Kürzel konnte nicht registriert werden. Möglicherweise wird es von einer anderen App verwendet. Probiere eine andere Taste.",
 	"actions": {
+		"toggleRecording": "Start / Stop Recording",
+		"pauseRecording": "Pause / Resume Recording",
 		"openApp": "App öffnen",
 		"addZoom": "Zoom hinzufügen",
 		"addTrim": "Trim hinzufügen",

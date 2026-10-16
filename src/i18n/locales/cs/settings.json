@@ -140,7 +140,7 @@
 	"stylePresets": {
 		"button": "Předvolby",
 		"menuLabel": "Předvolby stylu",
-		"factoryName": "OpenScreen",
+		"factoryName": "{{product}}",
 		"factoryBadge": "Vestavěná",
 		"empty": "Zatím žádné uložené předvolby",
 		"create": "Vytvořit novou předvolbu…",

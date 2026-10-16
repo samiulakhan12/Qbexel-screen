@@ -57,8 +57,8 @@
 		"screens": "Màn hình ({{count}})",
 		"windows": "Cửa sổ ({{count}})",
 		"emptyTitle": "Không tìm thấy màn hình hoặc cửa sổ nào",
-		"emptyDescription": "Nếu bạn vừa cấp quyền ghi màn hình, hãy tải lại bộ chọn này. Trên macOS, bạn có thể cần mở lại OpenScreen.",
-		"loadFailedDescription": "OpenScreen không thể tải các nguồn ghi hình. Hãy tải lại bộ chọn này và thử lại.",
+		"emptyDescription": "Nếu bạn vừa cấp quyền ghi màn hình, hãy tải lại bộ chọn này. Trên macOS, bạn có thể cần mở lại {{product}}.",
+		"loadFailedDescription": "{{product}} không thể tải các nguồn ghi hình. Hãy tải lại bộ chọn này và thử lại.",
 		"defaultSourceName": "Màn hình"
 	},
 	"recording": {
@@ -72,7 +72,7 @@
 	"languageWithName": "Ngôn ngữ: {{language}}",
 	"systemLanguagePrompt": {
 		"title": "Sử dụng ngôn ngữ hệ thống của bạn?",
-		"description": "Chúng tôi phát hiện {{language}} là ngôn ngữ hệ thống của bạn. Bạn có muốn chuyển OpenScreen sang {{language}} không?",
+		"description": "Chúng tôi phát hiện {{language}} là ngôn ngữ hệ thống của bạn. Bạn có muốn chuyển {{product}} sang {{language}} không?",
 		"switch": "Chuyển sang {{language}}",
 		"keepDefault": "Giữ ngôn ngữ hiện tại"
 	},
@@ -83,7 +83,7 @@
 	},
 	"softwareEncoderFallback": {
 		"title": "Đã chuyển sang mã hóa bằng phần mềm",
-		"description": "Bộ mã hóa GPU mặc định không khởi động được, nên OpenScreen đã chuyển sang mã hóa H.264 bằng phần mềm. Quá trình ghi vẫn tiếp tục bình thường, nhưng mức sử dụng CPU có thể cao hơn.",
+		"description": "Bộ mã hóa GPU mặc định không khởi động được, nên {{product}} đã chuyển sang mã hóa H.264 bằng phần mềm. Quá trình ghi vẫn tiếp tục bình thường, nhưng mức sử dụng CPU có thể cao hơn.",
 		"dismiss": "Đã hiểu",
 		"dontShowAgain": "Không hiển thị lại"
 	},
@@ -100,7 +100,7 @@
 		"checkingForUpdates": "Đang kiểm tra…"
 	},
 	"permissions": {
-		"title": "OpenScreen cần một vài quyền",
+		"title": "{{product}} cần một vài quyền",
 		"subtitle": "macOS chỉ yêu cầu bạn cấp mỗi quyền một lần. Bạn có thể thay đổi bất cứ lúc nào trong Cài đặt hệ thống.",
 		"level": {
 			"required": "Bắt buộc",
@@ -137,17 +137,17 @@
 			"continue": "Tiếp tục",
 			"allow": "Cho phép",
 			"openSettings": "Mở Cài đặt",
-			"restart": "Khởi động lại OpenScreen",
+			"restart": "Khởi động lại {{product}}",
 			"start": "Bắt đầu"
 		},
 		"help": {
-			"screenPrompt": "Sau đó macOS sẽ yêu cầu bạn bật OpenScreen trong Cài đặt hệ thống.",
-			"screenSettings": "Trong Cài đặt hệ thống, hãy bật OpenScreen. Nếu macOS đề nghị thoát và mở lại, hãy đồng ý: cửa sổ này sẽ quay lại.",
-			"screenNotListed": "Không thấy OpenScreen trong danh sách? Bấm +, rồi chọn OpenScreen trong Ứng dụng.",
-			"screenRestart": "Đã cho phép. OpenScreen cần khởi động lại để sử dụng quyền này.",
-			"screenRecurring": "Ở lần ghi đầu tiên, macOS sẽ hỏi OpenScreen có được truy cập trực tiếp màn hình mà không qua bộ chọn của hệ thống hay không. Hãy bấm Cho phép. Thỉnh thoảng macOS sẽ hỏi lại; điều đó là bình thường.",
-			"systemAudioPrompt": "macOS sẽ hỏi bạn có cho phép OpenScreen ghi âm thanh của máy Mac không.",
-			"systemAudioRequested": "Nếu bạn đã từ chối, hãy bật OpenScreen trong mục “Chỉ bản ghi âm thanh hệ thống” ở Cài đặt hệ thống."
+			"screenPrompt": "Sau đó macOS sẽ yêu cầu bạn bật {{product}} trong Cài đặt hệ thống.",
+			"screenSettings": "Trong Cài đặt hệ thống, hãy bật {{product}}. Nếu macOS đề nghị thoát và mở lại, hãy đồng ý: cửa sổ này sẽ quay lại.",
+			"screenNotListed": "Không thấy {{product}} trong danh sách? Bấm +, rồi chọn {{product}} trong Ứng dụng.",
+			"screenRestart": "Đã cho phép. {{product}} cần khởi động lại để sử dụng quyền này.",
+			"screenRecurring": "Ở lần ghi đầu tiên, macOS sẽ hỏi {{product}} có được truy cập trực tiếp màn hình mà không qua bộ chọn của hệ thống hay không. Hãy bấm Cho phép. Thỉnh thoảng macOS sẽ hỏi lại; điều đó là bình thường.",
+			"systemAudioPrompt": "macOS sẽ hỏi bạn có cho phép {{product}} ghi âm thanh của máy Mac không.",
+			"systemAudioRequested": "Nếu bạn đã từ chối, hãy bật {{product}} trong mục “Chỉ bản ghi âm thanh hệ thống” ở Cài đặt hệ thống."
 		},
 		"footer": {
 			"screenRequired": "Cần quyền ghi màn hình để ghi.",

@@ -1,9 +1,11 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "com.etiennelescot.openscreen",
+  "appId": "com.qbexel.capturestudio",
   "asar": true,
-  "productName": "Openscreen",
+  "productName": "Qbexel Capture Studio",
+  // No spaces in the binary: `QbexelCaptureStudio export …` is what the CLI docs show.
+  "executableName": "QbexelCaptureStudio",
   // There is deliberately no `electronVersion` here. electron-builder needs an EXACT
   // version because it downloads the binaries for one release, and it takes that from
   // package.json's `electron` devDependency, which is pinned without a caret for this
@@ -20,7 +22,7 @@
   // Windows LegalCopyright, so leaving it implicit put an attribution on the binary that the
   // LICENSE it ships alongside does not make. Any other surface that renders this line must
   // repeat it byte-for-byte.
-  "copyright": "© 2025-2026 OpenScreen contributors — MIT License",
+  "copyright": "© 2026 Qbexel. Based on OpenScreen, © 2025-2026 OpenScreen contributors — MIT License",
   // Declared explicitly, NOT to start publishing from CI — every build still passes
   // `--publish never`, which suppresses uploading only. What this turns on is the update
   // METADATA: `latest.yml` / `latest-mac.yml` / `latest-linux.yml`, the `.blockmap` used for
@@ -38,8 +40,10 @@
   "publish": [
     {
       "provider": "github",
-      "owner": "getopenscreen",
-      "repo": "openscreen"
+      // Placeholder until releases exist: branding.json#updates is null, so the app never
+      // checks this feed. When it is set, these two must match it (src/lib/branding.test.ts).
+      "owner": "qbexel",
+      "repo": "capture-studio"
     }
   ],
   // Fails the build when compositor_view.node is older than the crates/ Rust sources. Plain
@@ -213,10 +217,10 @@
       }
     ],
     "extendInfo": {
-      "NSAudioCaptureUsageDescription": "OpenScreen needs audio capture permission to record system audio.",
-      "NSMicrophoneUsageDescription": "OpenScreen needs microphone access to record voice audio.",
-      "NSCameraUsageDescription": "OpenScreen needs camera access to record webcam video.",
-      "NSScreenCaptureUsageDescription": "OpenScreen needs screen recording permission to detect and capture windows.",
+      "NSAudioCaptureUsageDescription": "Qbexel Capture Studio needs audio capture permission to record system audio.",
+      "NSMicrophoneUsageDescription": "Qbexel Capture Studio needs microphone access to record voice audio.",
+      "NSCameraUsageDescription": "Qbexel Capture Studio needs camera access to record webcam video.",
+      "NSScreenCaptureUsageDescription": "Qbexel Capture Studio needs screen recording permission to detect and capture windows.",
       "NSCameraUseContinuityCameraDeviceType": true
     }
   },
@@ -234,7 +238,7 @@
     ],
     "icon": "icons/icons/png",
     "artifactName": "${productName}-Linux-${version}.${ext}",
-    "maintainer": "Etienne Lescot <etiennelescot@gmail.com>",
+    "maintainer": "Qbexel <samiul@qbexel.com>",
     "category": "AudioVideo",
     "extraResources": [
       {
@@ -449,11 +453,12 @@
   // Microsoft Store packaging identity, from Partner Center's "Product identity" page
   // (Applications et jeux > OpenScreen > Product identity).
   "appx": {
-    "identityName": "EtienneLescot.OpenScreen",
+    // Placeholder identity: a Store submission needs the values from Partner Center.
+    "identityName": "Qbexel.CaptureStudio",
     "publisher": "CN=03B0FC8C-2067-45D9-BE82-9F15CE264B4A",
-    "publisherDisplayName": "Etienne Lescot",
-    "applicationId": "Openscreen",
-    "displayName": "OpenScreen",
+    "publisherDisplayName": "Qbexel",
+    "applicationId": "QbexelCaptureStudio",
+    "displayName": "Qbexel Capture Studio",
     "backgroundColor": "transparent",
     "capabilities": ["runFullTrust", "microphone", "webcam"],
     // Mirrors SUPPORTED_LOCALES in src/i18n/config.ts. This list is what the Store

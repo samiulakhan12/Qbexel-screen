@@ -521,8 +521,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	saveShortcuts: (shortcuts: unknown) => {
 		return ipcRenderer.invoke("save-shortcuts", shortcuts);
 	},
-	updateGlobalShortcut: (binding: ShortcutBinding) => {
-		return ipcRenderer.invoke("update-global-shortcut", binding);
+	updateGlobalShortcuts: (config: Partial<Record<string, ShortcutBinding>>) => {
+		return ipcRenderer.invoke("update-global-shortcuts", config);
+	},
+	// A global hotkey pressed while another app has the focus; the HUD acts on it.
+	onHudShortcut: (callback: (action: string) => void) => {
+		const listener = (_: unknown, action: string) => callback(action);
+		ipcRenderer.on("hud-shortcut", listener);
+		return () => ipcRenderer.removeListener("hud-shortcut", listener);
 	},
 	setLocale: (locale: string) => {
 		return ipcRenderer.invoke("set-locale", locale);

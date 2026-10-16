@@ -140,7 +140,7 @@
 	"stylePresets": {
 		"button": "Préréglages",
 		"menuLabel": "Préréglages de style",
-		"factoryName": "OpenScreen",
+		"factoryName": "{{product}}",
 		"factoryBadge": "Intégré",
 		"empty": "Aucun préréglage enregistré",
 		"create": "Créer un préréglage…",

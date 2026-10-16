@@ -51,7 +51,7 @@
 		"microphoneUnavailable": "Tato verze macOS neumí nahrávat mikrofon. Nahrávání probíhá bez něj.",
 		"restartFailed": "Novou nahrávku se nepodařilo spustit. Předchozí byla smazána.",
 		"permissionDenied": "Oprávnění k nahrávání odepřeno. Povolte prosím záznam obrazovky.",
-		"accessibilityAllowAndRetry": "Povolte přístup k usnadnění pro OpenScreen a poté znovu stiskněte tlačítko nahrávání pro zahájení odpočítávání.",
+		"accessibilityAllowAndRetry": "Povolte přístup k usnadnění pro {{product}} a poté znovu stiskněte tlačítko nahrávání pro zahájení odpočítávání.",
 		"cursorAccessibilityUnavailable": "Přístup k usnadnění není povolen. Nahrávání bude pokračovat, ale efekty kurzoru mohou být omezené. Pro plné efekty kurzoru jej povolte v Nastavení systému.",
 		"selectSource": "Vyberte prosím zdroj pro nahrávání"
 	},
@@ -178,7 +178,7 @@
 		"detectedLanguage": "Zjištěný jazyk: {{language}}",
 		"noAudioTrack": "Žádná zvuková stopa",
 		"noAudioTrackHint": "Toto médium nemá zvukovou stopu, takže není co přepisovat.",
-		"mediaUnreadableHint": "Zvuk tohoto média se nepodařilo přečíst. Ověřte, že OpenScreen má přístup ke složce, ve které je uloženo, a pak jej vygenerujte znovu.",
+		"mediaUnreadableHint": "Zvuk tohoto média se nepodařilo přečíst. Ověřte, že {{product}} má přístup ke složce, ve které je uloženo, a pak jej vygenerujte znovu.",
 		"noSpeechDetected": "Žádná řeč nezjištěna"
 	},
 	"exportDialog": {
@@ -209,7 +209,7 @@
 		"exportedVideo": "Video exportováno",
 		"exportedVideoOf": "z videa exportováno za",
 		"showInFolder": "Zobrazit ve složce",
-		"starPrompt": "OpenScreen je zdarma a pod licencí MIT. Hvězda na GitHubu pomůže ostatním ho najít.",
+		"starPrompt": "{{product}} je zdarma a pod licencí MIT. Hvězda na GitHubu pomůže ostatním ho najít.",
 		"starPromptNoThanks": "Ne, děkuji",
 		"rateOnStore": "Ohodnotit v Microsoft Store",
 		"exportFailed": "Export selhal",
@@ -291,7 +291,7 @@
 			"disclaimer": "Přepis vašeho videa bude odeslán vámi zvolenému poskytovateli. Nic není sdíleno, dokud ho nepřipojíte."
 		},
 		"authorUser": "Vy",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "{{product}}",
 		"rewindToMessage": "Přetočit na tuto zprávu",
 		"rewindTip": "Přetočit na tuto zprávu. Pozdější změny se vrátí zpět.",
 		"copyMessage": "Kopírovat zprávu",
@@ -413,7 +413,7 @@
 	},
 	"mcpServer": {
 		"title": "MCP server",
-		"description": "Umožněte MCP klientům, které sami spouštíte, například Claude Code nebo Codex, používat nástroje pro úpravy s AI na kterémkoli z vašich projektů, nejen na tom otevřeném v editoru. Přihlašují se vlastními účty; OpenScreen je nikdy nevidí.",
+		"description": "Umožněte MCP klientům, které sami spouštíte, například Claude Code nebo Codex, používat nástroje pro úpravy s AI na kterémkoli z vašich projektů, nejen na tom otevřeném v editoru. Přihlašují se vlastními účty; {{product}} je nikdy nevidí.",
 		"enableLabel": "Server",
 		"enable": "Zapnout MCP server",
 		"editsLabel": "Úpravy přes MCP",

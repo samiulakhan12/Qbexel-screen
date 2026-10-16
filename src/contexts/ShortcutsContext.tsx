@@ -61,7 +61,7 @@ export function ShortcutsProvider({ children }: { children: ReactNode }) {
 			const configToSave = config ?? shortcuts;
 			await window.electronAPI?.saveShortcuts?.(configToSave);
 
-			const result = await window.electronAPI?.updateGlobalShortcut?.(configToSave.openApp);
+			const result = await window.electronAPI?.updateGlobalShortcuts?.(configToSave);
 			return result ? result.success : true;
 		},
 		[shortcuts],

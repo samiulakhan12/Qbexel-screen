@@ -1,4 +1,5 @@
 import i18next, { type Resource } from "i18next";
+import { BRAND_I18N_VARIABLES } from "@/lib/branding";
 import { DEFAULT_LOCALE, I18N_NAMESPACES, type I18nNamespace, type Locale } from "./config";
 
 const modules = import.meta.glob("./locales/**/*.json", {
@@ -38,7 +39,9 @@ await i18next.init({
 	fallbackLng: DEFAULT_LOCALE,
 	defaultNS: "common",
 	resources,
-	interpolation: { escapeValue: false },
+	// `{{product}}` and friends resolve to branding.json in every string, so no locale file
+	// carries the product name: a rebrand is one JSON edit, not 450.
+	interpolation: { escapeValue: false, defaultVariables: BRAND_I18N_VARIABLES },
 	// A non-leaf key would otherwise render i18next's English developer message
 	// ("key 'x' returned an object instead of string") straight into the UI.
 	// Returning undefined keeps the old loader's behaviour: fall through to the

@@ -1,3 +1,5 @@
+import { BRAND, repositoryUrl } from "../src/lib/branding";
+
 // Stars are the only distribution signal this project has, and most people who use it arrive
 // from a search result and never see the repo. The one moment asking is not an interruption is
 // straight after an export the user wanted, which is why the ask lives there and nowhere else.
@@ -40,7 +42,7 @@ export function offersStarPrompt(state: StarPromptState): boolean {
  *  a Store copy that is the second, parallel install `install-channel.ts` exists to prevent, and
  *  on every other channel it is simply not what the ask is about. Lives here so main, the app
  *  menu and the export prompt cannot drift to three different links. */
-export const REPO_URL = "https://github.com/getopenscreen/openscreen";
+export const REPO_URL: string | null = repositoryUrl(BRAND.repository);
 
 /** The Store listing this app ships under: the same id in the website's Store link and in the
  *  `winget install --source msstore` command the README recommends. */

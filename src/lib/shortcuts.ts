@@ -1,5 +1,7 @@
 export const SHORTCUT_ACTIONS = [
 	"openApp",
+	"toggleRecording",
+	"pauseRecording",
 	"addZoom",
 	"addTrim",
 	"addSpeed",
@@ -14,6 +16,11 @@ export const SHORTCUT_ACTIONS = [
 ] as const;
 
 export type ShortcutAction = (typeof SHORTCUT_ACTIONS)[number];
+
+/** The actions registered with the OS as global hotkeys, so they work while another app has
+ *  the focus: recording is driven from the application being recorded, not from the HUD. */
+export const GLOBAL_SHORTCUT_ACTIONS = ["openApp", "toggleRecording", "pauseRecording"] as const;
+export type GlobalShortcutAction = (typeof GLOBAL_SHORTCUT_ACTIONS)[number];
 
 export interface ShortcutBinding {
 	key: string;
@@ -110,6 +117,9 @@ export function findConflict(
 
 export const DEFAULT_SHORTCUTS: ShortcutsConfig = {
 	openApp: { key: "o", ctrl: true, shift: true },
+	// Start or stop a take from anywhere; pause and resume the one running.
+	toggleRecording: { key: "r", ctrl: true, shift: true },
+	pauseRecording: { key: "p", ctrl: true, shift: true },
 	addZoom: { key: "z" },
 	addTrim: { key: "t" },
 	addSpeed: { key: "s" },
@@ -126,6 +136,8 @@ export const DEFAULT_SHORTCUTS: ShortcutsConfig = {
 
 export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
 	openApp: "Open App",
+	toggleRecording: "Start / Stop Recording",
+	pauseRecording: "Pause / Resume Recording",
 	addZoom: "Add Zoom",
 	addTrim: "Add Trim",
 	addSpeed: "Add Speed",

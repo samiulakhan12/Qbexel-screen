@@ -6,13 +6,14 @@
 // copy does or does not offer "Check for Updates" (see install-channel.ts), and the first
 // thing worth knowing about a bug report from a build we did not install ourselves.
 
+import { BRAND } from "../src/lib/branding";
 import type { InstallChannel } from "./install-channel";
 
-export const WEBSITE_URL = "https://getopenscreen.com";
+export const WEBSITE_URL = BRAND.website;
 /** The brand spelling, for the surfaces we render ourselves. NOT `app.name`: that resolves to
  *  electron-builder's `productName` ("Openscreen") when packaged and to package.json's `name`
  *  ("openscreen") in dev, so the About box would disagree with its own title bar. */
-export const PRODUCT_NAME = "OpenScreen";
+export const PRODUCT_NAME = BRAND.productName;
 /** The collective form, and deliberately NOT the whole of LICENSE. LICENSE carries two holders:
  *  Siddharth Vaddem, who created the project — MIT obliges us to keep that notice on a codebase
  *  that still contains his code — and the contributors collectively. This is the line every user
@@ -26,7 +27,7 @@ export const PRODUCT_NAME = "OpenScreen";
  *  NSHumanReadableCopyright and the Windows LegalCopyright. That key is declared explicitly
  *  BECAUSE electron-builder otherwise derives those from package.json's `author` — a single
  *  name, which put a second attribution on the same binary this string appears in. */
-export const COPYRIGHT = "© 2025-2026 OpenScreen contributors — MIT License";
+export const COPYRIGHT = BRAND.copyright;
 
 /** macOS opens its own About panel (the app menu's `role: "about"`), so it is the one platform
  *  that must not be shown the message box we build, and the only one whose panel needs

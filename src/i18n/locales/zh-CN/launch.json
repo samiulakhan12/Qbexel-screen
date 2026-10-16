@@ -2,7 +2,7 @@
 	"tooltips": {
 		"hideHUD": "隐藏录制栏",
 		"hideHUDTip": "隐藏录制栏，可通过系统托盘图标重新显示",
-		"closeApp": "退出 OpenScreen",
+		"closeApp": "退出 {{product}}",
 		"restartRecording": "删除本次录制并重新开始",
 		"cancelRecording": "停止录制并删除本次录制内容",
 		"pauseRecording": "暂停录制",
@@ -62,8 +62,8 @@
 		"screens": "屏幕 ({{count}})",
 		"windows": "窗口 ({{count}})",
 		"emptyTitle": "未找到屏幕或窗口",
-		"emptyDescription": "如果您刚刚授予了屏幕录制权限，请重新加载此选择器。在 macOS 上，您可能需要重新打开 OpenScreen。",
-		"loadFailedDescription": "OpenScreen 无法加载采集源。请重新加载此选择器并重试。",
+		"emptyDescription": "如果您刚刚授予了屏幕录制权限，请重新加载此选择器。在 macOS 上，您可能需要重新打开 {{product}}。",
+		"loadFailedDescription": "{{product}} 无法加载采集源。请重新加载此选择器并重试。",
 		"defaultSourceName": "屏幕"
 	},
 	"recording": {
@@ -77,13 +77,13 @@
 	"languageWithName": "语言：{{language}}",
 	"systemLanguagePrompt": {
 		"title": "使用系统语言吗？",
-		"description": "我们检测到你的系统语言是{{language}}。是否将 OpenScreen 切换为{{language}}？",
+		"description": "我们检测到你的系统语言是{{language}}。是否将 {{product}} 切换为{{language}}？",
 		"switch": "切换到{{language}}",
 		"keepDefault": "保持当前语言"
 	},
 	"softwareEncoderFallback": {
 		"title": "已切换到软件编码",
-		"description": "默认 GPU 编码器启动失败，OpenScreen 已改用软件 H.264 编码。录制会正常继续，但 CPU 占用可能更高。",
+		"description": "默认 GPU 编码器启动失败，{{product}} 已改用软件 H.264 编码。录制会正常继续，但 CPU 占用可能更高。",
 		"dismiss": "知道了",
 		"dontShowAgain": "不再提示"
 	},
@@ -100,7 +100,7 @@
 		"checkingForUpdates": "正在检查…"
 	},
 	"permissions": {
-		"title": "OpenScreen 需要一些权限",
+		"title": "{{product}} 需要一些权限",
 		"subtitle": "macOS 只会请求你授予一次。你可以随时在“系统设置”中更改。",
 		"level": {
 			"required": "必需",
@@ -137,17 +137,17 @@
 			"continue": "继续",
 			"allow": "允许",
 			"openSettings": "打开设置",
-			"restart": "重新启动 OpenScreen",
+			"restart": "重新启动 {{product}}",
 			"start": "开始使用"
 		},
 		"help": {
-			"screenPrompt": "接下来 macOS 会请你在“系统设置”中开启 OpenScreen。",
-			"screenSettings": "请在“系统设置”中开启 OpenScreen。如果 macOS 提示退出并重新打开，请同意：此窗口会重新出现。",
-			"screenNotListed": "列表中没有 OpenScreen？点按 +，然后在“应用程序”中选择 OpenScreen。",
-			"screenRestart": "已允许。OpenScreen 需要重新启动才能使用。",
-			"screenRecurring": "首次录制时，macOS 会询问是否允许 OpenScreen 不通过系统选择器直接访问你的屏幕。请点按“允许”。macOS 会不时再次询问，这是正常现象。",
-			"systemAudioPrompt": "macOS 会请你允许 OpenScreen 录制 Mac 播放的声音。",
-			"systemAudioRequested": "如果你拒绝了，请在“系统设置”的“仅系统录音”中开启 OpenScreen。"
+			"screenPrompt": "接下来 macOS 会请你在“系统设置”中开启 {{product}}。",
+			"screenSettings": "请在“系统设置”中开启 {{product}}。如果 macOS 提示退出并重新打开，请同意：此窗口会重新出现。",
+			"screenNotListed": "列表中没有 {{product}}？点按 +，然后在“应用程序”中选择 {{product}}。",
+			"screenRestart": "已允许。{{product}} 需要重新启动才能使用。",
+			"screenRecurring": "首次录制时，macOS 会询问是否允许 {{product}} 不通过系统选择器直接访问你的屏幕。请点按“允许”。macOS 会不时再次询问，这是正常现象。",
+			"systemAudioPrompt": "macOS 会请你允许 {{product}} 录制 Mac 播放的声音。",
+			"systemAudioRequested": "如果你拒绝了，请在“系统设置”的“仅系统录音”中开启 {{product}}。"
 		},
 		"footer": {
 			"screenRequired": "录制需要屏幕录制权限。",

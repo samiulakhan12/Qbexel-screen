@@ -6,7 +6,7 @@ import {
 	loadUsagePingState,
 	periodKeys,
 	planUsagePing,
-	sendUsagePing,
+	sendUsagePing as sendUsagePingWithToken,
 	setUsagePingEnabled,
 	type UsagePingFacts,
 	type UsagePingState,
@@ -73,6 +73,15 @@ describe("planUsagePing", () => {
 });
 
 describe("sendUsagePing", () => {
+	// The product build carries no token (branding.json); the sender is exercised with one here.
+	type Args = Parameters<typeof sendUsagePingWithToken>;
+	const sendUsagePing = (
+		dir: Args[0],
+		facts: Args[1],
+		env: Args[2],
+		now: Args[3],
+		fetchImpl: Args[4],
+	) => sendUsagePingWithToken(dir, facts, env, now, fetchImpl, "phc_test");
 	it("sends no identifier and keeps the dates only once PostHog accepted the ping", async () => {
 		const dir = tmp();
 		const bodies: Record<string, unknown>[] = [];

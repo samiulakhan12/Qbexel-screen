@@ -15,6 +15,8 @@
 	"resetToast": "デフォルトのショートカットにリセット — 保存をクリックして適用",
 	"registrationFailed": "ショートカットの登録に失敗しました。他のアプリで使用中の可能性があります。別のキーをお試しください。",
 	"actions": {
+		"toggleRecording": "Start / Stop Recording",
+		"pauseRecording": "Pause / Resume Recording",
 		"openApp": "アプリを開く",
 		"addZoom": "ズームを追加",
 		"addTrim": "トリムを追加",

@@ -140,7 +140,7 @@
 	"stylePresets": {
 		"button": "Пресеты",
 		"menuLabel": "Пресеты стиля",
-		"factoryName": "OpenScreen",
+		"factoryName": "{{product}}",
 		"factoryBadge": "Встроенный",
 		"empty": "Сохранённых пресетов пока нет",
 		"create": "Создать пресет…",

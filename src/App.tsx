@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { BRAND } from "@/lib/branding";
 import "./styles/fonts.css";
 import "./styles/design-tokens.css";
 import { installBrowserShims } from "./native/browserShim";
@@ -159,7 +160,7 @@ export default function App() {
 				return (
 					<div>
 						<div className="w-full h-full bg-background text-foreground">
-							<h1>Openscreen</h1>
+							<h1>{BRAND.productName}</h1>
 						</div>
 					</div>
 				);

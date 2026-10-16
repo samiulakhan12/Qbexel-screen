@@ -140,7 +140,7 @@
 	"stylePresets": {
 		"button": "Presets",
 		"menuLabel": "Style presets",
-		"factoryName": "OpenScreen",
+		"factoryName": "{{product}}",
 		"factoryBadge": "Built-in",
 		"empty": "No saved presets yet",
 		"create": "Create new preset…",

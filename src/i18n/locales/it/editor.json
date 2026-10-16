@@ -51,7 +51,7 @@
 		"microphoneUnavailable": "Questa versione di macOS non può registrare il microfono. Registrazione senza microfono.",
 		"restartFailed": "Impossibile avviare la nuova registrazione. Quella precedente è stata eliminata.",
 		"permissionDenied": "Autorizzazione di registrazione negata. Consenti la registrazione dello schermo.",
-		"accessibilityAllowAndRetry": "Consenti l'accesso all'accessibilità per OpenScreen, poi premi di nuovo registra per avviare il conto alla rovescia.",
+		"accessibilityAllowAndRetry": "Consenti l'accesso all'accessibilità per {{product}}, poi premi di nuovo registra per avviare il conto alla rovescia.",
 		"cursorAccessibilityUnavailable": "L'accesso all'accessibilità è disattivato. La registrazione continuerà, ma gli effetti del cursore potrebbero essere limitati. Attivalo nelle Impostazioni di Sistema per usare tutti gli effetti del cursore.",
 		"selectSource": "Seleziona una sorgente da registrare"
 	},
@@ -178,7 +178,7 @@
 		"detectedLanguage": "Lingua rilevata: {{language}}",
 		"noAudioTrack": "Nessuna traccia audio",
 		"noAudioTrackHint": "Questo contenuto non ha una traccia audio: non c'è nulla da trascrivere.",
-		"mediaUnreadableHint": "Impossibile leggere l'audio di questo contenuto. Verifica che OpenScreen possa accedere alla cartella che lo contiene, poi rigenera.",
+		"mediaUnreadableHint": "Impossibile leggere l'audio di questo contenuto. Verifica che {{product}} possa accedere alla cartella che lo contiene, poi rigenera.",
 		"noSpeechDetected": "Nessun parlato rilevato"
 	},
 	"exportDialog": {
@@ -208,7 +208,7 @@
 		"exportedGif": "GIF esportata",
 		"exportedVideo": "Video esportato",
 		"showInFolder": "Mostra nella cartella",
-		"starPrompt": "OpenScreen è gratuito e con licenza MIT. Una stella su GitHub aiuta altre persone a trovarlo.",
+		"starPrompt": "{{product}} è gratuito e con licenza MIT. Una stella su GitHub aiuta altre persone a trovarlo.",
 		"starPromptNoThanks": "No, grazie",
 		"rateOnStore": "Valuta su Microsoft Store",
 		"exportFailed": "Esportazione non riuscita",
@@ -291,7 +291,7 @@
 			"disclaimer": "La trascrizione del tuo video verrà inviata al fornitore che scegli. Nulla viene condiviso finché non ne colleghi uno."
 		},
 		"authorUser": "Tu",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "{{product}}",
 		"rewindToMessage": "Riavvolgi a questo messaggio",
 		"rewindTip": "Riavvolgi a questo messaggio. Le modifiche successive vengono annullate.",
 		"copyMessage": "Copia messaggio",
@@ -413,7 +413,7 @@
 	},
 	"mcpServer": {
 		"title": "Server MCP",
-		"description": "Consenti ai client MCP che esegui tu stesso, come Claude Code o Codex, di usare gli strumenti di modifica con IA su qualsiasi tuo progetto, non solo su quello aperto nell’editor. Accedono con i propri account; OpenScreen non li vede mai.",
+		"description": "Consenti ai client MCP che esegui tu stesso, come Claude Code o Codex, di usare gli strumenti di modifica con IA su qualsiasi tuo progetto, non solo su quello aperto nell’editor. Accedono con i propri account; {{product}} non li vede mai.",
 		"enableLabel": "Server",
 		"enable": "Attiva server MCP",
 		"editsLabel": "Modifiche via MCP",

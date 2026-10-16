@@ -140,7 +140,7 @@
 	"stylePresets": {
 		"button": "الإعدادات المسبقة",
 		"menuLabel": "إعدادات النمط المسبقة",
-		"factoryName": "OpenScreen",
+		"factoryName": "{{product}}",
 		"factoryBadge": "مضمَّن",
 		"empty": "لا توجد إعدادات مسبقة محفوظة بعد",
 		"create": "إنشاء إعداد مسبق جديد…",

@@ -1,5 +1,20 @@
-const LATEST_RELEASE_API = "https://api.github.com/repos/getopenscreen/openscreen/releases/latest";
-const OFFICIAL_RELEASE_PREFIX = "/getopenscreen/openscreen/releases/tag/";
+import { BRAND } from "../src/lib/branding";
+
+// Both derived from branding.json#updates. `null` means this build has no release feed: every
+// caller is gated on `canOfferUpdateCheck`, and `checkLatestRelease` refuses rather than guess.
+const UPDATE_REPOSITORY = BRAND.updates;
+
+export interface UpdateRepository {
+	owner: string;
+	repo: string;
+}
+
+function releaseEndpoints(repository: UpdateRepository): { api: string; tagPrefix: string } {
+	return {
+		api: `https://api.github.com/repos/${repository.owner}/${repository.repo}/releases/latest`,
+		tagPrefix: `/${repository.owner}/${repository.repo}/releases/tag/`,
+	};
+}
 
 interface ReleaseResponse {
 	ok: boolean;
@@ -77,14 +92,14 @@ export function compareVersions(left: string, right: string): number {
 	return comparePrerelease(a.prerelease, b.prerelease);
 }
 
-function officialReleaseUrl(value: string, tag: string): string {
+function officialReleaseUrl(value: string, tag: string, tagPrefix: string): string {
 	let url: URL;
 	try {
 		url = new URL(value);
 	} catch {
 		throw new Error("untrusted release URL");
 	}
-	const encodedTag = url.pathname.slice(OFFICIAL_RELEASE_PREFIX.length);
+	const encodedTag = url.pathname.slice(tagPrefix.length);
 	let decodedTag = "";
 	try {
 		decodedTag = decodeURIComponent(encodedTag);
@@ -95,7 +110,7 @@ function officialReleaseUrl(value: string, tag: string): string {
 		url.protocol !== "https:" ||
 		url.hostname !== "github.com" ||
 		url.port !== "" ||
-		!url.pathname.startsWith(OFFICIAL_RELEASE_PREFIX) ||
+		!url.pathname.startsWith(tagPrefix) ||
 		decodedTag !== tag ||
 		url.search !== "" ||
 		url.hash !== ""
@@ -122,8 +137,13 @@ export async function checkLatestRelease(options: {
 	currentVersion: string;
 	fetchLatest: FetchLatestRelease;
 	signal?: AbortSignal;
+	/** The repository whose latest release is checked. Defaults to branding.json#updates. */
+	repository?: UpdateRepository | null;
 }): Promise<UpdateCheckResult> {
-	const response = await options.fetchLatest(LATEST_RELEASE_API, {
+	const repository = options.repository === undefined ? UPDATE_REPOSITORY : options.repository;
+	if (!repository) throw new Error("update checks are disabled for this build");
+	const endpoints = releaseEndpoints(repository);
+	const response = await options.fetchLatest(endpoints.api, {
 		headers: {
 			Accept: "application/vnd.github+json",
 			"X-GitHub-Api-Version": "2022-11-28",
@@ -159,6 +179,6 @@ export async function checkLatestRelease(options: {
 		kind: "available",
 		currentVersion: current.normalized,
 		latestVersion: latest.normalized,
-		releaseUrl: officialReleaseUrl(release.html_url, release.tag_name),
+		releaseUrl: officialReleaseUrl(release.html_url, release.tag_name, endpoints.tagPrefix),
 	};
 }

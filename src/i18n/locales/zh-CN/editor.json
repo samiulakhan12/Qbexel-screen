@@ -51,7 +51,7 @@
 		"microphoneUnavailable": "此版本的 macOS 无法录制麦克风，正在不使用麦克风录制。",
 		"restartFailed": "无法开始新的录制。之前的录制已被删除。",
 		"permissionDenied": "录屏权限被拒绝。请允许屏幕录制。",
-		"accessibilityAllowAndRetry": "允许 OpenScreen 使用辅助功能权限，然后再次按录制以开始倒计时。",
+		"accessibilityAllowAndRetry": "允许 {{product}} 使用辅助功能权限，然后再次按录制以开始倒计时。",
 		"cursorAccessibilityUnavailable": "辅助功能权限未开启。录制将继续，但光标效果可能受限。请在系统设置中开启此权限以使用完整的光标效果。",
 		"selectSource": "请选择要录制的源"
 	},
@@ -178,7 +178,7 @@
 		"detectedLanguage": "检测到的语言：{{language}}",
 		"noAudioTrack": "无音频轨道",
 		"noAudioTrackHint": "此媒体没有音频轨道，没有可转录的内容。",
-		"mediaUnreadableHint": "无法读取此媒体的音频。请确认 OpenScreen 可以访问它所在的文件夹，然后重新生成。",
+		"mediaUnreadableHint": "无法读取此媒体的音频。请确认 {{product}} 可以访问它所在的文件夹，然后重新生成。",
 		"noSpeechDetected": "未检测到语音"
 	},
 	"exportDialog": {
@@ -208,7 +208,7 @@
 		"exportedGif": "GIF 已导出",
 		"exportedVideo": "视频已导出",
 		"showInFolder": "在文件夹中显示",
-		"starPrompt": "OpenScreen 免费且采用 MIT 许可证。在 GitHub 上点个星标，能帮助更多人发现它。",
+		"starPrompt": "{{product}} 免费且采用 MIT 许可证。在 GitHub 上点个星标，能帮助更多人发现它。",
 		"starPromptNoThanks": "不用了",
 		"rateOnStore": "在 Microsoft Store 评价",
 		"exportFailed": "导出失败",
@@ -291,7 +291,7 @@
 			"disclaimer": "你视频的转录文本将发送到你选择的提供方。在你连接之前不会共享任何内容。"
 		},
 		"authorUser": "你",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "{{product}}",
 		"rewindToMessage": "回退到此消息",
 		"rewindTip": "回退到这条消息，并撤销之后的更改",
 		"copyMessage": "复制消息",
@@ -413,7 +413,7 @@
 	},
 	"mcpServer": {
 		"title": "MCP 服务器",
-		"description": "让你自己运行的 MCP 客户端（如 Claude Code 或 Codex）在你的任意项目上使用 AI 编辑工具，而不只是编辑器中打开的项目。它们使用各自的账号登录，OpenScreen 永远不会看到这些账号。",
+		"description": "让你自己运行的 MCP 客户端（如 Claude Code 或 Codex）在你的任意项目上使用 AI 编辑工具，而不只是编辑器中打开的项目。它们使用各自的账号登录，{{product}} 永远不会看到这些账号。",
 		"enableLabel": "服务器",
 		"enable": "启用 MCP 服务器",
 		"editsLabel": "MCP 编辑",

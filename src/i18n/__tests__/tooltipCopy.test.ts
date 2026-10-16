@@ -10,6 +10,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { BRAND_I18N_VARIABLES } from "@/lib/branding";
 
 const LOCALES_DIR = resolve(process.cwd(), "src/i18n/locales");
 const MAX_LENGTH = 130;
@@ -58,8 +59,15 @@ function read(locale: string, namespace: string, key: string): string {
 	return value;
 }
 
+// Default variables (`{{product}}` and friends, from branding.json) resolve in every string
+// without a call-site value, so a translation that spells the product out instead of
+// interpolating it is not drift.
+const DEFAULT_PLACEHOLDERS = new Set(Object.keys(BRAND_I18N_VARIABLES));
 const placeholders = (text: string) =>
-	[...text.matchAll(/\{\{\s*\w+\s*\}\}/g)].map((m) => m[0]).sort();
+	[...text.matchAll(/\{\{\s*(\w+)\s*\}\}/g)]
+		.filter((m) => !DEFAULT_PLACEHOLDERS.has(m[1]))
+		.map((m) => m[0])
+		.sort();
 // en included: it is the source, and its own length is held to the same cap.
 const locales = readdirSync(LOCALES_DIR);
 const entries = Object.entries(TOOLTIP_KEYS).flatMap(([namespace, keys]) =>

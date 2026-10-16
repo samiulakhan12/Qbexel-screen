@@ -51,7 +51,7 @@
 		"zoomExistsAtLocation": "Zoom already exists at this location or not enough space available.",
 		"zoomSuggestionUnavailable": "Zoom suggestion handler unavailable",
 		"noCursorTelemetry": "No cursor data in this recording",
-		"noCursorTelemetryDescription": "Record your screen with OpenScreen to get zooms that follow the cursor.",
+		"noCursorTelemetryDescription": "Record your screen with {{product}} to get zooms that follow the cursor.",
 		"noUsableTelemetry": "Not enough cursor movement",
 		"noUsableTelemetryDescription": "The recording does not include enough cursor movement data.",
 		"noDwellMoments": "No clear cursor dwell moments found",

@@ -140,7 +140,7 @@
 	"stylePresets": {
 		"button": "Cài đặt sẵn",
 		"menuLabel": "Kiểu cài đặt sẵn",
-		"factoryName": "OpenScreen",
+		"factoryName": "{{product}}",
 		"factoryBadge": "Tích hợp",
 		"empty": "Chưa có cài đặt sẵn nào được lưu",
 		"create": "Tạo cài đặt sẵn mới…",

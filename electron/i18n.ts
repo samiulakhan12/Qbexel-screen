@@ -31,6 +31,7 @@ import commonZh from "../src/i18n/locales/zh-CN/common.json";
 import dialogsZh from "../src/i18n/locales/zh-CN/dialogs.json";
 import commonZhTw from "../src/i18n/locales/zh-TW/common.json";
 import dialogsZhTw from "../src/i18n/locales/zh-TW/dialogs.json";
+import { BRAND_I18N_VARIABLES } from "../src/lib/branding";
 
 type Locale =
 	| "en"
@@ -108,8 +109,9 @@ function getMessageValue(obj: unknown, dotPath: string): string | undefined {
 }
 
 function interpolate(str: string, vars?: Record<string, string | number>): string {
-	if (!vars) return str;
-	return str.replace(/\{\{(\w+)\}\}/g, (_, key: string) => String(vars[key] ?? `{{${key}}}`));
+	// The product name is a default variable, as in the renderer's i18next init.
+	const merged: Record<string, string | number> = { ...BRAND_I18N_VARIABLES, ...vars };
+	return str.replace(/\{\{(\w+)\}\}/g, (_, key: string) => String(merged[key] ?? `{{${key}}}`));
 }
 
 export function mainT(

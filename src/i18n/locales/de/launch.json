@@ -62,8 +62,8 @@
 		"screens": "Bildschirme ({{count}})",
 		"windows": "Fenster ({{count}})",
 		"emptyTitle": "Keine Bildschirme oder Fenster gefunden",
-		"emptyDescription": "Wenn du die Berechtigung zur Bildschirmaufnahme gerade erteilt hast, lade diese Auswahl neu. Unter macOS musst du OpenScreen eventuell neu öffnen.",
-		"loadFailedDescription": "OpenScreen konnte die Aufnahmequellen nicht laden. Lade diese Auswahl neu und versuche es erneut.",
+		"emptyDescription": "Wenn du die Berechtigung zur Bildschirmaufnahme gerade erteilt hast, lade diese Auswahl neu. Unter macOS musst du {{product}} eventuell neu öffnen.",
+		"loadFailedDescription": "{{product}} konnte die Aufnahmequellen nicht laden. Lade diese Auswahl neu und versuche es erneut.",
 		"defaultSourceName": "Bildschirm"
 	},
 	"recording": {
@@ -77,13 +77,13 @@
 	"languageWithName": "Sprache: {{language}}",
 	"systemLanguagePrompt": {
 		"title": "Systemsprache verwenden?",
-		"description": "{{language}} wurde als deine Systemsprache erkannt. Soll OpenScreen auf {{language}} umgestellt werden?",
+		"description": "{{language}} wurde als deine Systemsprache erkannt. Soll {{product}} auf {{language}} umgestellt werden?",
 		"switch": "Zu {{language}} wechseln",
 		"keepDefault": "Aktuelle Sprache behalten"
 	},
 	"softwareEncoderFallback": {
 		"title": "Auf Software-Encoding umgestellt",
-		"description": "Der Standard-GPU-Encoder konnte nicht gestartet werden, deshalb ist OpenScreen auf Software-H.264-Encoding zurückgefallen. Die Aufnahme läuft normal weiter, die CPU-Auslastung kann aber höher sein.",
+		"description": "Der Standard-GPU-Encoder konnte nicht gestartet werden, deshalb ist {{product}} auf Software-H.264-Encoding zurückgefallen. Die Aufnahme läuft normal weiter, die CPU-Auslastung kann aber höher sein.",
 		"dismiss": "Verstanden",
 		"dontShowAgain": "Nicht mehr anzeigen"
 	},
@@ -100,7 +100,7 @@
 		"checkingForUpdates": "Wird geprüft…"
 	},
 	"permissions": {
-		"title": "OpenScreen benötigt einige Berechtigungen",
+		"title": "{{product}} benötigt einige Berechtigungen",
 		"subtitle": "macOS fragt jede Berechtigung nur einmal ab. Du kannst sie jederzeit in den Systemeinstellungen ändern.",
 		"level": {
 			"required": "Erforderlich",
@@ -137,17 +137,17 @@
 			"continue": "Weiter",
 			"allow": "Erlauben",
 			"openSettings": "Einstellungen öffnen",
-			"restart": "OpenScreen neu starten",
+			"restart": "{{product}} neu starten",
 			"start": "Los geht's"
 		},
 		"help": {
-			"screenPrompt": "macOS bittet dich anschließend, OpenScreen in den Systemeinstellungen zu aktivieren.",
-			"screenSettings": "Aktiviere OpenScreen in den Systemeinstellungen. Wenn macOS anbietet, die App zu beenden und neu zu öffnen, stimme zu: Dieses Fenster erscheint wieder.",
-			"screenNotListed": "OpenScreen fehlt in der Liste? Klicke auf + und wähle OpenScreen unter „Programme“.",
-			"screenRestart": "Erlaubt. OpenScreen muss neu starten, um die Berechtigung zu nutzen.",
-			"screenRecurring": "Bei deiner ersten Aufnahme fragt macOS, ob OpenScreen ohne die Systemauswahl direkt auf deinen Bildschirm zugreifen darf. Klicke auf „Erlauben“. macOS fragt von Zeit zu Zeit erneut – das ist normal.",
-			"systemAudioPrompt": "macOS fragt dich, ob OpenScreen den Ton deines Mac aufnehmen darf.",
-			"systemAudioRequested": "Falls du abgelehnt hast, aktiviere OpenScreen unter „Nur Aufnahme von Systemaudio“ in den Systemeinstellungen."
+			"screenPrompt": "macOS bittet dich anschließend, {{product}} in den Systemeinstellungen zu aktivieren.",
+			"screenSettings": "Aktiviere {{product}} in den Systemeinstellungen. Wenn macOS anbietet, die App zu beenden und neu zu öffnen, stimme zu: Dieses Fenster erscheint wieder.",
+			"screenNotListed": "{{product}} fehlt in der Liste? Klicke auf + und wähle {{product}} unter „Programme“.",
+			"screenRestart": "Erlaubt. {{product}} muss neu starten, um die Berechtigung zu nutzen.",
+			"screenRecurring": "Bei deiner ersten Aufnahme fragt macOS, ob {{product}} ohne die Systemauswahl direkt auf deinen Bildschirm zugreifen darf. Klicke auf „Erlauben“. macOS fragt von Zeit zu Zeit erneut – das ist normal.",
+			"systemAudioPrompt": "macOS fragt dich, ob {{product}} den Ton deines Mac aufnehmen darf.",
+			"systemAudioRequested": "Falls du abgelehnt hast, aktiviere {{product}} unter „Nur Aufnahme von Systemaudio“ in den Systemeinstellungen."
 		},
 		"footer": {
 			"screenRequired": "Zum Aufnehmen ist die Bildschirmaufnahme erforderlich.",

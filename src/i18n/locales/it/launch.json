@@ -62,8 +62,8 @@
 		"screens": "Schermi ({{count}})",
 		"windows": "Finestre ({{count}})",
 		"emptyTitle": "Nessuno schermo o finestra trovati",
-		"emptyDescription": "Se hai appena concesso il permesso di registrazione dello schermo, ricarica questo selettore. Su macOS potrebbe essere necessario riaprire OpenScreen.",
-		"loadFailedDescription": "OpenScreen non è riuscito a caricare le sorgenti di cattura. Ricarica questo selettore e riprova.",
+		"emptyDescription": "Se hai appena concesso il permesso di registrazione dello schermo, ricarica questo selettore. Su macOS potrebbe essere necessario riaprire {{product}}.",
+		"loadFailedDescription": "{{product}} non è riuscito a caricare le sorgenti di cattura. Ricarica questo selettore e riprova.",
 		"defaultSourceName": "Schermo"
 	},
 	"recording": {
@@ -77,13 +77,13 @@
 	"languageWithName": "Lingua: {{language}}",
 	"systemLanguagePrompt": {
 		"title": "Usare la lingua del sistema?",
-		"description": "Abbiamo rilevato {{language}} come lingua del sistema. Vuoi passare OpenScreen a {{language}}?",
+		"description": "Abbiamo rilevato {{language}} come lingua del sistema. Vuoi passare {{product}} a {{language}}?",
 		"switch": "Passa a {{language}}",
 		"keepDefault": "Mantieni la lingua corrente"
 	},
 	"softwareEncoderFallback": {
 		"title": "Passaggio alla codifica software",
-		"description": "L'encoder GPU predefinito non si è avviato, quindi OpenScreen è passato alla codifica H.264 software. La registrazione dovrebbe continuare normalmente, ma l'uso della CPU potrebbe essere più alto.",
+		"description": "L'encoder GPU predefinito non si è avviato, quindi {{product}} è passato alla codifica H.264 software. La registrazione dovrebbe continuare normalmente, ma l'uso della CPU potrebbe essere più alto.",
 		"dismiss": "Ho capito",
 		"dontShowAgain": "Non mostrare più"
 	},
@@ -100,7 +100,7 @@
 		"checkingForUpdates": "Controllo…"
 	},
 	"permissions": {
-		"title": "OpenScreen ha bisogno di alcuni permessi",
+		"title": "{{product}} ha bisogno di alcuni permessi",
 		"subtitle": "macOS ti chiede di concederli una sola volta. Puoi modificarli in qualsiasi momento in Impostazioni di Sistema.",
 		"level": {
 			"required": "Obbligatorio",
@@ -137,17 +137,17 @@
 			"continue": "Continua",
 			"allow": "Consenti",
 			"openSettings": "Apri Impostazioni",
-			"restart": "Riavvia OpenScreen",
+			"restart": "Riavvia {{product}}",
 			"start": "Inizia"
 		},
 		"help": {
-			"screenPrompt": "Poi macOS ti chiederà di attivare OpenScreen in Impostazioni di Sistema.",
-			"screenSettings": "In Impostazioni di Sistema, attiva OpenScreen. Se macOS propone di chiuderlo e riaprirlo, accetta: questa finestra tornerà.",
-			"screenNotListed": "OpenScreen non è nell'elenco? Fai clic su +, poi scegli OpenScreen in Applicazioni.",
-			"screenRestart": "Consentito. OpenScreen deve riavviarsi per poterlo usare.",
-			"screenRecurring": "Alla prima registrazione, macOS ti chiederà se OpenScreen può accedere direttamente allo schermo, senza il selettore di sistema. Fai clic su Consenti. macOS lo richiede di tanto in tanto: è normale.",
-			"systemAudioPrompt": "macOS ti chiederà di consentire a OpenScreen di registrare l'audio del tuo Mac.",
-			"systemAudioRequested": "Se hai rifiutato, attiva OpenScreen in “Solo registrazione audio di sistema” in Impostazioni di Sistema."
+			"screenPrompt": "Poi macOS ti chiederà di attivare {{product}} in Impostazioni di Sistema.",
+			"screenSettings": "In Impostazioni di Sistema, attiva {{product}}. Se macOS propone di chiuderlo e riaprirlo, accetta: questa finestra tornerà.",
+			"screenNotListed": "{{product}} non è nell'elenco? Fai clic su +, poi scegli {{product}} in Applicazioni.",
+			"screenRestart": "Consentito. {{product}} deve riavviarsi per poterlo usare.",
+			"screenRecurring": "Alla prima registrazione, macOS ti chiederà se {{product}} può accedere direttamente allo schermo, senza il selettore di sistema. Fai clic su Consenti. macOS lo richiede di tanto in tanto: è normale.",
+			"systemAudioPrompt": "macOS ti chiederà di consentire a {{product}} di registrare l'audio del tuo Mac.",
+			"systemAudioRequested": "Se hai rifiutato, attiva {{product}} in “Solo registrazione audio di sistema” in Impostazioni di Sistema."
 		},
 		"footer": {
 			"screenRequired": "Per registrare serve la registrazione dello schermo.",

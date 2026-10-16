@@ -4,6 +4,7 @@ import { mkdir, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import { BRAND } from "../../src/lib/branding";
 import { renameWithRetry } from "../atomic-rename";
 
 /**
@@ -107,8 +108,7 @@ export const STT_MODELS: Record<SttModelId, SttModelDescriptor> = {
  * release tag like the other binaries that need a permanent URL but are not a
  * product version (see scripts/fetch-onnxruntime.mjs). Apache-2.0, both of them.
  */
-const ALIGNER_RELEASE =
-	"https://github.com/getopenscreen/openscreen/releases/download/v0.0.0-ctc-aligners-1";
+const ALIGNER_RELEASE = BRAND.assets.ctcAlignerBaseUrl;
 
 export interface CtcAlignerFile extends SttModelFile {
 	/** HuggingFace repo and revision the file was converted from. */

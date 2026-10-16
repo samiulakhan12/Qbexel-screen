@@ -51,7 +51,7 @@
 		"microphoneUnavailable": "This version of macOS can't record the microphone. Recording without it.",
 		"restartFailed": "The new recording could not start. The previous one was deleted.",
 		"permissionDenied": "Recording permission denied. Please allow screen recording.",
-		"accessibilityAllowAndRetry": "Allow Accessibility access for OpenScreen, then press record again to start the countdown.",
+		"accessibilityAllowAndRetry": "Allow Accessibility access for {{product}}, then press record again to start the countdown.",
 		"cursorAccessibilityUnavailable": "Accessibility is off. Recording will continue, but cursor effects may be limited. Enable it in System Settings for full cursor effects.",
 		"selectSource": "Choose a screen or window to record"
 	},
@@ -178,7 +178,7 @@
 		"detectedLanguage": "Detected language: {{language}}",
 		"noAudioTrack": "No audio track",
 		"noAudioTrackHint": "This media has no audio track — there is nothing to transcribe.",
-		"mediaUnreadableHint": "Couldn't read this media's audio. Make sure OpenScreen can access the folder it's in, then regenerate.",
+		"mediaUnreadableHint": "Couldn't read this media's audio. Make sure {{product}} can access the folder it's in, then regenerate.",
 		"noSpeechDetected": "No speech detected"
 	},
 	"exportDialog": {
@@ -209,7 +209,7 @@
 		"exportedVideo": "Video exported",
 		"exportedVideoOf": "of video exported in",
 		"showInFolder": "Show in folder",
-		"starPrompt": "OpenScreen is free and MIT licensed. A star on GitHub helps other people find it.",
+		"starPrompt": "{{product}} is free and MIT licensed. A star on GitHub helps other people find it.",
 		"starPromptNoThanks": "No thanks",
 		"rateOnStore": "Rate on the Microsoft Store",
 		"exportFailed": "Export failed",
@@ -291,7 +291,7 @@
 			"disclaimer": "Your video's transcript will be sent to the provider you choose. Nothing is shared until you connect one."
 		},
 		"authorUser": "You",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "{{product}}",
 		"rewindToMessage": "Rewind to this message",
 		"rewindTip": "Rewind to this message. Later changes are undone.",
 		"copyMessage": "Copy message",
@@ -413,7 +413,7 @@
 	},
 	"mcpServer": {
 		"title": "MCP server",
-		"description": "Let MCP clients you run yourself, such as Claude Code or Codex, use the AI editing tools on any of your projects, not only the one open in the editor. They sign in with their own accounts; OpenScreen never sees them.",
+		"description": "Let MCP clients you run yourself, such as Claude Code or Codex, use the AI editing tools on any of your projects, not only the one open in the editor. They sign in with their own accounts; {{product}} never sees them.",
 		"enableLabel": "Server",
 		"enable": "Enable MCP server",
 		"editsLabel": "MCP edits",

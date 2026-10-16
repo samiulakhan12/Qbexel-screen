@@ -140,7 +140,7 @@
 	"stylePresets": {
 		"button": "プリセット",
 		"menuLabel": "スタイルプリセット",
-		"factoryName": "OpenScreen",
+		"factoryName": "{{product}}",
 		"factoryBadge": "組み込み",
 		"empty": "保存されたプリセットはまだありません",
 		"create": "新しいプリセットを作成…",

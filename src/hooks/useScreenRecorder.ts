@@ -1010,6 +1010,13 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		[cursorCaptureMode, getRecordingDurationMs],
 	);
 
+	/** The latest recording controls, for the global-hotkey listener registered once on mount. */
+	const hudShortcutControls = useRef<{
+		toggleRecording: () => void;
+		togglePaused: () => void;
+		recording: boolean;
+		canPause: boolean;
+	} | null>(null);
 	const stopRecording = useRef(() => {
 		if (nativeWindowsRecording.current) {
 			void finalizeNativeWindowsRecording(false);
@@ -1080,10 +1087,23 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 				stopRecording.current();
 			});
 		}
+		// Global hotkeys (Ctrl/Cmd+Shift+R, Ctrl/Cmd+Shift+P by default) arrive from the main
+		// process while another app has the focus. The controls are read through a ref: this
+		// effect runs once, and the callbacks it would otherwise close over are rebuilt every render.
+		const cleanupShortcut = window.electronAPI?.onHudShortcut?.((action) => {
+			const controls = hudShortcutControls.current;
+			if (!controls) return;
+			if (action === "toggleRecording") {
+				controls.toggleRecording();
+			} else if (action === "pauseRecording" && controls.recording && controls.canPause) {
+				controls.togglePaused();
+			}
+		});
 
 		return () => {
 			const activeRunId = countdownRunId.current;
 			if (cleanup) cleanup();
+			cleanupShortcut?.();
 			countdownRunId.current += 1;
 			void safeHideCountdownOverlay(activeRunId);
 			allowAutoFinalize.current = false;
@@ -2456,6 +2476,13 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			saveUserPreferences({ hideSoftwareEncoderFallbackNotice: true });
 		}
 		setSoftwareEncoderFallbackNoticeVisible(false);
+	};
+
+	hudShortcutControls.current = {
+		toggleRecording,
+		togglePaused,
+		recording,
+		canPause: canPauseRecording,
 	};
 
 	return {

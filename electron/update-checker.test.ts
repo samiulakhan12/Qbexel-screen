@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { checkLatestRelease, compareVersions } from "./update-checker";
 
+// The product build has no release feed of its own (branding.json#updates is null), so the
+// checker is exercised against the upstream repository the fixtures were written for.
+const UPSTREAM = { owner: "getopenscreen", repo: "openscreen" };
+
 function releaseResponse(payload: unknown, status = 200) {
 	return {
 		ok: status >= 200 && status < 300,
@@ -42,7 +46,9 @@ describe("checkLatestRelease", () => {
 			}),
 		);
 
-		await expect(checkLatestRelease({ currentVersion: "1.9.0", fetchLatest })).resolves.toEqual({
+		await expect(
+			checkLatestRelease({ repository: UPSTREAM, currentVersion: "1.9.0", fetchLatest }),
+		).resolves.toEqual({
 			kind: "available",
 			currentVersion: "1.9.0",
 			latestVersion: "1.10.0",
@@ -66,12 +72,16 @@ describe("checkLatestRelease", () => {
 			}),
 		);
 
-		await expect(checkLatestRelease({ currentVersion: "1.9.1", fetchLatest })).resolves.toEqual({
+		await expect(
+			checkLatestRelease({ repository: UPSTREAM, currentVersion: "1.9.1", fetchLatest }),
+		).resolves.toEqual({
 			kind: "current",
 			currentVersion: "1.9.1",
 			latestVersion: "1.9.0",
 		});
-		await expect(checkLatestRelease({ currentVersion: "1.9.0", fetchLatest })).resolves.toEqual({
+		await expect(
+			checkLatestRelease({ repository: UPSTREAM, currentVersion: "1.9.0", fetchLatest }),
+		).resolves.toEqual({
 			kind: "current",
 			currentVersion: "1.9.0",
 			latestVersion: "1.9.0",
@@ -90,6 +100,7 @@ describe("checkLatestRelease", () => {
 		const controller = new AbortController();
 
 		await checkLatestRelease({
+			repository: UPSTREAM,
 			currentVersion: "1.9.0",
 			fetchLatest,
 			signal: controller.signal,
@@ -114,9 +125,9 @@ describe("checkLatestRelease", () => {
 			}),
 		);
 
-		await expect(checkLatestRelease({ currentVersion: "1.9.0", fetchLatest })).rejects.toThrow(
-			"invalid GitHub release response",
-		);
+		await expect(
+			checkLatestRelease({ repository: UPSTREAM, currentVersion: "1.9.0", fetchLatest }),
+		).rejects.toThrow("invalid GitHub release response");
 	});
 
 	it("rejects a release URL outside the official repository", async () => {
@@ -129,9 +140,9 @@ describe("checkLatestRelease", () => {
 			}),
 		);
 
-		await expect(checkLatestRelease({ currentVersion: "1.9.0", fetchLatest })).rejects.toThrow(
-			"untrusted release URL",
-		);
+		await expect(
+			checkLatestRelease({ repository: UPSTREAM, currentVersion: "1.9.0", fetchLatest }),
+		).rejects.toThrow("untrusted release URL");
 	});
 
 	it.each([
@@ -149,20 +160,24 @@ describe("checkLatestRelease", () => {
 			}),
 		);
 
-		await expect(checkLatestRelease({ currentVersion: "1.9.0", fetchLatest })).rejects.toThrow(
-			"untrusted release URL",
-		);
+		await expect(
+			checkLatestRelease({ repository: UPSTREAM, currentVersion: "1.9.0", fetchLatest }),
+		).rejects.toThrow("untrusted release URL");
 	});
 
 	it("rejects unsuccessful or malformed GitHub responses", async () => {
 		const unavailable = vi.fn().mockResolvedValue(releaseResponse({}, 503));
 		await expect(
-			checkLatestRelease({ currentVersion: "1.9.0", fetchLatest: unavailable }),
+			checkLatestRelease({
+				repository: UPSTREAM,
+				currentVersion: "1.9.0",
+				fetchLatest: unavailable,
+			}),
 		).rejects.toThrow("GitHub release check failed (503)");
 
 		const malformed = vi.fn().mockResolvedValue(releaseResponse({ tag_name: "v2.0.0" }));
 		await expect(
-			checkLatestRelease({ currentVersion: "1.9.0", fetchLatest: malformed }),
+			checkLatestRelease({ repository: UPSTREAM, currentVersion: "1.9.0", fetchLatest: malformed }),
 		).rejects.toThrow("invalid GitHub release response");
 	});
 });

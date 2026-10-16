@@ -1,0 +1,25 @@
+{
+	"$comment": "Product identity for this build. Read by src/lib/branding.ts (renderer and main process). electron-builder.json5 and package.json must agree with it; src/lib/branding.test.ts checks that they do. Keep `upstream` and `copyright` naming OpenScreen: the MIT licence requires the original notices to stay.",
+	"productName": "Qbexel Capture Studio",
+	"shortName": "Capture Studio",
+	"vendor": "Qbexel",
+	"appId": "com.qbexel.capturestudio",
+	"executableName": "QbexelCaptureStudio",
+	"cliName": "qbexel",
+	"website": "https://qbexel.com",
+	"copyright": "© 2026 Qbexel. Based on OpenScreen, © 2025-2026 OpenScreen contributors — MIT License",
+	"repository": null,
+	"updates": null,
+	"telemetry": { "posthogToken": null },
+	"assets": {
+		"ctcAlignerBaseUrl": "https://github.com/getopenscreen/openscreen/releases/download/v0.0.0-ctc-aligners-1"
+	},
+	"projectFileExtension": ".openscreen",
+	"stylePresetExtension": ".openscreenpreset",
+	"mcpServerName": "openscreen",
+	"upstream": {
+		"name": "OpenScreen",
+		"repository": "https://github.com/getopenscreen/openscreen",
+		"website": "https://getopenscreen.com"
+	}
+}

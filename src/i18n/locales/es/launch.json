@@ -62,8 +62,8 @@
 		"screens": "Pantallas ({{count}})",
 		"windows": "Ventanas ({{count}})",
 		"emptyTitle": "No se encontraron pantallas ni ventanas",
-		"emptyDescription": "Si acabas de conceder permiso de grabación de pantalla, recarga este selector. En macOS puede que debas volver a abrir OpenScreen.",
-		"loadFailedDescription": "OpenScreen no pudo cargar las fuentes de captura. Recarga este selector e inténtalo de nuevo.",
+		"emptyDescription": "Si acabas de conceder permiso de grabación de pantalla, recarga este selector. En macOS puede que debas volver a abrir {{product}}.",
+		"loadFailedDescription": "{{product}} no pudo cargar las fuentes de captura. Recarga este selector e inténtalo de nuevo.",
 		"defaultSourceName": "Pantalla"
 	},
 	"recording": {
@@ -77,13 +77,13 @@
 	"languageWithName": "Idioma: {{language}}",
 	"systemLanguagePrompt": {
 		"title": "¿Usar el idioma del sistema?",
-		"description": "Detectamos {{language}} como idioma de tu sistema. ¿Quieres cambiar OpenScreen a {{language}}?",
+		"description": "Detectamos {{language}} como idioma de tu sistema. ¿Quieres cambiar {{product}} a {{language}}?",
 		"switch": "Cambiar a {{language}}",
 		"keepDefault": "Mantener idioma actual"
 	},
 	"softwareEncoderFallback": {
 		"title": "Se cambió a codificación por software",
-		"description": "El codificador GPU predeterminado no pudo iniciarse, por lo que OpenScreen pasó a la codificación H.264 por software. La grabación debería continuar con normalidad, pero el uso de CPU puede ser mayor.",
+		"description": "El codificador GPU predeterminado no pudo iniciarse, por lo que {{product}} pasó a la codificación H.264 por software. La grabación debería continuar con normalidad, pero el uso de CPU puede ser mayor.",
 		"dismiss": "Entendido",
 		"dontShowAgain": "No volver a mostrar"
 	},
@@ -100,7 +100,7 @@
 		"checkingForUpdates": "Buscando…"
 	},
 	"permissions": {
-		"title": "OpenScreen necesita algunos permisos",
+		"title": "{{product}} necesita algunos permisos",
 		"subtitle": "macOS te pide concederlos una sola vez. Puedes cambiarlos en cualquier momento en Ajustes del Sistema.",
 		"level": {
 			"required": "Obligatorio",
@@ -137,17 +137,17 @@
 			"continue": "Continuar",
 			"allow": "Permitir",
 			"openSettings": "Abrir Ajustes",
-			"restart": "Reiniciar OpenScreen",
+			"restart": "Reiniciar {{product}}",
 			"start": "Empezar"
 		},
 		"help": {
-			"screenPrompt": "Después, macOS te pedirá que actives OpenScreen en Ajustes del Sistema.",
-			"screenSettings": "En Ajustes del Sistema, activa OpenScreen. Si macOS ofrece cerrarlo y volver a abrirlo, acepta: esta ventana volverá.",
-			"screenNotListed": "¿OpenScreen no aparece en la lista? Haz clic en + y elige OpenScreen en Aplicaciones.",
-			"screenRestart": "Permitido. OpenScreen debe reiniciarse para poder usarlo.",
-			"screenRecurring": "En tu primera grabación, macOS te preguntará si OpenScreen puede acceder directamente a tu pantalla, sin el selector del sistema. Haz clic en Permitir. macOS vuelve a preguntar de vez en cuando; es normal.",
-			"systemAudioPrompt": "macOS te pedirá que permitas a OpenScreen grabar el sonido de tu Mac.",
-			"systemAudioRequested": "Si lo rechazaste, activa OpenScreen en «Solo grabación del audio del sistema» en Ajustes del Sistema."
+			"screenPrompt": "Después, macOS te pedirá que actives {{product}} en Ajustes del Sistema.",
+			"screenSettings": "En Ajustes del Sistema, activa {{product}}. Si macOS ofrece cerrarlo y volver a abrirlo, acepta: esta ventana volverá.",
+			"screenNotListed": "¿{{product}} no aparece en la lista? Haz clic en + y elige {{product}} en Aplicaciones.",
+			"screenRestart": "Permitido. {{product}} debe reiniciarse para poder usarlo.",
+			"screenRecurring": "En tu primera grabación, macOS te preguntará si {{product}} puede acceder directamente a tu pantalla, sin el selector del sistema. Haz clic en Permitir. macOS vuelve a preguntar de vez en cuando; es normal.",
+			"systemAudioPrompt": "macOS te pedirá que permitas a {{product}} grabar el sonido de tu Mac.",
+			"systemAudioRequested": "Si lo rechazaste, activa {{product}} en «Solo grabación del audio del sistema» en Ajustes del Sistema."
 		},
 		"footer": {
 			"screenRequired": "Se necesita la grabación de pantalla para grabar.",

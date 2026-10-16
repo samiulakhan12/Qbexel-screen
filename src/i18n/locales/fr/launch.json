@@ -62,8 +62,8 @@
 		"screens": "Écrans ({{count}})",
 		"windows": "Fenêtres ({{count}})",
 		"emptyTitle": "Aucun écran ni fenêtre trouvé",
-		"emptyDescription": "Si vous venez d'accorder l'autorisation d'enregistrement d'écran, rechargez ce sélecteur. Sur macOS, il peut être nécessaire de rouvrir OpenScreen.",
-		"loadFailedDescription": "OpenScreen n'a pas pu charger les sources de capture. Rechargez ce sélecteur et réessayez.",
+		"emptyDescription": "Si vous venez d'accorder l'autorisation d'enregistrement d'écran, rechargez ce sélecteur. Sur macOS, il peut être nécessaire de rouvrir {{product}}.",
+		"loadFailedDescription": "{{product}} n'a pas pu charger les sources de capture. Rechargez ce sélecteur et réessayez.",
 		"defaultSourceName": "Écran"
 	},
 	"recording": {
@@ -77,13 +77,13 @@
 	"languageWithName": "Langue : {{language}}",
 	"systemLanguagePrompt": {
 		"title": "Utiliser la langue de votre système ?",
-		"description": "Nous avons détecté {{language}} comme langue système. Voulez-vous passer OpenScreen en {{language}} ?",
+		"description": "Nous avons détecté {{language}} comme langue système. Voulez-vous passer {{product}} en {{language}} ?",
 		"switch": "Passer en {{language}}",
 		"keepDefault": "Conserver la langue actuelle"
 	},
 	"softwareEncoderFallback": {
 		"title": "Passage à l'encodage logiciel",
-		"description": "L'encodeur GPU par défaut n'a pas pu démarrer, OpenScreen est donc passé à l'encodage H.264 logiciel. L'enregistrement devrait continuer normalement, mais l'utilisation du processeur peut être plus élevée.",
+		"description": "L'encodeur GPU par défaut n'a pas pu démarrer, {{product}} est donc passé à l'encodage H.264 logiciel. L'enregistrement devrait continuer normalement, mais l'utilisation du processeur peut être plus élevée.",
 		"dismiss": "Compris",
 		"dontShowAgain": "Ne plus afficher"
 	},
@@ -100,7 +100,7 @@
 		"checkingForUpdates": "Recherche…"
 	},
 	"permissions": {
-		"title": "OpenScreen a besoin de quelques autorisations",
+		"title": "{{product}} a besoin de quelques autorisations",
 		"subtitle": "macOS vous demande de les accorder une seule fois. Vous pouvez les modifier à tout moment dans Réglages Système.",
 		"level": {
 			"required": "Obligatoire",
@@ -137,17 +137,17 @@
 			"continue": "Continuer",
 			"allow": "Autoriser",
 			"openSettings": "Ouvrir Réglages",
-			"restart": "Redémarrer OpenScreen",
+			"restart": "Redémarrer {{product}}",
 			"start": "Commencer"
 		},
 		"help": {
-			"screenPrompt": "macOS vous demandera ensuite d'activer OpenScreen dans Réglages Système.",
-			"screenSettings": "Dans Réglages Système, activez OpenScreen. Si macOS propose de le quitter et le rouvrir, acceptez : cette fenêtre reviendra.",
-			"screenNotListed": "OpenScreen n'apparaît pas dans la liste ? Cliquez sur +, puis choisissez OpenScreen dans Applications.",
-			"screenRestart": "Autorisé. OpenScreen doit redémarrer pour pouvoir l'utiliser.",
-			"screenRecurring": "À votre premier enregistrement, macOS vous demandera si OpenScreen peut accéder directement à votre écran, sans passer par le sélecteur du système. Cliquez sur Autoriser. macOS repose la question de temps en temps, c'est normal.",
-			"systemAudioPrompt": "macOS vous demandera d'autoriser OpenScreen à enregistrer le son de votre Mac.",
-			"systemAudioRequested": "Si vous avez refusé, activez OpenScreen sous « Enregistrement des sons du système uniquement » dans Réglages Système."
+			"screenPrompt": "macOS vous demandera ensuite d'activer {{product}} dans Réglages Système.",
+			"screenSettings": "Dans Réglages Système, activez {{product}}. Si macOS propose de le quitter et le rouvrir, acceptez : cette fenêtre reviendra.",
+			"screenNotListed": "{{product}} n'apparaît pas dans la liste ? Cliquez sur +, puis choisissez {{product}} dans Applications.",
+			"screenRestart": "Autorisé. {{product}} doit redémarrer pour pouvoir l'utiliser.",
+			"screenRecurring": "À votre premier enregistrement, macOS vous demandera si {{product}} peut accéder directement à votre écran, sans passer par le sélecteur du système. Cliquez sur Autoriser. macOS repose la question de temps en temps, c'est normal.",
+			"systemAudioPrompt": "macOS vous demandera d'autoriser {{product}} à enregistrer le son de votre Mac.",
+			"systemAudioRequested": "Si vous avez refusé, activez {{product}} sous « Enregistrement des sons du système uniquement » dans Réglages Système."
 		},
 		"footer": {
 			"screenRequired": "L'enregistrement de l'écran est nécessaire pour enregistrer.",

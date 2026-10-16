@@ -12,7 +12,7 @@ import {
 	shell,
 	Tray,
 } from "electron";
-import { ShortcutBinding } from "../src/lib/shortcuts";
+import { BRAND } from "../src/lib/branding";
 import {
 	type AboutFacts,
 	COPYRIGHT,
@@ -42,8 +42,10 @@ import { disableHttpCacheForDevServer } from "./dev-http-cache";
 import { mainLogBuffer } from "./diagnostics/main-log-buffer";
 import { buildEditMenuSubmenu, type EditorUndoRedoChannel, routeEditorUndoRedo } from "./edit-menu";
 import {
-	loadAndRegisterGlobalShortcut,
-	registerOpenAppShortcut,
+	type GlobalShortcutHandlers,
+	loadAndRegisterGlobalShortcuts,
+	pickGlobalBindings,
+	registerGlobalShortcuts,
 	unregisterAllGlobalShortcuts,
 } from "./globalShortcut";
 import { mainT, setMainLocale } from "./i18n";
@@ -281,10 +283,14 @@ function setupApplicationMenu() {
 				// Permanent and unconditional, unlike the update check below: a link to the repo
 				// is the one thing every channel may show, the Store included. Not in the tray,
 				// which is the recording surface — nothing asks for a favour mid-take.
-				{
-					label: mainT("common", "actions.starOnGithub") || "Star on GitHub",
-					click: runStarOnGithub,
-				},
+				...(REPO_URL
+					? [
+							{
+								label: mainT("common", "actions.starOnGithub") || "Star on GitHub",
+								click: runStarOnGithub,
+							},
+						]
+					: []),
 				// Omitted entirely — here, in the Help menu and in the tray — where a package
 				// manager owns the update. See `canOfferUpdateCheck`.
 				...(canOfferUpdateCheck()
@@ -448,10 +454,14 @@ function setupApplicationMenu() {
 					label: mainT("common", "actions.saveDiagnostics") || "Save Diagnostics",
 					click: runSaveDiagnostics,
 				},
-				{
-					label: mainT("common", "actions.starOnGithub") || "Star on GitHub",
-					click: runStarOnGithub,
-				},
+				...(REPO_URL
+					? [
+							{
+								label: mainT("common", "actions.starOnGithub") || "Star on GitHub",
+								click: runStarOnGithub,
+							},
+						]
+					: []),
 			],
 		});
 	}
@@ -495,7 +505,10 @@ let updateCheckAbort: AbortController | null = null;
  *  the install, i.e. after a 240 MB download has already competed with the encoder. Every
  *  surface is rebuilt when the flag flips (see `setupApplicationMenu`/`updateTrayMenu`). */
 function canOfferUpdateCheck(): boolean {
-	return offersUpdateCheck(getInstallChannel(), { recording: isRecording });
+	// A build with no release feed (branding.json#updates null) never offers the check.
+	return (
+		BRAND.updates !== null && offersUpdateCheck(getInstallChannel(), { recording: isRecording })
+	);
 }
 
 /** What the HUD is told at mount, and only the permanent half of the veto. The recording half
@@ -504,7 +517,7 @@ function canOfferUpdateCheck(): boolean {
  *  mount mid-take — and the HUD is rebuilt for every recording. The renderer applies the
  *  transient half itself; `check-for-updates` still enforces both. */
 function channelAllowsUpdateCheck(): boolean {
-	return !platformOwnsUpdates(getInstallChannel());
+	return BRAND.updates !== null && !platformOwnsUpdates(getInstallChannel());
 }
 
 /** Message boxes must be owned by a window. The HUD is `alwaysOnTop` and `skipTaskbar`
@@ -596,8 +609,27 @@ function runAboutDialog() {
 	});
 }
 
+/** A recording hotkey pressed anywhere on the desktop. The HUD owns the take, so the action is
+ *  handed to the app's window, which is the HUD whenever a take can start or is running (the
+ *  editor closes before the HUD records). With nothing to act on, the hotkey brings the app
+ *  forward, as the one global shortcut always did, so a press is never silently swallowed. */
+function sendHudShortcut(action: "toggleRecording" | "pauseRecording") {
+	if (action === "pauseRecording" && !isRecording) return;
+	if (mainWindow && !mainWindow.isDestroyed()) {
+		mainWindow.webContents.send("hud-shortcut", action);
+	}
+	if (!isRecording) showMainWindow();
+}
+
+const globalShortcutHandlers: GlobalShortcutHandlers = {
+	openApp: () => showMainWindow(),
+	toggleRecording: () => sendHudShortcut("toggleRecording"),
+	pauseRecording: () => sendHudShortcut("pauseRecording"),
+};
+
 /** Menu, tray and renderer all end up here, so the link cannot drift between them. */
 function runStarOnGithub() {
+	if (REPO_URL === null) return;
 	shell.openExternal(REPO_URL).catch((error) => {
 		console.error("[star] could not open the repo page", error);
 	});
@@ -1326,9 +1358,8 @@ appReady?.then(async () => {
 		updateTrayMenu();
 	});
 
-	ipcMain.handle("update-global-shortcut", (_, binding: ShortcutBinding) => {
-		const success = registerOpenAppShortcut(binding, showMainWindow);
-		return { success };
+	ipcMain.handle("update-global-shortcuts", (_, config: unknown) => {
+		return registerGlobalShortcuts(pickGlobalBindings(config), globalShortcutHandlers);
 	});
 
 	// The HUD's settings panel shows the running version and, where this copy owns its updates,
@@ -1362,15 +1393,18 @@ appReady?.then(async () => {
 	ipcMain.handle("star-prompt:export-finished", () => {
 		const { successfulExports, dismissed } = starPromptSettings.recordSuccessfulExport();
 		return {
-			offer: offersStarPrompt({
-				successfulExports,
-				dismissed,
-				recording: isRecording,
-				// Every handler in this file is registered inside `appReady`, which the CLI boot
-				// path never reaches, so this is the second lock on a shut door — see the note on
-				// `headless` in star-prompt.ts.
-				headless: cliCommand !== null,
-			}),
+			// Nothing to star without a public repository (branding.json#repository).
+			offer:
+				REPO_URL !== null &&
+				offersStarPrompt({
+					successfulExports,
+					dismissed,
+					recording: isRecording,
+					// Every handler in this file is registered inside `appReady`, which the CLI boot
+					// path never reaches, so this is the second lock on a shut door — see the note on
+					// `headless` in star-prompt.ts.
+					headless: cliCommand !== null,
+				}),
 			// Drives which links the prompt shows. A Store copy must not be pointed at Releases
 			// or at an .exe, so it is offered the repo root and the Store's own review page.
 			store: getInstallChannel() === "store",
@@ -1484,7 +1518,7 @@ appReady?.then(async () => {
 	// Native STT (whisper.cpp + forced alignment) — single instance per app.
 	registerSttIpc(ipcMain);
 
-	await loadAndRegisterGlobalShortcut(showMainWindow);
+	await loadAndRegisterGlobalShortcuts(globalShortcutHandlers);
 
 	// --bench=<query>: run the export bench instead of the app. Opens the real
 	// editor window (same webPreferences, same preload) pointed at the bench

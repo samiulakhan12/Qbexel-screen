@@ -1,9 +1,12 @@
 import fs from "node:fs/promises";
 import { globalShortcut } from "electron";
-import { type ShortcutBinding } from "../src/lib/shortcuts";
+import {
+	DEFAULT_SHORTCUTS,
+	GLOBAL_SHORTCUT_ACTIONS,
+	type GlobalShortcutAction,
+	type ShortcutBinding,
+} from "../src/lib/shortcuts";
 import { SHORTCUTS_FILE } from "./ipc/handlers";
-
-const DEFAULT_OPEN_APP_BINDING: ShortcutBinding = { key: "o", ctrl: true, shift: true };
 
 // Maps KeyboardEvent.key values to Electron accelerator key names
 const KEY_TO_ACCELERATOR: Record<string, string> = {
@@ -23,7 +26,7 @@ const KEY_TO_ACCELERATOR: Record<string, string> = {
 	tab: "Tab",
 };
 
-function bindingToAccelerator(binding: ShortcutBinding): string {
+export function bindingToAccelerator(binding: ShortcutBinding): string {
 	const parts: string[] = [];
 	if (binding.ctrl) parts.push("CommandOrControl");
 	if (binding.shift) parts.push("Shift");
@@ -36,42 +39,94 @@ function bindingToAccelerator(binding: ShortcutBinding): string {
 	return parts.join("+");
 }
 
-let currentAccelerator: string | null = null;
+export type GlobalShortcutHandlers = Record<GlobalShortcutAction, () => void>;
+export type GlobalShortcutBindings = Partial<Record<GlobalShortcutAction, ShortcutBinding>>;
 
-export function registerOpenAppShortcut(binding: ShortcutBinding, onTrigger: () => void): boolean {
-	const accelerator = bindingToAccelerator(binding);
+/** The accelerator each action is currently registered under, so a re-register can release it. */
+const current = new Map<GlobalShortcutAction, string>();
 
-	if (accelerator === currentAccelerator) {
-		return true;
-	}
-
-	// Register the new shortcut before unregistering the old, so a failure leaves the old binding intact
-	const success = globalShortcut.register(accelerator, onTrigger);
-
-	if (success) {
-		if (currentAccelerator) {
-			globalShortcut.unregister(currentAccelerator);
-		}
-		currentAccelerator = accelerator;
-		console.log(`Global shortcut registered: ${accelerator}`);
-	} else {
-		console.warn(`Failed to register global shortcut: ${accelerator}`);
-	}
-
-	return success;
+/** The subset of Electron's `globalShortcut` this module uses; injected by the tests. */
+export interface GlobalShortcutApi {
+	register(accelerator: string, callback: () => void): boolean;
+	unregister(accelerator: string): void;
+	unregisterAll(): void;
 }
 
-export async function loadAndRegisterGlobalShortcut(onTrigger: () => void): Promise<void> {
+/**
+ * Registers every global action under its binding (the default where none is given). An action
+ * whose accelerator is taken by another app keeps its previous binding, and is reported in
+ * `failed` so the settings dialog can say so. Two actions bound to the same keys would race for
+ * one accelerator; the second is reported failed rather than silently stealing the first.
+ */
+export function registerGlobalShortcuts(
+	bindings: GlobalShortcutBindings,
+	handlers: GlobalShortcutHandlers,
+	api: GlobalShortcutApi = globalShortcut,
+): { success: boolean; failed: GlobalShortcutAction[] } {
+	const failed: GlobalShortcutAction[] = [];
+	const claimed = new Set<string>();
+	for (const action of GLOBAL_SHORTCUT_ACTIONS) {
+		const accelerator = bindingToAccelerator(bindings[action] ?? DEFAULT_SHORTCUTS[action]);
+		if (claimed.has(accelerator)) {
+			failed.push(action);
+			continue;
+		}
+		const previous = current.get(action);
+		if (previous === accelerator) {
+			claimed.add(accelerator);
+			continue;
+		}
+		// Register the new shortcut before unregistering the old, so a failure leaves the old
+		// binding intact.
+		const success = api.register(accelerator, handlers[action]);
+		if (success) {
+			if (previous) api.unregister(previous);
+			current.set(action, accelerator);
+			claimed.add(accelerator);
+			console.log(`Global shortcut registered: ${accelerator} (${action})`);
+		} else {
+			failed.push(action);
+			if (previous) claimed.add(previous);
+			console.warn(`Failed to register global shortcut: ${accelerator} (${action})`);
+		}
+	}
+	return { success: failed.length === 0, failed };
+}
+
+export async function loadAndRegisterGlobalShortcuts(
+	handlers: GlobalShortcutHandlers,
+	api: GlobalShortcutApi = globalShortcut,
+): Promise<void> {
+	let bindings: GlobalShortcutBindings = {};
 	try {
 		const data = await fs.readFile(SHORTCUTS_FILE, "utf-8");
-		const shortcuts = JSON.parse(data);
-		const binding = shortcuts.openApp || DEFAULT_OPEN_APP_BINDING;
-		registerOpenAppShortcut(binding, onTrigger);
+		const shortcuts = JSON.parse(data) as Record<string, unknown>;
+		bindings = pickGlobalBindings(shortcuts);
 	} catch {
-		registerOpenAppShortcut(DEFAULT_OPEN_APP_BINDING, onTrigger);
+		// No saved shortcuts yet: the defaults apply.
 	}
+	registerGlobalShortcuts(bindings, handlers, api);
 }
 
-export function unregisterAllGlobalShortcuts(): void {
-	globalShortcut.unregisterAll();
+/** The global actions' bindings out of a saved config, ignoring anything malformed. */
+export function pickGlobalBindings(config: unknown): GlobalShortcutBindings {
+	const bindings: GlobalShortcutBindings = {};
+	if (!config || typeof config !== "object") return bindings;
+	for (const action of GLOBAL_SHORTCUT_ACTIONS) {
+		const candidate = (config as Record<string, unknown>)[action];
+		if (
+			candidate &&
+			typeof candidate === "object" &&
+			typeof (candidate as ShortcutBinding).key === "string" &&
+			(candidate as ShortcutBinding).key.length > 0
+		) {
+			bindings[action] = candidate as ShortcutBinding;
+		}
+	}
+	return bindings;
+}
+
+export function unregisterAllGlobalShortcuts(api: GlobalShortcutApi = globalShortcut): void {
+	api.unregisterAll();
+	current.clear();
 }

@@ -140,7 +140,7 @@
 	"stylePresets": {
 		"button": "预设",
 		"menuLabel": "样式预设",
-		"factoryName": "OpenScreen",
+		"factoryName": "{{product}}",
 		"factoryBadge": "内置",
 		"empty": "暂无已保存的预设",
 		"create": "新建预设…",

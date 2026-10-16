@@ -62,8 +62,8 @@
 		"screens": "螢幕 ({{count}})",
 		"windows": "視窗 ({{count}})",
 		"emptyTitle": "找不到螢幕或視窗",
-		"emptyDescription": "如果您剛授予螢幕錄製權限，請重新載入此選擇器。在 macOS 上，您可能需要重新開啟 OpenScreen。",
-		"loadFailedDescription": "OpenScreen 無法載入擷取來源。請重新載入此選擇器並再試一次。",
+		"emptyDescription": "如果您剛授予螢幕錄製權限，請重新載入此選擇器。在 macOS 上，您可能需要重新開啟 {{product}}。",
+		"loadFailedDescription": "{{product}} 無法載入擷取來源。請重新載入此選擇器並再試一次。",
 		"defaultSourceName": "螢幕"
 	},
 	"recording": {
@@ -77,13 +77,13 @@
 	"languageWithName": "語言：{{language}}",
 	"systemLanguagePrompt": {
 		"title": "要使用系統語言嗎？",
-		"description": "偵測到系統語言為 {{language}}。要將 OpenScreen 切換為 {{language}} 嗎？",
+		"description": "偵測到系統語言為 {{language}}。要將 {{product}} 切換為 {{language}} 嗎？",
 		"switch": "切換為 {{language}}",
 		"keepDefault": "保持目前語言"
 	},
 	"softwareEncoderFallback": {
 		"title": "已切換至軟體編碼",
-		"description": "預設 GPU 編碼器啟動失敗，OpenScreen 已改用軟體 H.264 編碼。錄製會照常繼續，但 CPU 使用率可能較高。",
+		"description": "預設 GPU 編碼器啟動失敗，{{product}} 已改用軟體 H.264 編碼。錄製會照常繼續，但 CPU 使用率可能較高。",
 		"dismiss": "知道了",
 		"dontShowAgain": "不再顯示"
 	},
@@ -100,7 +100,7 @@
 		"checkingForUpdates": "檢查中…"
 	},
 	"permissions": {
-		"title": "OpenScreen 需要一些權限",
+		"title": "{{product}} 需要一些權限",
 		"subtitle": "macOS 只會請你授予一次。你可以隨時在「系統設定」中更改。",
 		"level": {
 			"required": "必要",
@@ -137,17 +137,17 @@
 			"continue": "繼續",
 			"allow": "允許",
 			"openSettings": "打開設定",
-			"restart": "重新啟動 OpenScreen",
+			"restart": "重新啟動 {{product}}",
 			"start": "開始使用"
 		},
 		"help": {
-			"screenPrompt": "接下來 macOS 會請你在「系統設定」中開啟 OpenScreen。",
-			"screenSettings": "請在「系統設定」中開啟 OpenScreen。如果 macOS 提議結束並重新打開，請同意：此視窗會再次出現。",
-			"screenNotListed": "列表中沒有 OpenScreen？按一下 +，然後在「應用程式」中選擇 OpenScreen。",
-			"screenRestart": "已允許。OpenScreen 需要重新啟動才能使用。",
-			"screenRecurring": "第一次錄製時，macOS 會詢問是否允許 OpenScreen 不透過系統選擇器直接取用你的螢幕。請按一下「允許」。macOS 會不時再次詢問，這是正常的。",
-			"systemAudioPrompt": "macOS 會請你允許 OpenScreen 錄製 Mac 播放的聲音。",
-			"systemAudioRequested": "如果你拒絕了，請在「系統設定」的「僅限系統錄音」中開啟 OpenScreen。"
+			"screenPrompt": "接下來 macOS 會請你在「系統設定」中開啟 {{product}}。",
+			"screenSettings": "請在「系統設定」中開啟 {{product}}。如果 macOS 提議結束並重新打開，請同意：此視窗會再次出現。",
+			"screenNotListed": "列表中沒有 {{product}}？按一下 +，然後在「應用程式」中選擇 {{product}}。",
+			"screenRestart": "已允許。{{product}} 需要重新啟動才能使用。",
+			"screenRecurring": "第一次錄製時，macOS 會詢問是否允許 {{product}} 不透過系統選擇器直接取用你的螢幕。請按一下「允許」。macOS 會不時再次詢問，這是正常的。",
+			"systemAudioPrompt": "macOS 會請你允許 {{product}} 錄製 Mac 播放的聲音。",
+			"systemAudioRequested": "如果你拒絕了，請在「系統設定」的「僅限系統錄音」中開啟 {{product}}。"
 		},
 		"footer": {
 			"screenRequired": "錄製需要螢幕錄製權限。",

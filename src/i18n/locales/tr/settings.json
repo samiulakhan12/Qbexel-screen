@@ -140,7 +140,7 @@
 	"stylePresets": {
 		"button": "Ön ayarlar",
 		"menuLabel": "Stil ön ayarları",
-		"factoryName": "OpenScreen",
+		"factoryName": "{{product}}",
 		"factoryBadge": "Yerleşik",
 		"empty": "Henüz kayıtlı ön ayar yok",
 		"create": "Yeni ön ayar oluştur…",

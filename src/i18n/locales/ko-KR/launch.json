@@ -62,8 +62,8 @@
 		"screens": "화면 ({{count}}개)",
 		"windows": "창 ({{count}}개)",
 		"emptyTitle": "화면이나 창을 찾을 수 없음",
-		"emptyDescription": "화면 녹화 권한을 방금 허용했다면 이 선택기를 새로고침하세요. macOS에서는 OpenScreen을 다시 열어야 할 수도 있습니다.",
-		"loadFailedDescription": "OpenScreen이 캡처 소스를 불러오지 못했습니다. 이 선택기를 새로고침한 후 다시 시도하세요.",
+		"emptyDescription": "화면 녹화 권한을 방금 허용했다면 이 선택기를 새로고침하세요. macOS에서는 {{product}}을 다시 열어야 할 수도 있습니다.",
+		"loadFailedDescription": "{{product}}이 캡처 소스를 불러오지 못했습니다. 이 선택기를 새로고침한 후 다시 시도하세요.",
 		"defaultSourceName": "화면"
 	},
 	"recording": {
@@ -77,13 +77,13 @@
 	"languageWithName": "언어: {{language}}",
 	"systemLanguagePrompt": {
 		"title": "시스템 언어를 사용하시겠습니까?",
-		"description": "시스템 언어가 {{language}}(으)로 감지되었습니다. OpenScreen을 {{language}}(으)로 전환하시겠습니까?",
+		"description": "시스템 언어가 {{language}}(으)로 감지되었습니다. {{product}}을 {{language}}(으)로 전환하시겠습니까?",
 		"switch": "{{language}}(으)로 전환",
 		"keepDefault": "현재 언어 유지"
 	},
 	"softwareEncoderFallback": {
 		"title": "소프트웨어 인코딩으로 전환됨",
-		"description": "기본 GPU 인코더를 시작할 수 없어 OpenScreen이 소프트웨어 H.264 인코딩으로 전환했습니다. 녹화는 정상적으로 계속되지만 CPU 사용량이 높아질 수 있습니다.",
+		"description": "기본 GPU 인코더를 시작할 수 없어 {{product}}이 소프트웨어 H.264 인코딩으로 전환했습니다. 녹화는 정상적으로 계속되지만 CPU 사용량이 높아질 수 있습니다.",
 		"dismiss": "확인",
 		"dontShowAgain": "다시 표시하지 않음"
 	},
@@ -100,7 +100,7 @@
 		"checkingForUpdates": "확인 중…"
 	},
 	"permissions": {
-		"title": "OpenScreen에 몇 가지 권한이 필요합니다",
+		"title": "{{product}}에 몇 가지 권한이 필요합니다",
 		"subtitle": "macOS에서는 각 권한을 한 번만 허용하면 됩니다. 시스템 설정에서 언제든지 변경할 수 있습니다.",
 		"level": {
 			"required": "필수",
@@ -137,17 +137,17 @@
 			"continue": "계속",
 			"allow": "허용",
 			"openSettings": "설정 열기",
-			"restart": "OpenScreen 재시작",
+			"restart": "{{product}} 재시작",
 			"start": "시작하기"
 		},
 		"help": {
-			"screenPrompt": "이어서 macOS가 시스템 설정에서 OpenScreen을 켜도록 요청합니다.",
-			"screenSettings": "시스템 설정에서 OpenScreen을 켜세요. macOS가 종료 후 다시 열기를 제안하면 수락하세요. 이 창이 다시 표시됩니다.",
-			"screenNotListed": "목록에 OpenScreen이 없나요? +를 클릭한 다음 응용 프로그램에서 OpenScreen을 선택하세요.",
-			"screenRestart": "허용되었습니다. 이 권한을 사용하려면 OpenScreen을 재시작해야 합니다.",
-			"screenRecurring": "처음 녹화할 때 macOS가 OpenScreen이 시스템 선택기 없이 화면에 직접 접근해도 되는지 묻습니다. 허용을 클릭하세요. macOS는 가끔 다시 묻습니다. 정상적인 동작입니다.",
-			"systemAudioPrompt": "macOS가 OpenScreen이 Mac의 소리를 녹음하도록 허용할지 묻습니다.",
-			"systemAudioRequested": "거부했다면 시스템 설정의 ‘시스템 오디오 녹음만’에서 OpenScreen을 켜세요."
+			"screenPrompt": "이어서 macOS가 시스템 설정에서 {{product}}을 켜도록 요청합니다.",
+			"screenSettings": "시스템 설정에서 {{product}}을 켜세요. macOS가 종료 후 다시 열기를 제안하면 수락하세요. 이 창이 다시 표시됩니다.",
+			"screenNotListed": "목록에 {{product}}이 없나요? +를 클릭한 다음 응용 프로그램에서 {{product}}을 선택하세요.",
+			"screenRestart": "허용되었습니다. 이 권한을 사용하려면 {{product}}을 재시작해야 합니다.",
+			"screenRecurring": "처음 녹화할 때 macOS가 {{product}}이 시스템 선택기 없이 화면에 직접 접근해도 되는지 묻습니다. 허용을 클릭하세요. macOS는 가끔 다시 묻습니다. 정상적인 동작입니다.",
+			"systemAudioPrompt": "macOS가 {{product}}이 Mac의 소리를 녹음하도록 허용할지 묻습니다.",
+			"systemAudioRequested": "거부했다면 시스템 설정의 ‘시스템 오디오 녹음만’에서 {{product}}을 켜세요."
 		},
 		"footer": {
 			"screenRequired": "녹화하려면 화면 기록 권한이 필요합니다.",

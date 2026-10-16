@@ -140,7 +140,7 @@
 	"stylePresets": {
 		"button": "Vorgaben",
 		"menuLabel": "Stil-Vorgaben",
-		"factoryName": "OpenScreen",
+		"factoryName": "{{product}}",
 		"factoryBadge": "Integriert",
 		"empty": "Noch keine Vorgaben gespeichert",
 		"create": "Neue Vorgabe erstellen…",
