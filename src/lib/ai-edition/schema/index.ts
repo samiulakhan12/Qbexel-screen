@@ -846,6 +846,84 @@ export const storyboardSchema = z.object({
 	suggestions: z.array(storyboardSuggestionSchema).default([]),
 });
 
+// ---- Privacy Guardian review -------------------------------------------------
+// What a scan of the recording found (text on screen that looks like a secret, an
+// email, a card number…), what the user decided about each finding, and whether the
+// review was done. Optional and additive, like `storyboard`.
+//
+// A finding never stores the secret itself: `preview` is masked at detection time
+// (`privacy/patterns.ts`), and boxes locate it on the picture so a blur can cover it.
+// Accepting a finding writes blur annotations through `addAnnotation`; the ids are kept
+// so the review can tell the blur is still there.
+export const privacyFindingKindSchema = z.enum([
+	"api-key",
+	"token",
+	"private-key",
+	"secret-assignment",
+	"url-credential",
+	"email",
+	"phone",
+	"card",
+	"iban",
+	"ip",
+]);
+
+export const privacyBoxSchema = z.object({
+	/** SOURCE ms of the asset the frame was taken from. */
+	timeMs: z.number().nonnegative(),
+	/** The box in fractions (0..1) of the recording's picture. */
+	x: z.number().min(0).max(1),
+	y: z.number().min(0).max(1),
+	w: z.number().min(0).max(1),
+	h: z.number().min(0).max(1),
+});
+
+export const privacyFindingSchema = z.object({
+	id: z.string().min(1),
+	kind: privacyFindingKindSchema,
+	/** Masked excerpt: the first and last characters, the rest hidden. Never the value. */
+	preview: z.string().max(80),
+	confidence: z.number().min(0).max(1),
+	/** Where it was seen: a sampled frame of the recording, or the transcript (spoken). */
+	source: z.enum(["frame", "transcript"]),
+	assetId: z.string().min(1),
+	/** Empty for a transcript finding: there is nothing on the picture to cover. */
+	boxes: z.array(privacyBoxSchema).default([]),
+	/** For a transcript finding, the SOURCE seconds of the words. */
+	spokenStartSec: z.number().nonnegative().optional(),
+	spokenEndSec: z.number().nonnegative().optional(),
+	status: z.enum(["suggested", "accepted", "dismissed"]).default("suggested"),
+	/** The blur annotations an accepted finding created. */
+	annotationIds: z.array(z.string().min(1)).default([]),
+	error: z.string().optional(),
+});
+
+export const privacyScanSchema = z.object({
+	id: z.string().min(1),
+	at: isoDateSchema,
+	/** How the recording was read: text patterns over OCR'd frames, over the transcript. */
+	strategies: z.array(z.enum(["ocr", "transcript"])),
+	/** Whether frames could be OCR'd at all; false means only the transcript was read. */
+	ocrAvailable: z.boolean(),
+	sampleEveryMs: z.number().positive(),
+	framesScanned: z.number().int().nonnegative(),
+	assetIds: z.array(z.string().min(1)).default([]),
+	findings: z.array(privacyFindingSchema).default([]),
+	/** Why the scan was partial, if it was (a missing ffmpeg, a frame that failed). */
+	warnings: z.array(z.string()).default([]),
+});
+
+export const PRIVACY_REVIEW_VERSION = 1;
+
+export const privacyReviewSchema = z.object({
+	version: z.literal(PRIVACY_REVIEW_VERSION),
+	/** The latest scan replaces the previous one; decisions carry over by finding identity. */
+	scan: privacyScanSchema.nullable().default(null),
+	/** The user confirmed the findings were reviewed, against this clip signature. */
+	reviewedAt: isoDateSchema.nullable().default(null),
+	reviewedClipSignature: z.string().nullable().default(null),
+});
+
 // Legacy OpenScreen appearance / export settings that the v3 schema doesn't
 // normalize into the timeline / assets model. They are applied at export time
 // by the existing pipeline (see technical-documentation/architecture/document-model.md).
@@ -891,6 +969,8 @@ const documentSchemaShape = z.object({
 	audioTracks: z.array(audioTrackSchema).default([]),
 	// The Tutorial Director's review (above). Optional like `shaderEffects`.
 	storyboard: storyboardSchema.optional(),
+	// The Privacy Guardian's review (above). Optional like `storyboard`.
+	privacy: privacyReviewSchema.optional(),
 	legacyEditor: legacyEditorSchema.nullable().default(null),
 });
 
@@ -1534,6 +1614,11 @@ export type AxcutStoryboardSuggestion = z.infer<typeof storyboardSuggestionSchem
 export type AxcutStoryboardSuggestionStatus = z.infer<typeof storyboardSuggestionStatusSchema>;
 export type AxcutStoryboardObservedEvent = z.infer<typeof storyboardObservedEventSchema>;
 export type AxcutStoryboardInference = z.infer<typeof storyboardInferenceSchema>;
+export type AxcutPrivacyReview = z.infer<typeof privacyReviewSchema>;
+export type AxcutPrivacyScan = z.infer<typeof privacyScanSchema>;
+export type AxcutPrivacyFinding = z.infer<typeof privacyFindingSchema>;
+export type AxcutPrivacyFindingKind = z.infer<typeof privacyFindingKindSchema>;
+export type AxcutPrivacyBox = z.infer<typeof privacyBoxSchema>;
 export type AxcutDocument = z.infer<typeof documentSchema>;
 export type AxcutDocumentInput = z.input<typeof documentSchema>;
 export type CreateProjectInput = z.infer<typeof createProjectInputSchema>;

@@ -825,6 +825,39 @@ function createShimBridgeClient() {
 					error: "Applying storyboard suggestions needs the desktop app.",
 				}),
 		},
+		// The browser has no ffmpeg and no OCR worker: the transcript half of the scan runs,
+		// frames are reported as not read, and nothing can be applied or checked.
+		privacy: {
+			status: () =>
+				Promise.resolve({ ocrAvailable: false, modelPresent: false, ffmpegPresent: false }),
+			scan: async (document: unknown) => {
+				const parsed = documentSchema.safeParse(document);
+				if (!parsed.success) {
+					return { success: false, error: "The document snapshot is not valid." };
+				}
+				const { scanDocumentForSensitiveContent } = await import(
+					"../lib/ai-edition/privacy/browserScan"
+				);
+				return { success: true, scan: scanDocumentForSensitiveContent(parsed.data) };
+			},
+			cancelScan: () => Promise.resolve({ cancelled: false }),
+			apply: () =>
+				Promise.resolve({
+					success: false,
+					applied: [],
+					failed: [],
+					skipped: [],
+					error: "Blurring findings needs the desktop app.",
+				}),
+			scanFile: () =>
+				Promise.resolve({
+					success: false,
+					framesScanned: 0,
+					findings: [],
+					warnings: [],
+					error: "Checking an exported file needs the desktop app.",
+				}),
+		},
 		project: {
 			getCurrentContext: () =>
 				Promise.resolve({ currentProjectPath: null, currentVideoPath: null }),

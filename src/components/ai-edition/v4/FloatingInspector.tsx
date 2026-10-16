@@ -20,6 +20,7 @@ import {
 	MousePointer2,
 	Pencil,
 	Scissors,
+	ShieldCheck,
 	SlidersHorizontal,
 	Sparkles,
 	Trash2,
@@ -77,6 +78,7 @@ import { checkShaderEffectCode } from "@/native/compositorViewClient";
 import { annotationFootageRect, zoomScaleLimit } from "@/native/sceneDescription";
 import { ColorField } from "../ColorField";
 import shell from "../NewEditorShell.module.css";
+import { PrivacyPane } from "../PrivacyPane";
 import {
 	AudioPane,
 	AudioTrackPane,
@@ -100,7 +102,14 @@ type TimelineApi = ReturnType<typeof useTimeline>;
 // They were never a separate concern from the transcript — they RENDER it — and two
 // tabs meant two entry points to transcription, one of which ("transcribe video",
 // on the caption tab) was the only one many users ever found. See issue #560.
-export type Facet = "effects" | "layout" | "audio" | "cursor" | "transcript" | "director";
+export type Facet =
+	| "effects"
+	| "layout"
+	| "audio"
+	| "cursor"
+	| "transcript"
+	| "director"
+	| "privacy";
 
 const FACETS: Array<{ id: Facet; labelKey: string; icon: typeof SlidersHorizontal }> = [
 	// Background is a SECTION of this facet now, not a facet of its own — see
@@ -112,6 +121,8 @@ const FACETS: Array<{ id: Facet; labelKey: string; icon: typeof SlidersHorizonta
 	{ id: "transcript", labelKey: "facets.transcript", icon: FileText },
 	// The Tutorial Director: scenes and reviewed suggestions (StoryboardPane).
 	{ id: "director", labelKey: "facets.director", icon: Clapperboard },
+	// The Privacy Guardian: sensitive text found on screen, blurred on accept (PrivacyPane).
+	{ id: "privacy", labelKey: "facets.privacy", icon: ShieldCheck },
 ];
 
 // The rail is a column against the right edge, so its tooltips open to the left: above or below
@@ -166,6 +177,7 @@ export function FloatingInspector({
 		cursor: ts("facets.tips.cursor"),
 		transcript: ts("facets.tips.transcript"),
 		director: ts("facets.tips.director"),
+		privacy: ts("facets.tips.privacy"),
 	};
 	const facet = facets.some(({ id }) => id === chosenFacet) ? chosenFacet : facets[0].id;
 	const [clipPickerOpen, setClipPickerOpen] = useState(false);
@@ -1610,6 +1622,7 @@ function FacetBody({
 	if (facet === "cursor") return wrap(collapse, <CursorPane />);
 	if (facet === "transcript") return wrap(collapse, <TranscriptPane {...transcriptProps} />);
 	if (facet === "director") return wrap(collapse, <StoryboardPane />);
+	if (facet === "privacy") return wrap(collapse, <PrivacyPane />);
 	// `effects` is the fallthrough rather than a branch of its own: the union has no
 	// tail left now that captions is a popover, and a `never` check here would only
 	// restate what the type already says.

@@ -349,9 +349,11 @@
 			"audio": "音频：调整整个视频的输出电平",
 			"cursor": "光标：设置样式、大小和效果",
 			"transcript": "转录文本：通过编辑文字剪辑视频",
-			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording",
+			"privacy": "Privacy: find and blur sensitive text shown in the recording"
 		},
-		"director": "Director"
+		"director": "Director",
+		"privacy": "Privacy"
 	},
 	"crop": {
 		"title": "裁剪",

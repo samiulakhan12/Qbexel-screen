@@ -349,9 +349,11 @@
 			"audio": "Audio: output level of the whole video",
 			"cursor": "Cursor: style, size and effects",
 			"transcript": "Transcript: edit the words to cut the video",
-			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording",
+			"privacy": "Privacy: find and blur sensitive text shown in the recording"
 		},
-		"director": "Director"
+		"director": "Director",
+		"privacy": "Privacy"
 	},
 	"crop": {
 		"title": "Crop",

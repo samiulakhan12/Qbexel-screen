@@ -344,6 +344,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
 		ipcRenderer.on("recording-disk-space", listener);
 		return () => ipcRenderer.removeListener("recording-disk-space", listener);
 	},
+	onPrivacyScanProgress: (
+		callback: (progress: { done: number; total: number; assetId: string }) => void,
+	) => {
+		const listener = (_: unknown, progress: { done: number; total: number; assetId: string }) =>
+			callback(progress);
+		ipcRenderer.on("privacy-scan-progress", listener);
+		return () => ipcRenderer.removeListener("privacy-scan-progress", listener);
+	},
 	onStopRecordingFromTray: (callback: () => void) => {
 		const listener = () => callback();
 		ipcRenderer.on("stop-recording-from-tray", listener);

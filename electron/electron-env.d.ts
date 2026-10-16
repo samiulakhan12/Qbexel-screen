@@ -306,6 +306,9 @@ interface Window {
 		onRecordingDiskSpace: (
 			callback: (report: { level: "low" | "critical"; availableBytes: number }) => void,
 		) => () => void;
+		onPrivacyScanProgress: (
+			callback: (progress: { done: number; total: number; assetId: string }) => void,
+		) => () => void;
 		onStopRecordingFromTray: (callback: () => void) => () => void;
 		openExternalUrl: (url: string) => Promise<{ success: boolean; error?: string }>;
 		openRepoPage: () => Promise<void>;

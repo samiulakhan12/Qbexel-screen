@@ -349,9 +349,11 @@
 			"audio": "Audio : niveau de sortie de toute la vidéo",
 			"cursor": "Curseur : style, taille et effets",
 			"transcript": "Transcription : modifiez les mots pour couper la vidéo",
-			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording",
+			"privacy": "Privacy: find and blur sensitive text shown in the recording"
 		},
-		"director": "Director"
+		"director": "Director",
+		"privacy": "Privacy"
 	},
 	"crop": {
 		"title": "Recadrage",

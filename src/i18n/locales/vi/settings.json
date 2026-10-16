@@ -349,9 +349,11 @@
 			"audio": "Âm thanh: mức đầu ra của toàn bộ video",
 			"cursor": "Con trỏ: kiểu, kích thước và hiệu ứng",
 			"transcript": "Bản ghi lời thoại: chỉnh sửa từ để cắt video",
-			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording",
+			"privacy": "Privacy: find and blur sensitive text shown in the recording"
 		},
-		"director": "Director"
+		"director": "Director",
+		"privacy": "Privacy"
 	},
 	"crop": {
 		"title": "Cắt xén",

@@ -26,6 +26,10 @@ import {
 	type NativeBridgeRequest,
 	type NativeBridgeResponse,
 	type NativePlatform,
+	type PrivacyApplyResult,
+	type PrivacyFileScanResult,
+	type PrivacyScanResult,
+	type PrivacyStatus,
 	type ProjectContext,
 	type ProjectFileResult,
 	type ProjectPathResult,
@@ -400,6 +404,31 @@ export const nativeBridgeClient = {
 				domain: "aiEdition",
 				action: "director.apply",
 				payload: { document, suggestionIds },
+			}),
+	},
+	/** The Privacy Guardian. Scans run in the main process (local OCR over sampled frames);
+	 *  the renderer saves the returned scan and the edited document. */
+	privacy: {
+		status: () => requireNativeBridgeData<PrivacyStatus>({ domain: "privacy", action: "status" }),
+		scan: (document: unknown, options: { sampleEveryMs?: number } = {}) =>
+			requireNativeBridgeData<PrivacyScanResult>({
+				domain: "privacy",
+				action: "scan",
+				payload: { document, ...options },
+			}),
+		cancelScan: () =>
+			requireNativeBridgeData<{ cancelled: boolean }>({ domain: "privacy", action: "cancelScan" }),
+		apply: (document: unknown, findingIds: string[]) =>
+			requireNativeBridgeData<PrivacyApplyResult>({
+				domain: "privacy",
+				action: "apply",
+				payload: { document, findingIds },
+			}),
+		scanFile: (filePath: string, durationSec?: number) =>
+			requireNativeBridgeData<PrivacyFileScanResult>({
+				domain: "privacy",
+				action: "scanFile",
+				payload: { path: filePath, durationSec },
 			}),
 	},
 	/** Style presets. `create` and `rename` reject with a `NativeBridgeRequestError` whose

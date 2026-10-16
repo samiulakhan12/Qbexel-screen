@@ -19,6 +19,7 @@ import {
 	referenceClipDims,
 	resolveAspectRatioValue,
 } from "@/lib/ai-edition/document/outputFormat";
+import { exportGateState, exportNeedsAcknowledgement } from "@/lib/ai-edition/privacy/review";
 import type { AxcutDocument } from "@/lib/ai-edition/schema";
 import { getEditorSettings } from "@/lib/ai-edition/store/editorSettings";
 import { assetCameraSource } from "@/lib/ai-edition/timeline/camera";
@@ -42,8 +43,8 @@ import {
 	exportMultiNative,
 	useIsCpuCompositor,
 } from "@/native";
-import { NativeBridgeRequestError } from "@/native/client";
-import type { CompositorClipInput } from "@/native/contracts";
+import { NativeBridgeRequestError, nativeBridgeClient } from "@/native/client";
+import type { CompositorClipInput, PrivacyFileScanResult } from "@/native/contracts";
 import { buildSceneDescription, resolveVisibleClips } from "@/native/sceneDescription";
 import { ModalShell } from "./Modals";
 import styles from "./NewEditorShell.module.css";
@@ -154,9 +155,16 @@ interface ExportDialogProps {
 	open: boolean;
 	onClose: () => void;
 	document: AxcutDocument | null;
+	/** Opens the Privacy pane, from the gate's "Review findings". */
+	onOpenPrivacy?: () => void;
 }
 
-export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
+type ExportCheck =
+	| { state: "running" }
+	| { state: "done"; result: PrivacyFileScanResult }
+	| { state: "failed"; error: string };
+
+export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportDialogProps) {
 	const t = useScopedT("editor");
 	const ts = useScopedT("settings");
 	// No usable GPU: the export still applies every effect (output is identical), it
@@ -165,6 +173,12 @@ export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
 	const [format, setFormat] = useState<ExportFormat>("mp4");
 	// Write the captions as an .srt beside the MP4, whether or not they are burnt in.
 	const [writeSubtitles, setWriteSubtitles] = useState(false);
+	// The privacy gate: the review's state, whether the user chose to export past it for
+	// THIS export, and whether to check the exported file afterwards.
+	const privacyGate = useMemo(() => (document ? exportGateState(document) : null), [document]);
+	const [privacyPrompt, setPrivacyPrompt] = useState(false);
+	const [checkExport, setCheckExport] = useState(false);
+	const [exportCheck, setExportCheck] = useState<ExportCheck | null>(null);
 	const [quality, setQuality] = useState<ExportQuality>("good");
 	const [fps, setFps] = useState<Mp4FrameRate>(60);
 	const [gifFrameRate, setGifFrameRate] = useState<GifFrameRate>(15);
@@ -334,8 +348,17 @@ export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
 		}
 	};
 
-	const handleStart = async () => {
+	const handleStart = async (options: { skipPrivacyGate?: boolean } = {}) => {
 		if (!document || activeExport.current || phase === "configuring") return;
+		// Findings nobody decided on, or a recording the scan never saw: ask once, in the
+		// dialog, before anything is rendered. "Export anyway" comes back through here with
+		// the gate skipped for this export only.
+		if (!options.skipPrivacyGate && privacyGate && exportNeedsAcknowledgement(privacyGate.state)) {
+			setPrivacyPrompt(true);
+			return;
+		}
+		setPrivacyPrompt(false);
+		setExportCheck(null);
 		const generation = ++pickerGeneration.current;
 		const asset = primaryAsset;
 		if (!asset) {
@@ -465,6 +488,27 @@ export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
 				if (activeExport.current !== job) return;
 				setSavedPath(pickedPath);
 				setPhase("done");
+				if (checkExport) {
+					// Read-only: the finished file is sampled and OCR'd like a recording, and the
+					// result is only reported here. The ruler length bounds the sampling.
+					setExportCheck({ state: "running" });
+					const durationSec = Math.max(0, ...document.timeline.clips.map((c) => c.timelineEndSec));
+					void nativeBridgeClient.privacy
+						.scanFile(pickedPath, durationSec)
+						.then((result) =>
+							setExportCheck(
+								result.success
+									? { state: "done", result }
+									: { state: "failed", error: result.error ?? "" },
+							),
+						)
+						.catch((err) =>
+							setExportCheck({
+								state: "failed",
+								error: err instanceof Error ? err.message : String(err),
+							}),
+						);
+				}
 				if (writeSubtitles && format === "mp4") {
 					// On the programme clock, so the file lines up with the MP4 just written. The
 					// main process writes it beside the export and refuses any other extension.
@@ -574,6 +618,59 @@ export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
 						/>
 					</div>
 				) : null}
+
+				{privacyGate ? (
+					<div
+						className={styles.paneRow}
+						style={{ margin: 0, flexWrap: "wrap" }}
+						data-testid="export-privacy-gate"
+						data-state={privacyGate.state}
+					>
+						<span className={styles.label} role={privacyPrompt ? "alert" : undefined}>
+							{privacyGate.state === "unscanned"
+								? t("exportDialog.privacyUnscanned")
+								: privacyGate.state === "stale"
+									? t("exportDialog.privacyStale")
+									: privacyGate.state === "unreviewed"
+										? t("exportDialog.privacyUnreviewed", { count: privacyGate.suggested })
+										: privacyGate.state === "reviewed"
+											? t("exportDialog.privacyReviewed")
+											: t("exportDialog.privacyClear")}
+						</span>
+						<span style={{ display: "inline-flex", gap: 6 }}>
+							{onOpenPrivacy ? (
+								<button
+									type="button"
+									className={`${styles.btn} ${styles.btnSecondary}`}
+									disabled={isBusy}
+									onClick={onOpenPrivacy}
+								>
+									{t("exportDialog.privacyReview")}
+								</button>
+							) : null}
+							{privacyPrompt ? (
+								<button
+									type="button"
+									className={`${styles.btn} ${styles.btnSecondary}`}
+									data-testid="export-privacy-anyway"
+									onClick={() => void handleStart({ skipPrivacyGate: true })}
+								>
+									{t("exportDialog.privacyExportAnyway")}
+								</button>
+							) : null}
+						</span>
+					</div>
+				) : null}
+
+				<div className={styles.paneRow} style={{ margin: 0 }}>
+					<span className={styles.label}>{t("exportDialog.privacyCheckExport")}</span>
+					<Toggle
+						checked={checkExport}
+						ariaLabel={t("exportDialog.privacyCheckExport")}
+						disabled={isBusy}
+						onChange={setCheckExport}
+					/>
+				</div>
 
 				{format === "mp4" ? (
 					<section>
@@ -705,6 +802,7 @@ export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
 					error={error}
 					pct={pct}
 					savedPath={savedPath}
+					exportCheck={exportCheck}
 					starPrompt={starPrompt}
 					onAnswerStarPrompt={() => {
 						// Starring and declining are the same answer here: the ask is over. Cleared
@@ -760,7 +858,7 @@ export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
 					<button
 						type="button"
 						className={`${styles.btn} ${styles.btnPrimary}`}
-						onClick={handleStart}
+						onClick={() => void handleStart()}
 						disabled={isBusy || !document}
 					>
 						{isBusy ? (
@@ -831,6 +929,7 @@ function ProgressBlock({
 	error,
 	pct,
 	savedPath,
+	exportCheck,
 	starPrompt,
 	onAnswerStarPrompt,
 }: {
@@ -839,6 +938,8 @@ function ProgressBlock({
 	error: string | null;
 	pct: number;
 	savedPath: string | null;
+	/** The post-export privacy check, when the user asked for one. */
+	exportCheck: ExportCheck | null;
 	starPrompt: { store: boolean } | null;
 	onAnswerStarPrompt: () => void;
 }) {
@@ -872,6 +973,24 @@ function ProgressBlock({
 					{t("exportDialog.savedTo")}{" "}
 					<span style={{ fontFamily: "var(--font-mono)" }}>{savedPath}</span>
 				</div>
+				{exportCheck ? (
+					<div data-testid="export-privacy-check" role="status">
+						{exportCheck.state === "running"
+							? t("exportDialog.privacyCheckRunning")
+							: exportCheck.state === "failed"
+								? t("exportDialog.privacyCheckFailed", { error: exportCheck.error })
+								: exportCheck.result.findings.length === 0
+									? t("exportDialog.privacyCheckClean", {
+											frames: exportCheck.result.framesScanned,
+										})
+									: t("exportDialog.privacyCheckFound", {
+											count: exportCheck.result.findings.length,
+											list: exportCheck.result.findings
+												.map((f) => `${f.kind} ${f.preview}`)
+												.join(", "),
+										})}
+					</div>
+				) : null}
 				{savedPath ? (
 					<button
 						type="button"

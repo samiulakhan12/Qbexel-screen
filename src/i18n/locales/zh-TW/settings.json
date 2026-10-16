@@ -349,9 +349,11 @@
 			"audio": "音訊：整部影片的輸出音量",
 			"cursor": "游標：樣式、大小和效果",
 			"transcript": "逐字稿：編輯文字即可剪輯影片",
-			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording",
+			"privacy": "Privacy: find and blur sensitive text shown in the recording"
 		},
-		"director": "Director"
+		"director": "Director",
+		"privacy": "Privacy"
 	},
 	"crop": {
 		"title": "裁剪",

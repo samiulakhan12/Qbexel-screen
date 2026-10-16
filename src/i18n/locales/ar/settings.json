@@ -349,9 +349,11 @@
 			"audio": "الصوت: مستوى إخراج الفيديو كله",
 			"cursor": "المؤشر: النمط والحجم والتأثيرات",
 			"transcript": "النص: عدّل الكلمات لقص الفيديو",
-			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording",
+			"privacy": "Privacy: find and blur sensitive text shown in the recording"
 		},
-		"director": "Director"
+		"director": "Director",
+		"privacy": "Privacy"
 	},
 	"crop": {
 		"title": "اقتصاص",

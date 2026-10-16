@@ -349,9 +349,11 @@
 			"audio": "Áudio: nível de saída de todo o vídeo",
 			"cursor": "Cursor: estilo, tamanho e efeitos",
 			"transcript": "Transcrição: edite as palavras para cortar o vídeo",
-			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording"
+			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording",
+			"privacy": "Privacy: find and blur sensitive text shown in the recording"
 		},
-		"director": "Director"
+		"director": "Director",
+		"privacy": "Privacy"
 	},
 	"crop": {
 		"title": "Cortar",

@@ -42,8 +42,8 @@ of every milestone.
 | 3 | Editing timeline and export pipeline | **done** (see below) |
 | 4 | Creative presets, cursor effects, editable zooms | **done** (see below) |
 | 5 | Transcription and AI Tutorial Director | **done** (see below) |
-| 6 | Privacy Guardian and redaction workflow | in progress |
-| 7 | Multi-format compositions and publishing presets | pending |
+| 6 | Privacy Guardian and redaction workflow | **done** (see below) |
+| 7 | Multi-format compositions and publishing presets | in progress |
 | 8 | CLI and MCP interfaces | pending |
 | 9 | Adversarial review, benchmarks, packaging | pending |
 
@@ -132,6 +132,29 @@ the Director's model pass uses the chat's configured provider and model. Token
 usage of the Director pass is returned over the bridge but not yet shown in the
 pane (only the model name is).
 
+## Milestone 6 — what was built and how it was verified
+
+| Change | Where | Verified by |
+|---|---|---|
+| `privacy` review on the document: one scan, masked findings with boxes or spoken times, decisions, a "reviewed" mark bound to the timeline | `src/lib/ai-edition/schema/index.ts` | schema parse in the scan and apply tests |
+| Detectors with masked previews: key prefixes, JWT, bearer, secret assignments, credential URLs, private keys, emails, Luhn cards, IBAN checksums, phones, IPs, high-entropy runs | `src/lib/ai-edition/privacy/patterns.ts` | `patterns.test.ts` (11 tests incl. false-positive cases) |
+| OCR words → findings with frame-relative boxes; merge across frames; transcript findings; decision carry-over | `findings.ts` | `findings.test.ts` (8) |
+| Export gate state and review helpers; blur placement per run and per clip | `review.ts`, `blur.ts` | `review.test.ts` (10) |
+| Frame sampling with ffmpeg (bounded, timeout, abort), tesseract.js engine (local, cached model), scan orchestration with partial results, post-export file check | `electron/privacy/{frames,ocr,scan}.ts` | `scan.test.ts` (7, injected sampler/engine); **end-to-end** `privacy.e2e.test.ts` with real ffmpeg + tesseract on a synthetic recording: email and `sk-live-…` key found, masked, boxed, blurred (run here, 2 tests passed) |
+| Accepted findings → mosaic blur annotations through `addAnnotation`/`executeAgentTool` | `electron/privacy/apply.ts` | `apply.test.ts` (4) |
+| Bridge domain `privacy` (status, scan + progress channel, cancel, apply, scanFile with path validation) | `contracts.ts`, `client.ts`, `browserShim.ts`, `privacyService.ts`, `nativeBridge.ts`, `preload.ts` | bridge tests, `tsc` |
+| Privacy facet: scan/stop/progress, machine status, masked findings, Blur/Dismiss/jump, Blur all, Mark as reviewed | `PrivacyPane.tsx`, `usePrivacy.ts`, `FloatingInspector.tsx` | `PrivacyPane.test.tsx` (4 jsdom tests); audit rows |
+| Export gate: state line, first click stopped on undecided or stale findings, Review findings / Export anyway, optional check of the exported file with a report | `ExportDialog.tsx`, `NewEditorShell.tsx` | `ExportDialog.privacyGate.test.tsx` (3) |
+
+Known limitations of M6: English OCR only; the OCR model (5 MB) is downloaded once on
+first scan unless `resources/ocr/eng.traineddata` is shipped with the build (not
+committed to the repository); a scan samples the recording (every 2 s, sparser past 120
+frames), so text shown briefly between samples can be missed — the pane says so; the
+password-field heuristic from the design (detecting masked input fields) is not built,
+and keyboard input is never recorded by the capture helpers in the first place. The
+transcript scan flags spoken values but cannot blur them; the user cuts them in the
+transcript pane.
+
 ## Backlog (needs a Windows/macOS device, native binaries or compositor work)
 
 
@@ -145,15 +168,17 @@ pane (only the model name is).
 - A second video lane / overlay track (compositor timeline walk).
 - Fragmented MP4 on Linux (crash-safe recording parity).
 - Windows and macOS end-to-end passes and export benchmarks (`technical-documentation/testing/manual-e2e-checklist.md`).
+- Ship the OCR model (`resources/ocr/eng.traineddata`) in the installer and add more OCR languages.
+- Detect masked password fields visually (the design's `password-field` kind).
 - Licence notice gaps found in M1: Linux/macOS FFmpeg libraries and the symbol
   rename, `cpp-httplib` and `nlohmann/json` in the Whisper helper, the PipeWire
   helper's crates, wallpaper provenance.
 
 ## Next steps
 
-1. M6 Privacy Guardian: `privacy` field, pattern + OCR (tesseract.js) scan of
-   sampled frames in the main process, findings → blur annotations through
-   `addAnnotation`, export gate ("review findings before export"), post-export
-   re-scan report.
-2. M7 compositions and export presets; M8 CLI `qbexel storyboard` / `privacy
-   scan` and MCP `director.*` / `privacy.*` tools with strict schemas; M9 review.
+1. M7 compositions: `compositions` on the document, per-composition format and
+   safe areas, export presets (YouTube, Shorts/Reels, GIF for docs), caption
+   style per composition, batch export.
+2. M8 CLI (`storyboard`, `privacy scan`, `validate`, `apply-preset`) and MCP
+   tools (`director.*`, `privacy.*`, `exportSubtitles`) with strict schemas and
+   confirmation flags; M9 review, SECURITY.md, TESTING.md, README.

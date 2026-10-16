@@ -496,6 +496,58 @@ export interface AiEditionDirectorApplyResult {
 	error?: string;
 }
 
+// ---- Privacy Guardian domain -----------------------------------------------
+// The scan and its findings are `AxcutPrivacyScan` / `AxcutPrivacyFinding`
+// (src/lib/ai-edition/schema); they travel as `unknown` like documents do and the
+// renderer validates them before saving.
+
+export interface PrivacyStatus {
+	/** OCR is wired in this build (the engine and a place for its model). */
+	ocrAvailable: boolean;
+	/** The OCR language model is already on disk, so a scan needs no download. */
+	modelPresent: boolean;
+	ffmpegPresent: boolean;
+}
+
+export interface PrivacyScanProgressEvent {
+	done: number;
+	total: number;
+	assetId: string;
+}
+
+export interface PrivacyScanResult {
+	success: boolean;
+	scan?: unknown;
+	/** The scan was stopped early; `scan` holds what was found until then. */
+	cancelled?: boolean;
+	error?: string;
+}
+
+export interface PrivacyApplyResult {
+	success: boolean;
+	document?: unknown;
+	applied: string[];
+	failed: Array<{ id: string; error: string }>;
+	skipped: string[];
+	error?: string;
+}
+
+export interface PrivacyFileFinding {
+	kind: string;
+	preview: string;
+	confidence: number;
+	/** Where in the file, in ms. */
+	timesMs: number[];
+}
+
+export interface PrivacyFileScanResult {
+	success: boolean;
+	framesScanned: number;
+	findings: PrivacyFileFinding[];
+	warnings: string[];
+	error?: string;
+}
+
 // ---- Style presets domain -------------------------------------------------
 // One `<name>.openscreenpreset` file per preset in Documents/OpenScreen Presets. The
 // shape and its validation live in src/lib/ai-edition/stylePresets.ts, shared with main.
@@ -1019,6 +1071,41 @@ export type NativeBridgeRequest =
 			/** Either format: the export ID names the job, MP4 or GIF. */
 			action: "cancelExport";
 			payload: { exportId: string };
+			requestId?: string;
+	  }
+	| {
+			domain: "privacy";
+			action: "status";
+			payload?: EmptyPayload;
+			requestId?: string;
+	  }
+	| {
+			domain: "privacy";
+			action: "scan";
+			/** Scans every recording on the document's timeline (sampled frames through local
+			 *  OCR, and the transcript). Nothing is written on the main side: the renderer saves
+			 *  the returned scan. Progress arrives on the `privacy-scan-progress` channel. */
+			payload: { document: unknown; sampleEveryMs?: number };
+			requestId?: string;
+	  }
+	| {
+			domain: "privacy";
+			action: "cancelScan";
+			payload?: EmptyPayload;
+			requestId?: string;
+	  }
+	| {
+			domain: "privacy";
+			action: "apply";
+			/** Writes blur annotations for the named findings through the agent tools. */
+			payload: { document: unknown; findingIds: string[] };
+			requestId?: string;
+	  }
+	| {
+			domain: "privacy";
+			action: "scanFile";
+			/** The post-export check: samples and OCRs one finished video file. Read-only. */
+			payload: { path: string; durationSec?: number };
 			requestId?: string;
 	  }
 	| {

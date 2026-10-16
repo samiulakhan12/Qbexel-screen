@@ -115,39 +115,75 @@ or tool event. Both resolve the turn as `cancelled`, reported as information.
 Not built yet (M8): CLI `qbexel storyboard` and MCP `director.*` tools; the
 analyser is pure and ready for both.
 
-## Privacy Guardian (M6)
+## Privacy Guardian (M6) — as built
 
 Document field: `privacy?: AxcutPrivacyReview` (optional, additive).
 
 ```
-AxcutPrivacyReview {
-  version: 1
-  scans: PrivacyScan[]                 // one per run, newest last
-  reviewedAt?: iso                     // user confirmed the findings before export
-  reviewedRevision?: number            // document revision at review time
+AxcutPrivacyReview { version: 1; scan: AxcutPrivacyScan | null; reviewedAt; reviewedClipSignature }
+AxcutPrivacyScan {
+  id; at; strategies: ("ocr"|"transcript")[]; ocrAvailable; sampleEveryMs; framesScanned
+  assetIds: string[]                    // the recordings on the timeline the scan read
+  findings: AxcutPrivacyFinding[]; warnings: string[]
 }
-PrivacyScan { id; at; strategy: ("pattern"|"ocr"|"vision"|"manual")[]; assetId; sampleEveryMs; findings: PrivacyFinding[] }
-PrivacyFinding {
-  id; kind: "api-key"|"token"|"email"|"phone"|"card"|"password-field"|"customer-id"|"ip"|"custom"
-  preview: string                      // masked excerpt, never the full secret
-  confidence: 0..1
-  boxes: { timeMs, x, y, w, h }[]      // footage space, 0..1
-  status: "suggested" | "accepted" | "dismissed"
-  annotationIds: string[]              // the blur regions created on accept
+AxcutPrivacyFinding {
+  id; kind: api-key|token|private-key|secret-assignment|url-credential|email|phone|card|iban|ip
+  preview: string                       // MASKED at detection time; the value is never stored
+  confidence: 0..1; source: "frame" | "transcript"; assetId
+  boxes: { timeMs (SOURCE), x, y, w, h (0..1 of the picture) }[]   // empty for spoken findings
+  spokenStartSec?; spokenEndSec?
+  status: suggested | accepted | dismissed; annotationIds: string[]; error?
 }
 ```
 
-Detection runs in the main process: frames are sampled with ffmpeg, OCR'd with
-tesseract.js (Apache-2.0, WASM, offline), words are matched against the pattern
-table in `patterns.ts`, and adjacent samples with overlapping boxes are merged
-into one finding with a box track. Accepting a finding writes blur annotations
-(existing `type: "blur"`, footage space) through `addAnnotation`; a moving box
-becomes consecutive annotations, which is how the schema expresses keyframes.
-The Export dialog refuses to proceed while `suggested` findings exist unless
-the user reviews them; after export, the finding times are re-sampled from the
-output file and OCR'd again, and any finding whose text is still readable is
-reported as a warning. The secret itself is never stored: `preview` keeps the
-first and last two characters.
+Pipeline:
+
+1. `src/lib/ai-edition/privacy/patterns.ts` (pure): detectors with masked previews —
+   known key prefixes (OpenAI, Anthropic, AWS, GitHub, Slack, Google, Stripe), JWTs,
+   bearer tokens, `password = …` assignments, credential URLs, private-key headers,
+   emails, Luhn-checked card numbers, checksum-checked IBANs, phones with a plausible
+   shape (account-number shapes refused), IP addresses (low confidence, private ranges
+   lower, loopback skipped), and a generic high-entropy run (lowest confidence).
+   Overlapping detectors keep the stronger one.
+2. `findings.ts` (pure): OCR words with pixel boxes → line text → matches → the box of the
+   words carrying the match, in fractions of the frame with a 1 % margin; confidence
+   tempered by the OCR's; unsure words (< 40) only count for detectors sure of their
+   shape (≥ 0.9), since a real key IS low-confidence text to an OCR engine. One finding
+   per distinct value per asset with every box; transcript words → spoken findings with
+   times and no box. Decisions carry over between scans by identity (kind + preview).
+3. `electron/privacy/frames.ts`: one ffmpeg run per recording (`fps=1/N`, scaled to 1280),
+   at most 120 frames (the interval widens for long recordings), 120 s timeout, abort.
+   ffmpeg is resolved as the app does (`resolveFfmpeg`), never from PATH.
+4. `electron/privacy/ocr.ts`: tesseract.js (WebAssembly, Node worker), one worker per
+   scan; `eng.traineddata` from `resources/ocr/` when shipped, else downloaded once into
+   the user-data cache (a public model download, said in the pane before the first scan).
+5. `electron/privacy/scan.ts`: transcript first, then frames; partial results carry
+   warnings (missing ffmpeg, engine failure, frame failures, cancellation).
+   `scanVideoFileForSensitiveContent` runs the same over a finished export.
+6. `electron/privacy/apply.ts`: accepted findings → `addAnnotation` (type blur, mosaic)
+   through `executeAgentTool`, one call per run of sightings per clip (`blur.ts`),
+   padded 0.5 s each side; ids recorded on the finding.
+7. `review.ts` (pure): counts and the export gate — `unscanned`, `stale` (a recording the
+   scan never saw), `unreviewed`, `reviewed` (every finding decided, or marked reviewed
+   for this timeline), `clear`.
+
+Bridge: domain `privacy` — `status`, `scan` (progress on `privacy-scan-progress`),
+`cancelScan`, `apply`, `scanFile` (absolute path, video extensions only, read-only).
+
+Surfaces: the **Privacy** facet (`PrivacyPane.tsx`): scan with progress and Stop,
+machine status (ffmpeg, OCR, model), findings masked with kind, confidence, where seen
+or spoken, Blur / Dismiss / jump-to, Blur all open, Mark as reviewed. The export dialog
+shows the gate state; undecided findings or a stale scan stop the first click with
+"Review findings" (opens the facet) and "Export anyway" (this export only); a toggle
+checks the finished file and reports what still shows.
+
+Verified end to end here (`electron/privacy/privacy.e2e.test.ts`, opt-in): a synthetic
+1280×720 recording with an email and an `sk-live-…` key drawn into it → both found with
+masked previews and boxes where the text was drawn → both blurred through the tools.
+
+Not built: OCR languages other than English (the model is per language); bundling the
+model in the installer (a 5 MB binary; documented, not committed); detection inside
+images of text at small sizes (frames are read at 1280 px wide).
 
 ## Multi-format compositions (M7)
 

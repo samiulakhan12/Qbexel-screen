@@ -299,6 +299,12 @@ const DECLARED: WritePath[] = [
 	// The Tutorial Director (StoryboardPane): the analysis saved onto the document, the
 	// review decisions, the application of approved suggestions, and clearing it all. Each
 	// is a click in the pane, so each records an undo step.
+	// The Privacy Guardian (PrivacyPane): the scan saved onto the document, decisions on
+	// findings, the blurs for accepted ones, and the "reviewed" mark. Each is a click.
+	w("src/lib/ai-edition/store/usePrivacy.ts", "blur", "save", "gesture"),
+	w("src/lib/ai-edition/store/usePrivacy.ts", "decide", "save", "gesture"),
+	w("src/lib/ai-edition/store/usePrivacy.ts", "markDone", "save", "gesture"),
+	w("src/lib/ai-edition/store/usePrivacy.ts", "scan", "save", "gesture"),
 	w("src/lib/ai-edition/store/useStoryboard.ts", "analyze", "save", "gesture"),
 	w("src/lib/ai-edition/store/useStoryboard.ts", "apply", "save", "gesture"),
 	w("src/lib/ai-edition/store/useStoryboard.ts", "clearStoryboard", "save", "gesture"),

@@ -222,7 +222,19 @@
 		"failedToWriteFile": "Impossibile scrivere il file",
 		"qualityUpscaleWarning": "Upscaling",
 		"exportedVideoOf": "di video esportato in",
-		"nothingToExport": "Niente da esportare: la timeline è vuota."
+		"nothingToExport": "Niente da esportare: la timeline è vuota.",
+		"privacyUnscanned": "Not scanned for sensitive text.",
+		"privacyStale": "A recording was added since the privacy scan.",
+		"privacyUnreviewed": "{{count}} privacy findings still need a decision.",
+		"privacyReviewed": "Privacy review done.",
+		"privacyClear": "Privacy scan found nothing.",
+		"privacyReview": "Review findings",
+		"privacyExportAnyway": "Export anyway",
+		"privacyCheckExport": "Check the exported video for sensitive text",
+		"privacyCheckRunning": "Checking the exported video…",
+		"privacyCheckClean": "Nothing sensitive was found in {{frames}} sampled frames of the export.",
+		"privacyCheckFound": "{{count}} sensitive-looking items still show in the export: {{list}}",
+		"privacyCheckFailed": "The exported video could not be checked: {{error}}"
 	},
 	"inspector": {
 		"resetFocusPoint": "Reimposta punto di messa a fuoco",
@@ -527,5 +539,61 @@
 		"applyError": "Could not apply: {{error}}",
 		"analyzeFailed": "Analysis failed: {{error}}",
 		"nothingApproved": "Approve a suggestion first."
+	},
+	"privacy": {
+		"title": "Privacy",
+		"help": "The Privacy Guardian reads the text shown in your recording (locally, with OCR over sampled frames) and the transcript, and flags what looks sensitive: keys, tokens, emails, card numbers and the like. Findings are shown masked. Accepting one blurs it on the video through the same tools every edit uses. Nothing is sent anywhere.",
+		"intro": "Scan the recordings on the timeline for sensitive text, then blur or dismiss each finding before exporting.",
+		"scan": "Scan recording",
+		"rescan": "Scan again",
+		"scanning": "Scanning…",
+		"scanningProgress": "Scanning… frame {{done}} of {{total}}",
+		"stopScan": "Stop",
+		"scanStopped": "The scan was stopped; findings so far were kept.",
+		"scanFailed": "The scan failed: {{error}}",
+		"noFootage": "Add a recording to the timeline first.",
+		"noFfmpeg": "ffmpeg is missing in this install, so frames cannot be read; only the transcript is scanned.",
+		"noOcr": "Text recognition is not available in this build; only the transcript is scanned.",
+		"modelReady": "Text recognition runs on this computer. The recognition model is installed.",
+		"modelDownload": "Text recognition runs on this computer. The first scan downloads the English recognition model (about 5 MB) once.",
+		"scanSummary": "{{frames}} frames read · {{found}} findings · {{open}} to decide",
+		"transcriptOnly": "Frames were not read.",
+		"nothingFound": "Nothing sensitive was found in the sampled frames or the transcript. A scan samples the recording; it cannot promise there is nothing in between.",
+		"blurAll": "Blur all open ({{count}})",
+		"blurring": "Blurring…",
+		"blur": "Blur",
+		"dismiss": "Dismiss",
+		"markReviewed": "Mark as reviewed",
+		"confidence": "{{percent}}%",
+		"seenOnScreen": "On screen in {{count}} frames, first at {{time}}",
+		"spokenAt": "Spoken at {{time}}; cut it from the transcript if needed",
+		"jumpTo": "Jump to {{time}}",
+		"blurred": "Blurred {{count}} findings",
+		"blurFailed": "{{count}} findings could not be blurred; each one says why",
+		"applyError": "Could not blur: {{error}}",
+		"kind": {
+			"apiKey": "API key",
+			"token": "Token",
+			"privateKey": "Private key",
+			"secretAssignment": "Secret",
+			"urlCredential": "Credentials in URL",
+			"email": "Email address",
+			"phone": "Phone number",
+			"card": "Card number",
+			"iban": "IBAN",
+			"ip": "IP address"
+		},
+		"status": {
+			"suggested": "To decide",
+			"accepted": "Blurred",
+			"dismissed": "Dismissed"
+		},
+		"gate": {
+			"unscanned": "Not scanned yet.",
+			"stale": "A recording on the timeline was added after the last scan.",
+			"unreviewed": "{{count}} findings still need a decision.",
+			"reviewed": "Reviewed.",
+			"clear": "Scanned, nothing found."
+		}
 	}
 }

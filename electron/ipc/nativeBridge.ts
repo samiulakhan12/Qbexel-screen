@@ -21,6 +21,11 @@ import {
 import { AiEditionService } from "../native-bridge/services/aiEditionService";
 import { CompositorViewService } from "../native-bridge/services/compositorViewService";
 import { CursorService } from "../native-bridge/services/cursorService";
+import {
+	MAX_SAMPLE_EVERY_MS,
+	MIN_SAMPLE_EVERY_MS,
+	PrivacyService,
+} from "../native-bridge/services/privacyService";
 import { ProjectService } from "../native-bridge/services/projectService";
 import { SystemService } from "../native-bridge/services/systemService";
 import { createNativeBridgeState } from "../native-bridge/store";
@@ -78,6 +83,9 @@ export interface NativeBridgeContext {
 	) => import("../../src/native/contracts").AiEditionChatResult;
 	/** Stops a running chat turn. Absent in the headless CLI, where none runs. */
 	cancelAiEditionChat?: (projectId: string, sessionId: string) => boolean;
+	/** The Privacy Guardian's OCR setup (where its model lives); null when OCR is not wired. */
+	getPrivacyOcr?: () => import("../privacy/ocr").OcrEngineOptions | null;
+	isFfmpegAvailable?: () => boolean;
 	rewindToMessage: (
 		projectId: string,
 		sessionId: string,
@@ -253,6 +261,11 @@ export function registerNativeBridgeHandlers(context: NativeBridgeContext) {
 		deleteSession: context.deleteAiEditionChatSession,
 		loadCursorTelemetry: context.loadCursorTelemetry,
 		cancelChat: context.cancelAiEditionChat,
+	});
+
+	const privacyService = new PrivacyService({
+		ocr: () => context.getPrivacyOcr?.() ?? null,
+		ffmpegPresent: () => context.isFfmpegAvailable?.() ?? false,
 	});
 
 	const exportJobs = new ExportJobs();
@@ -811,6 +824,90 @@ export function registerNativeBridgeHandlers(context: NativeBridgeContext) {
 								requestId,
 								"UNSUPPORTED_ACTION",
 								`Unsupported aiEdition action: ${action}`,
+							);
+					}
+				}
+
+				case "privacy": {
+					const action = request.action as string;
+					switch (request.action) {
+						case "status":
+							return createSuccessResponse(requestId, await privacyService.status());
+						case "scan": {
+							const every = request.payload?.sampleEveryMs;
+							if (
+								every !== undefined &&
+								(typeof every !== "number" ||
+									!Number.isFinite(every) ||
+									every < MIN_SAMPLE_EVERY_MS ||
+									every > MAX_SAMPLE_EVERY_MS)
+							) {
+								return createErrorResponse(
+									requestId,
+									"INVALID_REQUEST",
+									`sampleEveryMs must be between ${MIN_SAMPLE_EVERY_MS} and ${MAX_SAMPLE_EVERY_MS}.`,
+								);
+							}
+							const sender = event.sender;
+							return createSuccessResponse(
+								requestId,
+								await privacyService.scan(
+									{ document: request.payload.document, sampleEveryMs: every },
+									(progress) => {
+										try {
+											if (!sender.isDestroyed()) sender.send("privacy-scan-progress", progress);
+										} catch {
+											// The window went away mid-scan; the scan finishes on its own.
+										}
+									},
+								),
+							);
+						}
+						case "cancelScan":
+							return createSuccessResponse(requestId, privacyService.cancelScan());
+						case "apply": {
+							const ids = request.payload?.findingIds;
+							if (
+								!Array.isArray(ids) ||
+								ids.length === 0 ||
+								ids.length > 1000 ||
+								!ids.every((id) => typeof id === "string" && id.length > 0 && id.length <= 128)
+							) {
+								return createErrorResponse(
+									requestId,
+									"INVALID_REQUEST",
+									"findingIds must be 1 to 1000 non-empty strings.",
+								);
+							}
+							return createSuccessResponse(
+								requestId,
+								privacyService.apply({ document: request.payload.document, findingIds: ids }),
+							);
+						}
+						case "scanFile": {
+							const target = request.payload?.path;
+							const durationSec = request.payload?.durationSec;
+							if (typeof target !== "string" || target.length === 0 || target.length > 4096) {
+								return createErrorResponse(requestId, "INVALID_REQUEST", "Invalid file path.");
+							}
+							if (
+								durationSec !== undefined &&
+								(typeof durationSec !== "number" ||
+									!Number.isFinite(durationSec) ||
+									durationSec < 0)
+							) {
+								return createErrorResponse(requestId, "INVALID_REQUEST", "Invalid duration.");
+							}
+							return createSuccessResponse(
+								requestId,
+								await privacyService.scanFile({ path: target, durationSec }),
+							);
+						}
+						default:
+							return createErrorResponse(
+								requestId,
+								"UNSUPPORTED_ACTION",
+								`Unsupported privacy action: ${action}`,
 							);
 					}
 				}

@@ -92,7 +92,7 @@ import { McpController } from "../mcp/mcp-controller";
 import { McpSettingsStore } from "../mcp/mcp-settings-store";
 import { createMediaTools, type MediaToolDeps, type RecordRequest } from "../mcp/media-tools";
 import { createToolRunner, type McpToolDeps } from "../mcp/openscreen-mcp-server";
-import { type AudioPeaksResult, getAudioPeaks } from "../media/audioPeaks";
+import { type AudioPeaksResult, getAudioPeaks, resolveFfmpeg } from "../media/audioPeaks";
 import {
 	readCursorRecordingFile as readCursorRecordingFileFrom,
 	readCursorSidecar,
@@ -5402,6 +5402,13 @@ export function registerIpcHandlers(
 		getStylePresets: () => stylePresets,
 		getAiEditionLlmConfig,
 		cancelAiEditionChat: cancelChat,
+		// The OCR model is looked for in the app's resources first (`resources/ocr/`), then
+		// cached under user data after a one-time download. Both are local reads.
+		getPrivacyOcr: () => ({
+			cachePath: path.join(app.getPath("userData"), "ocr"),
+			bundledLangDir: path.join(process.resourcesPath, "ocr"),
+		}),
+		isFfmpegAvailable: () => resolveFfmpeg() !== null,
 		runAiEditionChat: (projectId, sessionId, message, document, sink) =>
 			runChat(projectId, sessionId, message, getAiEditionLlmConfig(), document, sink, {
 				cursor: agentCursorTelemetryReader,
