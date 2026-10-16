@@ -924,6 +924,61 @@ export const privacyReviewSchema = z.object({
 	reviewedClipSignature: z.string().nullable().default(null),
 });
 
+// ---- Compositions (output variants) -------------------------------------------
+// One project, several deliverables: a 16:9 for YouTube, a 9:16 cut for Shorts, a GIF for
+// the docs. A composition is the handful of settings that differ between them — the frame's
+// shape and fill, padding and corners, where the captions sit, the export container and
+// tier — plus guide margins for the preview. The timeline, cuts, zooms and annotations are
+// shared: `documentForComposition` (lib/ai-edition/compositions) overlays a composition on
+// the document right before preview or export, and nothing else changes. Optional and
+// additive, like `storyboard`.
+export const compositionPresetSchema = z.enum([
+	"custom",
+	"youtube",
+	"shorts",
+	"square",
+	"docs-gif",
+	"linkedin",
+]);
+
+export const compositionSafeAreaSchema = z.object({
+	/** Percent of the frame's height or width kept clear of important content. */
+	top: z.number().min(0).max(40),
+	bottom: z.number().min(0).max(40),
+	left: z.number().min(0).max(40),
+	right: z.number().min(0).max(40),
+});
+
+export const compositionExportSchema = z.object({
+	format: z.enum(["mp4", "gif"]),
+	quality: z.enum(["medium", "good", "source"]).default("good"),
+	/** MP4 frame rate; validated against the exporter's list where it is used. */
+	fps: z.number().int().min(1).max(120).default(60),
+	gifFrameRate: z.number().int().min(1).max(60).optional(),
+	gifSize: z.enum(["small", "medium", "large", "original"]).optional(),
+	gifLoop: z.boolean().optional(),
+});
+
+export const compositionSchema = z.object({
+	id: z.string().min(1),
+	name: z.string().min(1).max(80),
+	preset: compositionPresetSchema.default("custom"),
+	/** `"W:H"` or `"auto"`, as `EditorSettingsSnapshot.aspectRatio` takes it. */
+	aspectRatio: z.string().regex(/^(\d+:\d+|auto)$/),
+	formatFollowCursor: z.boolean().optional(),
+	padding: z.number().min(0).max(1000).optional(),
+	borderRadius: z.number().min(0).max(1000).optional(),
+	captions: z
+		.object({
+			anchorV: z.enum(["bottom", "top"]).optional(),
+			insetY: z.number().min(0).max(50).optional(),
+			fontSize: z.number().min(16).max(140).optional(),
+		})
+		.optional(),
+	safeArea: compositionSafeAreaSchema.optional(),
+	export: compositionExportSchema,
+});
+
 // Legacy OpenScreen appearance / export settings that the v3 schema doesn't
 // normalize into the timeline / assets model. They are applied at export time
 // by the existing pipeline (see technical-documentation/architecture/document-model.md).
@@ -971,6 +1026,8 @@ const documentSchemaShape = z.object({
 	storyboard: storyboardSchema.optional(),
 	// The Privacy Guardian's review (above). Optional like `storyboard`.
 	privacy: privacyReviewSchema.optional(),
+	// Output variants (above). Optional like `storyboard`.
+	compositions: z.array(compositionSchema).optional(),
 	legacyEditor: legacyEditorSchema.nullable().default(null),
 });
 
@@ -1619,6 +1676,10 @@ export type AxcutPrivacyScan = z.infer<typeof privacyScanSchema>;
 export type AxcutPrivacyFinding = z.infer<typeof privacyFindingSchema>;
 export type AxcutPrivacyFindingKind = z.infer<typeof privacyFindingKindSchema>;
 export type AxcutPrivacyBox = z.infer<typeof privacyBoxSchema>;
+export type AxcutComposition = z.infer<typeof compositionSchema>;
+export type AxcutCompositionPreset = z.infer<typeof compositionPresetSchema>;
+export type AxcutCompositionSafeArea = z.infer<typeof compositionSafeAreaSchema>;
+export type AxcutCompositionExport = z.infer<typeof compositionExportSchema>;
 export type AxcutDocument = z.infer<typeof documentSchema>;
 export type AxcutDocumentInput = z.input<typeof documentSchema>;
 export type CreateProjectInput = z.infer<typeof createProjectInputSchema>;

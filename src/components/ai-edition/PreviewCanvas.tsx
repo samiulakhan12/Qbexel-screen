@@ -70,6 +70,7 @@ import {
 import { AnnotationLayer } from "./AnnotationLayer";
 import { NativeCompositorOverlay } from "./NativeCompositorOverlay";
 import styles from "./NewEditorShell.module.css";
+import { SafeAreaGuides } from "./SafeAreaGuides";
 import { type VideoSource, VirtualPreview } from "./VirtualPreview";
 import { WebcamOverlay } from "./WebcamOverlay";
 import { ZoomFocusOverlay } from "./ZoomFocusOverlay";
@@ -444,6 +445,7 @@ export function PreviewCanvas(props: PreviewCanvasProps) {
 			    hitbox) still render on top as normal DOM so they stay clickable. No more
 			    dual preview path. */}
 			<NativeCompositorOverlay />
+			<SafeAreaGuides />
 			{layout?.screenRect ? (
 				<div className={styles.screenStage} style={screenStyle}>
 					{(() => {

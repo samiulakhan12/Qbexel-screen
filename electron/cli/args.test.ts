@@ -27,6 +27,25 @@ describe("parseCliArgs", () => {
 		expect(parse(["--no-sandbox"])).toBeNull();
 	});
 
+	it("parses --composition and remembers whether --fps was typed", () => {
+		const cmd = parse(["export", "demo.openscreen", "--composition", "Shorts / Reels"]);
+		expect(cmd).toMatchObject({
+			kind: "export",
+			composition: "Shorts / Reels",
+			mp4FrameRate: 60,
+		});
+		expect((cmd as { mp4FrameRateExplicit?: boolean }).mp4FrameRateExplicit).toBeUndefined();
+		const typed = parse(["export", "demo.openscreen", "--composition", "comp_1", "--fps", "30"]);
+		expect(typed).toMatchObject({
+			composition: "comp_1",
+			mp4FrameRate: 30,
+			mp4FrameRateExplicit: true,
+		});
+		expect(parse(["export", "demo.openscreen", "--composition", " "])).toMatchObject({
+			kind: "error",
+		});
+	});
+
 	it("parses a minimal export command and resolves relative paths", () => {
 		const cmd = parse(["export", "demo.openscreen"]);
 		expect(cmd).toMatchObject({

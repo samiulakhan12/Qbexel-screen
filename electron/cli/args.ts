@@ -99,6 +99,8 @@ Export options:
   --format <mp4|gif>        Override the format stored in the project
   --quality <medium|good|source>
                             MP4 quality (default: from project)
+  --composition <id|name>   Lay one of the project's compositions over the export; its
+                            export settings apply where no flag overrides them
   --fps <24|30|60>          MP4 frame rate (default 60)
   --gif-fps <15|20|25|30>   GIF frame rate (default: from project)
   --gif-size <small|medium|large|original>
@@ -212,11 +214,19 @@ function parseExport(args: string[], cwd: string): CliCommand {
 		audioPath: null,
 		audioMode: "mix",
 		audioOffsetSec: 0,
+		composition: null,
 	};
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i];
 		switch (arg) {
+			case "--composition": {
+				const [value, next] = takeValue(args, i, arg);
+				if (!value.trim()) throw new Error("--composition needs a composition id or name");
+				request.composition = value.trim();
+				i = next;
+				break;
+			}
 			case "-o":
 			case "--out": {
 				const [value, next] = takeValue(args, i, arg);
@@ -249,6 +259,7 @@ function parseExport(args: string[], cwd: string): CliCommand {
 					throw new Error(`--fps must be ${MP4_FRAME_RATES.join(", ")}, got "${value}"`);
 				}
 				request.mp4FrameRate = fps;
+				request.mp4FrameRateExplicit = true;
 				i = next;
 				break;
 			}

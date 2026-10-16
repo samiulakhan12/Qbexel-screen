@@ -185,28 +185,49 @@ Not built: OCR languages other than English (the model is per language); bundlin
 model in the installer (a 5 MB binary; documented, not committed); detection inside
 images of text at small sizes (frames are read at 1280 px wide).
 
-## Multi-format compositions (M7)
+## Multi-format compositions (M7) — as built
 
 Document field: `compositions?: AxcutComposition[]` (optional, additive).
 
 ```
 AxcutComposition {
-  id; name; aspectRatio                 // "16:9" | "9:16" | "1:1" | "4:3" | "W:H"
-  resolution?: { width, height }        // custom; otherwise the quality tier
-  formatFollowCursor?: boolean
-  padding?: number; borderRadius?: number
-  captions?: Partial<CaptionSettings>  // independent caption placement
-  safeArea?: { top, bottom, left, right } // % of frame kept clear
-  preset?: "tutorial" | "announcement" | "short" | "custom"
+  id; name; preset: custom|youtube|shorts|square|docs-gif|linkedin
+  aspectRatio: "W:H" | "auto"
+  formatFollowCursor?; padding?; borderRadius?          // editor settings the composition names
+  captions?: { anchorV?, insetY?, fontSize? }           // caption placement
+  safeArea?: { top, bottom, left, right }               // % of the frame, guides only
+  export: { format: mp4|gif; quality; fps; gifFrameRate?; gifSize?; gifLoop? }
 }
 ```
 
-`documentForComposition(document, id)` is a pure transform that overlays the
-composition on `legacyEditor` and the caption settings and returns a document
-the existing `buildSceneDescription` / `exportMultiNative` consume unchanged.
-The preview switches composition through the same function, so what the user
-sees for "9:16 short" is what the file holds. Export presets live in
-`src/lib/exporter/exportPresets.ts`.
+One transform, `documentForComposition(document, composition)`
+(`src/lib/ai-edition/compositions/apply.ts`): `patchEditorSettings` for the frame,
+fill, padding and corners, then `patchCaptionSettings` for the caption placement at the
+composition's aspect. The timeline, cuts, zooms and annotations pass through untouched.
+The preview ("Preview in project"), the export dialog, the batch and the CLI all run
+this same transform, so what the user previews is what the file holds.
+
+Presets (`presets.ts`): YouTube 16:9 1080p60; Shorts / Reels 9:16 following the cursor,
+captions at 26 % with a 24 % bottom margin; Square 1:1; Docs GIF 16:9 at 15 fps, small;
+LinkedIn 4:5. Each preset's captions clear its own safe area (a test holds this).
+`exportPlanFor` (`exportPlan.ts`) checks a composition's export numbers against the
+exporter's lists and defaults the rest; `compositionFileName` / `siblingExportPath` name
+a composition's file after it beside the chosen one.
+
+Surfaces: the **Compositions** facet (`CompositionsPane.tsx`): add from preset or custom,
+edit name / frame / fill / captions / safe area / format / quality / fps per composition
+(an edited composition becomes `custom`), Show guides (dashed safe-area overlay on the
+preview, `SafeAreaGuides.tsx`, renderer state only), Preview in project, Export…, Export
+all, Remove with confirmation. The export dialog takes `compositions`: one presets its
+controls, lays the composition over the document and suggests `<title>-<slug>.<ext>`;
+several run as a batch after one save-path pick, each composition laid over the project
+in turn with its own frame and container, written beside the chosen file, with a
+"k of n: name" line and a done summary. The CLI's `export --composition <id|name>` lays
+a composition over the project and takes its export settings where no flag overrides
+them (`--fps` only when typed).
+
+Not built: per-composition caption *style* (only placement); batch export from the
+CLI (one composition per run); a thumbnail per composition in the pane.
 
 ## Subtitle export (M3)
 

@@ -12,6 +12,13 @@ import { toast } from "sonner";
 import { useScopedT } from "@/contexts/I18nContext";
 import { renderSubtitles, subtitleCuesForDocument } from "@/lib/ai-edition/captions/subtitles";
 import { prepareClickSound } from "@/lib/ai-edition/clickSound";
+import { documentForComposition } from "@/lib/ai-edition/compositions/apply";
+import {
+	type CompositionExportPlan,
+	compositionFileName,
+	exportPlanFor,
+	siblingExportPath,
+} from "@/lib/ai-edition/compositions/exportPlan";
 import {
 	collectEffectiveClipDims,
 	type Dims,
@@ -20,7 +27,7 @@ import {
 	resolveAspectRatioValue,
 } from "@/lib/ai-edition/document/outputFormat";
 import { exportGateState, exportNeedsAcknowledgement } from "@/lib/ai-edition/privacy/review";
-import type { AxcutDocument } from "@/lib/ai-edition/schema";
+import type { AxcutComposition, AxcutDocument } from "@/lib/ai-edition/schema";
 import { getEditorSettings } from "@/lib/ai-edition/store/editorSettings";
 import { assetCameraSource } from "@/lib/ai-edition/timeline/camera";
 import { resolveClipSourceEndSec } from "@/lib/ai-edition/timeline/clipDuration";
@@ -157,6 +164,9 @@ interface ExportDialogProps {
 	document: AxcutDocument | null;
 	/** Opens the Privacy pane, from the gate's "Review findings". */
 	onOpenPrivacy?: () => void;
+	/** One composition: its look is laid over the project and its export settings preset the
+	 *  controls. Several: a batch, one file per composition beside the chosen one. */
+	compositions?: AxcutComposition[] | null;
 }
 
 type ExportCheck =
@@ -164,8 +174,23 @@ type ExportCheck =
 	| { state: "done"; result: PrivacyFileScanResult }
 	| { state: "failed"; error: string };
 
-export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportDialogProps) {
+export function ExportDialog({
+	open,
+	onClose,
+	document: projectDocument,
+	onOpenPrivacy,
+	compositions,
+}: ExportDialogProps) {
 	const t = useScopedT("editor");
+	const single = compositions && compositions.length === 1 ? compositions[0] : null;
+	const batch = compositions && compositions.length > 1 ? compositions : null;
+	// A single composition is laid over the project for everything the dialog shows and
+	// exports; a batch keeps the project as is and lays each composition over it at run time.
+	const document = useMemo(
+		() =>
+			projectDocument && single ? documentForComposition(projectDocument, single) : projectDocument,
+		[projectDocument, single],
+	);
 	const ts = useScopedT("settings");
 	// No usable GPU: the export still applies every effect (output is identical), it
 	// just runs on the software encoder and takes minutes instead of seconds.
@@ -193,6 +218,21 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 	const [starPrompt, setStarPrompt] = useState<{ store: boolean } | null>(null);
 	const activeExport = useRef<ActiveExport | null>(null);
 	const [cancelPending, setCancelPending] = useState(false);
+	/** Which composition of a batch is being written, for the progress line. */
+	const [batchStep, setBatchStep] = useState<{ index: number; count: number; name: string } | null>(
+		null,
+	);
+	// A composition's export settings preset the controls each time the dialog opens for it.
+	useEffect(() => {
+		if (!open || !single) return;
+		const plan = exportPlanFor(single);
+		setFormat(plan.format);
+		setQuality(plan.quality);
+		setFps(plan.fps);
+		setGifFrameRate(plan.gifFrameRate);
+		setGifSize(plan.gifSize);
+		setGifLoop(plan.gifLoop);
+	}, [open, single]);
 	const pickerGeneration = useRef(0);
 
 	useEffect(
@@ -266,14 +306,14 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 	// quality actually uses these as its target size; 720p/1080p target a fixed short side
 	// regardless (`calculateDimensionsForShortSide`), so this only changes what "Source"
 	// resolves to.
-	const tierOutputDims = (value: ExportQuality) =>
+	const tierOutputDims = (value: ExportQuality, aspect = EXPORT_ASPECT, frameRate = fps) =>
 		smallestSource
 			? calculateMp4ExportSettings({
 					quality: value,
 					sourceWidth: smallestSource.width,
 					sourceHeight: smallestSource.height,
-					aspectRatioValue: EXPORT_ASPECT,
-					frameRate: fps,
+					aspectRatioValue: aspect,
+					frameRate,
 				})
 			: null;
 
@@ -283,8 +323,11 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 	// size the GIF (a 640x360 clip gave 852x480 after the 1080p tier, 640x360 after Source).
 	// So no preset upscales and `original` is the source size. The native side falls back
 	// to its own defaults when undefined.
-	const gifOutputDims = (preset: GifSizePreset): { width?: number; height?: number } => {
-		const source = tierOutputDims("source");
+	const gifOutputDims = (
+		preset: GifSizePreset,
+		aspect = EXPORT_ASPECT,
+	): { width?: number; height?: number } => {
+		const source = tierOutputDims("source", aspect);
 		if (!source) return {};
 		const maxHeight = GIF_SIZE_PRESETS[preset].maxHeight;
 		if (source.height <= maxHeight) {
@@ -371,7 +414,12 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 			.replace(/[^a-z0-9-_]+/gi, "_")
 			.replace(/^_+|_+$/g, "")
 			.slice(0, 60);
-		const suggested = `${safeName || "export"}${format === "gif" ? ".gif" : ".mp4"}`;
+		const baseName = safeName || "export";
+		const suggested = single
+			? compositionFileName(baseName, single)
+			: batch
+				? `${baseName}.${exportPlanFor(batch[0]).format === "gif" ? "gif" : "mp4"}`
+				: `${baseName}${format === "gif" ? ".gif" : ".mp4"}`;
 
 		setPhase("configuring");
 		setError(null);
@@ -410,24 +458,58 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 		await prepareClickSound(document).catch(() => undefined);
 		// A close during that read has already run the cleanup, which had no job to cancel yet.
 		if (generation !== pickerGeneration.current) return;
-		{
+		// One run per deliverable: the dialog's own settings for a plain export or a single
+		// composition (already laid over `document`), or each composition of a batch laid over
+		// the project in turn, written beside the chosen file under the composition's name.
+		interface ExportRun {
+			document: AxcutDocument;
+			plan: CompositionExportPlan;
+			outPath: string;
+			aspect: number;
+			name: string | null;
+		}
+		const base = projectDocument;
+		const runs: ExportRun[] =
+			batch && base
+				? batch.map((composition) => {
+						const laid = documentForComposition(base, composition);
+						return {
+							document: laid,
+							plan: exportPlanFor(composition),
+							outPath: siblingExportPath(pickedPath, composition),
+							aspect: resolveAspectRatioValue(laid, getEditorSettings(laid).aspectRatio),
+							name: composition.name,
+						};
+					})
+				: [
+						{
+							document,
+							plan: { format, quality, fps, gifFrameRate, gifSize, gifLoop },
+							outPath: pickedPath,
+							aspect: EXPORT_ASPECT,
+							name: single?.name ?? null,
+						},
+					];
+		for (const [runIndex, run] of runs.entries()) {
+			const isLast = runIndex === runs.length - 1;
+			if (batch) setBatchStep({ index: runIndex + 1, count: runs.length, name: run.name ?? "" });
 			const job: ActiveExport = { id: crypto.randomUUID(), cancelRequested: false };
 			activeExport.current = job;
 			setPhase("rendering");
 			// Render the real timeline when there are clips; else fall back to the fixture.
-			const clips = buildNativeClipList(document);
+			const clips = buildNativeClipList(run.document);
 			// GIF runs at its own frame rate, so the progress total has to use it.
-			const outFps = format === "gif" ? gifFrameRate : fps;
+			const outFps = run.plan.format === "gif" ? run.plan.gifFrameRate : run.plan.fps;
 			// Total frames the encoder will produce, known upfront from the timeline — the
 			// native side only reports frames AFTER composing one (onNativeExportProgress),
 			// it doesn't know or send a total, so this is computed here to turn that raw
 			// count into a percentage.
 			//
 			// It has to count SPEED-ADJUSTED frames, not source seconds: a clip under a 1.25x
-			// region emits 80% of `duration * fps`, which is where the "frozen at ~80%" of
+			// region emits 80% of `duration * run.plan.fps`, which is where the "frozen at ~80%" of
 			// OpenScreen#371 came from — the bar climbed to 80% and the export finished
 			// there. `outputFrameCount` mirrors the compositor's own span arithmetic.
-			const sceneDesc = buildSceneDescription(document);
+			const sceneDesc = buildSceneDescription(run.document);
 			const totalFrames = outputFrameCount(clips, sceneDesc.speedRegions, outFps);
 			const startedAt = Date.now();
 			const unsubscribeProgress = window.electronAPI?.onNativeExportProgress?.(
@@ -451,32 +533,32 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 				const exportClips = clips;
 
 				const sceneJson = JSON.stringify(sceneDesc);
-				const outDims = tierOutputDims(quality);
+				const outDims = tierOutputDims(run.plan.quality, run.aspect, run.plan.fps);
 				if (exportClips.length === 0) {
 					throw new Error(t("exportDialog.nothingToExport"));
 				}
 				const stats =
-					format === "gif"
+					run.plan.format === "gif"
 						? await exportGifNative(
 								exportClips,
-								pickedPath,
+								run.outPath,
 								sceneJson,
 								{
-									...gifOutputDims(gifSize),
-									fps: gifFrameRate,
+									...gifOutputDims(run.plan.gifSize, run.aspect),
+									fps: run.plan.gifFrameRate,
 									// 0 = infinite, the historical GIF default; 1 = play once.
-									loopCount: gifLoop ? 0 : 1,
+									loopCount: run.plan.gifLoop ? 0 : 1,
 								},
 								job.id,
 							)
 						: await exportMultiNative(
 								exportClips,
-								pickedPath,
+								run.outPath,
 								sceneJson,
 								{
 									width: outDims?.width,
 									height: outDims?.height,
-									fps,
+									fps: run.plan.fps,
 									// H.264 only. The native pipeline still encodes H.265, but nothing
 									// offers it: it is software-only on Linux, slower than software on the
 									// measured Macs, and the files half the players cannot open.
@@ -486,15 +568,18 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 								job.id,
 							);
 				if (activeExport.current !== job) return;
-				setSavedPath(pickedPath);
-				setPhase("done");
-				if (checkExport) {
+				setSavedPath(run.outPath);
+				if (isLast) setPhase("done");
+				if (checkExport && !batch) {
 					// Read-only: the finished file is sampled and OCR'd like a recording, and the
 					// result is only reported here. The ruler length bounds the sampling.
 					setExportCheck({ state: "running" });
-					const durationSec = Math.max(0, ...document.timeline.clips.map((c) => c.timelineEndSec));
+					const durationSec = Math.max(
+						0,
+						...run.document.timeline.clips.map((c) => c.timelineEndSec),
+					);
 					void nativeBridgeClient.privacy
-						.scanFile(pickedPath, durationSec)
+						.scanFile(run.outPath, durationSec)
 						.then((result) =>
 							setExportCheck(
 								result.success
@@ -509,12 +594,12 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 							}),
 						);
 				}
-				if (writeSubtitles && format === "mp4") {
+				if (writeSubtitles && run.plan.format === "mp4") {
 					// On the programme clock, so the file lines up with the MP4 just written. The
 					// main process writes it beside the export and refuses any other extension.
-					const cues = subtitleCuesForDocument(document, EXPORT_ASPECT);
+					const cues = subtitleCuesForDocument(run.document, run.aspect);
 					void window.electronAPI
-						?.writeExportSidecar?.(pickedPath, "srt", renderSubtitles(cues, "srt"))
+						?.writeExportSidecar?.(run.outPath, "srt", renderSubtitles(cues, "srt"))
 						.then((result) => {
 							if (!result?.success) {
 								toast.error(t("exportDialog.subtitlesFailed"), { description: result?.error });
@@ -529,26 +614,28 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 				// Reported after the export succeeded, so a cancelled or failed run never counts.
 				// Main owns the whole decision; a failure here simply means no ask, which is the
 				// safe direction for something that may only ever happen once.
-				void window.electronAPI
-					?.starPromptExportFinished?.()
-					.then((result) => {
-						// The same generation guard the save picker uses: a close or a newer export
-						// invalidates this answer, and an IPC round trip is long enough for either to
-						// have happened. Without it a late "yes" lands on a dialog that has moved on.
-						if (generation !== pickerGeneration.current) return;
-						if (result?.offer) setStarPrompt({ store: result.store });
-					})
-					.catch((err) => console.warn("[export] star prompt check failed:", err));
+				if (isLast)
+					void window.electronAPI
+						?.starPromptExportFinished?.()
+						.then((result) => {
+							// The same generation guard the save picker uses: a close or a newer export
+							// invalidates this answer, and an IPC round trip is long enough for either to
+							// have happened. Without it a late "yes" lands on a dialog that has moved on.
+							if (generation !== pickerGeneration.current) return;
+							if (result?.offer) setStarPrompt({ store: result.store });
+						})
+						.catch((err) => console.warn("[export] star prompt check failed:", err));
 				toast.success(t("exportDialog.exportedVideo"), {
-					description: `${pickedPath} · ${formatHms(stats.videoDurationS)} ${t("exportDialog.exportedVideoOf")} ${formatHms(stats.wallS)}`,
+					description: `${run.outPath} · ${formatHms(stats.videoDurationS)} ${t("exportDialog.exportedVideoOf")} ${formatHms(stats.wallS)}`,
 					action: {
 						label: t("exportDialog.showInFolder"),
 						// The toast is gone in five seconds; the done panel below keeps the same
 						// action around for as long as the dialog is open.
-						onClick: () => revealExportedFile(pickedPath),
+						onClick: () => revealExportedFile(run.outPath),
 					},
 				});
 			} catch (err) {
+				setBatchStep(null);
 				if (activeExport.current !== job) return;
 				if (err instanceof NativeBridgeRequestError && err.code === "CANCELLED") {
 					setPhase("idle");
@@ -568,8 +655,8 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 					setCancelPending(false);
 				}
 			}
-			return;
 		}
+		setBatchStep(null);
 	};
 
 	const isBusy = phase === "rendering" || phase === "writing" || phase === "configuring";
@@ -580,7 +667,13 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 		<ModalShell
 			open={open}
 			onClose={handleClose}
-			title={t("exportDialog.title")}
+			title={
+				single
+					? t("exportDialog.compositionTitle", { name: single.name })
+					: batch
+						? t("exportDialog.batchTitle", { count: batch.length })
+						: t("exportDialog.title")
+			}
 			subtitle={t("exportDialog.subtitle")}
 		>
 			<div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -796,8 +889,18 @@ export function ExportDialog({ open, onClose, document, onOpenPrivacy }: ExportD
 					</section>
 				)}
 
+				{batchStep ? (
+					<div className={styles.sbNote} style={{ margin: 0 }} data-testid="export-batch-step">
+						{t("exportDialog.batchProgress", {
+							index: batchStep.index,
+							count: batchStep.count,
+							name: batchStep.name,
+						})}
+					</div>
+				) : null}
 				<ProgressBlock
 					phase={phase}
+					batchCount={batch?.length ?? null}
 					progress={progress}
 					error={error}
 					pct={pct}
@@ -930,6 +1033,7 @@ function ProgressBlock({
 	pct,
 	savedPath,
 	exportCheck,
+	batchCount,
 	starPrompt,
 	onAnswerStarPrompt,
 }: {
@@ -940,6 +1044,8 @@ function ProgressBlock({
 	savedPath: string | null;
 	/** The post-export privacy check, when the user asked for one. */
 	exportCheck: ExportCheck | null;
+	/** How many files a batch wrote, or null for a single export. */
+	batchCount: number | null;
 	starPrompt: { store: boolean } | null;
 	onAnswerStarPrompt: () => void;
 }) {
@@ -973,6 +1079,11 @@ function ProgressBlock({
 					{t("exportDialog.savedTo")}{" "}
 					<span style={{ fontFamily: "var(--font-mono)" }}>{savedPath}</span>
 				</div>
+				{batchCount ? (
+					<div data-testid="export-batch-done">
+						{t("exportDialog.batchDone", { count: batchCount })}
+					</div>
+				) : null}
 				{exportCheck ? (
 					<div data-testid="export-privacy-check" role="status">
 						{exportCheck.state === "running"

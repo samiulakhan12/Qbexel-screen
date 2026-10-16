@@ -25,10 +25,15 @@ export interface CliExportRequest {
 	quality: ExportQuality | null;
 	/** MP4 frame rate, as the Export dialog offers it. */
 	mp4FrameRate: Mp4FrameRate;
+	/** True when `--fps` was typed, so a composition's own rate does not override it. */
+	mp4FrameRateExplicit?: boolean;
 	gifFrameRate: GifFrameRate | null;
 	gifSizePreset: GifSizePreset | null;
 	/** null = use the loop setting stored in the project. */
 	gifLoop: boolean | null;
+	/** A composition of the project (id or unique name) laid over the document before the
+	 *  export; its export settings stand in for the project's where no flag overrides them. */
+	composition?: string | null;
 	/**
 	 * Reference preview box used to scale annotation text and border radii the
 	 * same way the editor's on-screen preview does. The composition is fitted

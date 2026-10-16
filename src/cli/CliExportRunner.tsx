@@ -8,6 +8,11 @@
 import { useEffect, useRef, useState } from "react";
 import { toFileUrl } from "@/components/video-editor/projectPersistence";
 import { prepareClickSound } from "@/lib/ai-edition/clickSound";
+import { documentForComposition, resolveCompositionRef } from "@/lib/ai-edition/compositions/apply";
+import {
+	type CompositionExportPlan,
+	exportPlanFor,
+} from "@/lib/ai-edition/compositions/exportPlan";
 import {
 	collectEffectiveClipDims,
 	pickExtremeDims,
@@ -66,7 +71,26 @@ async function runExport(request: CliExportRequest): Promise<CliDoneResult> {
 	const { editor } = project;
 	let axcutDocument = project.document;
 
-	const format = request.format ?? editor.exportFormat;
+	// A composition is the frame, captions and export settings of one deliverable, laid over
+	// the edit before anything is sized — the same transform the editor's preview and export use.
+	let plan: CompositionExportPlan | null = null;
+	if (request.composition) {
+		const composition = resolveCompositionRef(axcutDocument, request.composition);
+		if (!composition) {
+			const names = (axcutDocument.compositions ?? []).map((c) => `"${c.name}" (${c.id})`);
+			throw new Error(
+				`No composition "${request.composition}" in this project${names.length ? `; it has ${names.join(", ")}` : ""}`,
+			);
+		}
+		axcutDocument = documentForComposition(axcutDocument, composition);
+		plan = exportPlanFor(composition);
+		window.electronAPI.cliLog(
+			"info",
+			`Composition: ${composition.name} (${composition.aspectRatio})`,
+		);
+	}
+
+	const format = request.format ?? plan?.format ?? editor.exportFormat;
 	if (request.audioPath && format === "gif") {
 		throw new Error(
 			"--audio is only supported for MP4 exports (this project's stored format is gif; pass --format mp4)",
@@ -77,11 +101,13 @@ async function runExport(request: CliExportRequest): Promise<CliDoneResult> {
 			"--quality is only supported for MP4 exports (this project's stored format is gif; a GIF is sized with --gif-size)",
 		);
 	}
-	const quality = request.quality ?? editor.exportQuality;
-	const gifFrameRate = request.gifFrameRate ?? editor.gifFrameRate;
-	const gifSizePreset = request.gifSizePreset ?? editor.gifSizePreset;
-	const gifLoop = request.gifLoop ?? editor.gifLoop;
-	const mp4FrameRate = request.mp4FrameRate;
+	const quality = request.quality ?? plan?.quality ?? editor.exportQuality;
+	const gifFrameRate = request.gifFrameRate ?? plan?.gifFrameRate ?? editor.gifFrameRate;
+	const gifSizePreset = request.gifSizePreset ?? plan?.gifSize ?? editor.gifSizePreset;
+	const gifLoop = request.gifLoop ?? plan?.gifLoop ?? editor.gifLoop;
+	// `--fps` always arrives with a value (60 by default), so a composition's rate only stands
+	// in when the flag was not typed; the parser records that as `mp4FrameRateExplicit`.
+	const mp4FrameRate = request.mp4FrameRateExplicit || !plan ? request.mp4FrameRate : plan.fps;
 	const outPath =
 		request.outPath ?? replaceExtension(request.projectPath, format === "gif" ? ".gif" : ".mp4");
 	// Use the same per-clip auto-zoom suggestions as the editor, including its default span and

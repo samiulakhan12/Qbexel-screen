@@ -2841,3 +2841,82 @@ textarea.control {
 .sbDecision:hover:not(:disabled) { border-color: var(--brand); color: var(--fg); }
 .sbDecision.isOn { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); }
 .sbDecision:disabled { opacity: 0.5; cursor: default; }
+
+/* ─── Safe-area guides (Compositions pane) ────────────────────── */
+.safeAreaGuide {
+	position: absolute;
+	border: 1px dashed color-mix(in oklab, var(--accent) 80%, white);
+	border-radius: 6px;
+	box-shadow: 0 0 0 9999px color-mix(in oklab, var(--bg) 35%, transparent);
+	pointer-events: none;
+	z-index: 4;
+}
+.safeAreaLabel {
+	position: absolute;
+	top: 6px;
+	left: 8px;
+	padding: 2px 6px;
+	border-radius: 999px;
+	background: color-mix(in oklab, var(--accent) 80%, black);
+	color: white;
+	font: 600 10px/1.4 var(--font-body);
+	letter-spacing: 0.02em;
+}
+.compRow {
+	margin: 0 var(--sp-4) 10px;
+	padding: 10px 12px;
+	border: 1px solid var(--border-soft);
+	border-radius: var(--r-md);
+	background: var(--surface-1);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.compHead {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.compName {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 4px 8px;
+	border: 1px solid transparent;
+	border-radius: var(--r-sm);
+	background: transparent;
+	color: var(--fg);
+	font: 600 13px/1.3 var(--font-body);
+}
+.compName:hover,
+.compName:focus-visible {
+	border-color: var(--border);
+	background: var(--surface);
+	outline: none;
+}
+.compFields {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 6px 10px;
+}
+.compField {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	font: 500 11px/1.3 var(--font-body);
+	color: var(--muted);
+}
+.compField select,
+.compField input {
+	min-height: 28px;
+	padding: 0 8px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-sm);
+	background: var(--surface);
+	color: var(--fg);
+	font: 500 12px/1 var(--font-body);
+}
+.compActions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}

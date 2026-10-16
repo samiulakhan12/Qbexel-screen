@@ -234,7 +234,12 @@
 		"privacyCheckRunning": "Checking the exported video…",
 		"privacyCheckClean": "Nothing sensitive was found in {{frames}} sampled frames of the export.",
 		"privacyCheckFound": "{{count}} sensitive-looking items still show in the export: {{list}}",
-		"privacyCheckFailed": "The exported video could not be checked: {{error}}"
+		"privacyCheckFailed": "The exported video could not be checked: {{error}}",
+		"compositionTitle": "Export {{name}}",
+		"batchTitle": "Export {{count}} compositions",
+		"batchProgress": "{{index}} of {{count}}: {{name}}",
+		"batchDone": "{{count}} files written next to the first one.",
+		"batchFailed": "{{name}} failed: {{error}}"
 	},
 	"inspector": {
 		"resetFocusPoint": "重置焦点",

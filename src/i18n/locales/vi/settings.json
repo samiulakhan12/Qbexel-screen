@@ -350,10 +350,12 @@
 			"cursor": "Con trỏ: kiểu, kích thước và hiệu ứng",
 			"transcript": "Bản ghi lời thoại: chỉnh sửa từ để cắt video",
 			"director": "Director: scenes, suggested cuts, zooms and callouts read off the recording",
-			"privacy": "Privacy: find and blur sensitive text shown in the recording"
+			"privacy": "Privacy: find and blur sensitive text shown in the recording",
+			"compositions": "Compositions: one edit, several frames and export presets"
 		},
 		"director": "Director",
-		"privacy": "Privacy"
+		"privacy": "Privacy",
+		"compositions": "Compositions"
 	},
 	"crop": {
 		"title": "Cắt xén",
@@ -465,5 +467,47 @@
 		"dark": "Tối",
 		"light": "Sáng",
 		"custom": "Tùy chỉnh"
+	},
+	"compositions": {
+		"title": "Compositions",
+		"help": "A composition is one deliverable cut from the same edit: its frame shape, how the recording fills it, caption placement, safe-area guides and export settings. Preview applies a composition's look to the project; Export writes it to a file; Export all writes every composition next to one another.",
+		"intro": "Add a preset for each place the video goes. The edit is shared; only the frame, captions and export settings differ.",
+		"add": "Add",
+		"addCustom": "Custom",
+		"customName": "Custom",
+		"preset": {
+			"youtube": "YouTube",
+			"shorts": "Shorts / Reels",
+			"square": "Square",
+			"docs-gif": "Docs GIF",
+			"linkedin": "LinkedIn",
+			"custom": "Custom"
+		},
+		"empty": "No compositions yet. Add one above.",
+		"name": "Name",
+		"aspect": "Frame",
+		"aspectAuto": "Auto",
+		"fill": "Fill the frame following the cursor",
+		"padding": "Padding",
+		"captionsAnchor": "Captions",
+		"captionsInset": "Caption inset (%)",
+		"anchor": {
+			"bottom": "Bottom",
+			"top": "Top"
+		},
+		"format": "Format",
+		"quality": "Quality",
+		"fps": "Frame rate",
+		"safeArea": "Safe area (top / bottom / left / right, %)",
+		"showGuides": "Show guides",
+		"hideGuides": "Hide guides",
+		"applyToProject": "Preview in project",
+		"applied": "The project now shows this composition",
+		"export": "Export…",
+		"exportAll": "Export all ({{count}})",
+		"remove": "Remove",
+		"removeConfirm": "Remove this composition?",
+		"keep": "Keep",
+		"exportFileHint": "Files are named after the composition, next to the chosen file."
 	}
 }

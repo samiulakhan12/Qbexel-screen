@@ -43,8 +43,8 @@ of every milestone.
 | 4 | Creative presets, cursor effects, editable zooms | **done** (see below) |
 | 5 | Transcription and AI Tutorial Director | **done** (see below) |
 | 6 | Privacy Guardian and redaction workflow | **done** (see below) |
-| 7 | Multi-format compositions and publishing presets | in progress |
-| 8 | CLI and MCP interfaces | pending |
+| 7 | Multi-format compositions and publishing presets | **done** (see below) |
+| 8 | CLI and MCP interfaces | in progress |
 | 9 | Adversarial review, benchmarks, packaging | pending |
 
 ## Milestone 2 — what was built and how it was verified
@@ -155,6 +155,21 @@ and keyboard input is never recorded by the capture helpers in the first place. 
 transcript scan flags spoken values but cannot blur them; the user cuts them in the
 transcript pane.
 
+## Milestone 7 — what was built and how it was verified
+
+| Change | Where | Verified by |
+|---|---|---|
+| `compositions` on the document: frame, fill, padding, caption placement, safe area and export settings per deliverable | `src/lib/ai-edition/schema/index.ts` | schema parse of every preset in `compositions.test.ts` |
+| Presets (YouTube, Shorts/Reels, Square, Docs GIF, LinkedIn), the one transform `documentForComposition`, export plan and file naming, safe-area helpers | `src/lib/ai-edition/compositions/{presets,apply,exportPlan,safeArea}.ts` | `compositions.test.ts` (9 tests: presets validate and copy, transform touches only what it names, lookups, plan defaults, names, captions clear safe areas) |
+| Compositions facet with per-row editing, guides, preview-in-project, export, export all, remove | `CompositionsPane.tsx`, `useCompositions.ts`, `safeAreaGuide.ts`, `SafeAreaGuides.tsx` (over the preview frame), `FloatingInspector.tsx` | `CompositionsPane.test.tsx` (5 jsdom tests); audit rows |
+| Export dialog: a composition presets the controls and the file name; a batch writes one file per composition beside the chosen one, each with its own frame and container | `ExportDialog.tsx`, `NewEditorShell.tsx` | `ExportDialog.compositions.test.tsx` (2 tests: single GIF composition; batch of three with 16:9/9:16 frames and sibling paths); the existing dialog tests still pass |
+| CLI `export --composition <id|name>` | `electron/cli/args.ts`, `src/cli/CliExportRunner.tsx`, `src/lib/cliContracts.ts` | `args.test.ts`; the runner itself needs the compositor (not runnable here) |
+
+Known limitations of M7: a composition changes placement, not caption style; the batch
+stops at the first failure and reports which composition failed; safe-area guides are
+drawn by the preview only (never exported) and nothing warns when a zoom or annotation
+crosses them; the export itself was not run here (no compositor binaries).
+
 ## Backlog (needs a Windows/macOS device, native binaries or compositor work)
 
 
@@ -176,9 +191,9 @@ transcript pane.
 
 ## Next steps
 
-1. M7 compositions: `compositions` on the document, per-composition format and
-   safe areas, export presets (YouTube, Shorts/Reels, GIF for docs), caption
-   style per composition, batch export.
-2. M8 CLI (`storyboard`, `privacy scan`, `validate`, `apply-preset`) and MCP
-   tools (`director.*`, `privacy.*`, `exportSubtitles`) with strict schemas and
-   confirmation flags; M9 review, SECURITY.md, TESTING.md, README.
+1. M8 CLI: `qbexel storyboard <project> [--apply] [--json]`, `qbexel privacy scan
+   <project> [--json]`, `qbexel validate <project>`; MCP tools `director.*`,
+   `privacy.*`, `exportSubtitles`, `listCompositions`/`exportComposition` with strict
+   schemas, allowed directories, confirmation for writes.
+2. M9: adversarial review of every new input path, SECURITY.md, TESTING.md, README,
+   packaging notes (OCR model, ffmpeg), benchmarks that can run here.

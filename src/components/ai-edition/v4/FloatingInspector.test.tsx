@@ -88,6 +88,7 @@ describe("FloatingInspector", () => {
 		onToggleOpen: vi.fn(),
 		clips: [],
 		onEditClip: vi.fn(),
+		onExportCompositions: vi.fn(),
 		transcriptProps: {} as unknown as React.ComponentProps<
 			typeof FloatingInspector
 		>["transcriptProps"],
@@ -661,6 +662,7 @@ describe("FloatingInspector on an agent-written effect", () => {
 				open
 				onFacetChange={vi.fn()}
 				onToggleOpen={vi.fn()}
+				onExportCompositions={vi.fn()}
 				clips={[]}
 				onEditClip={vi.fn()}
 				transcriptProps={

@@ -15,6 +15,7 @@ import {
 	EyeOff,
 	FileText,
 	ImageIcon,
+	LayoutTemplate,
 	type LucideIcon,
 	Maximize2,
 	MousePointer2,
@@ -61,6 +62,7 @@ import { resolveAspectRatioValue } from "@/lib/ai-edition/document/outputFormat"
 import type {
 	AxcutAnnotationRegion,
 	AxcutClip,
+	AxcutComposition,
 	AxcutShaderEffect,
 	AxcutShaderEffectParam,
 	AxcutShaderEffectRange,
@@ -77,6 +79,7 @@ import { clampToBound } from "@/lib/projectDefaults";
 import { checkShaderEffectCode } from "@/native/compositorViewClient";
 import { annotationFootageRect, zoomScaleLimit } from "@/native/sceneDescription";
 import { ColorField } from "../ColorField";
+import { CompositionsPane } from "../CompositionsPane";
 import shell from "../NewEditorShell.module.css";
 import { PrivacyPane } from "../PrivacyPane";
 import {
@@ -109,7 +112,8 @@ export type Facet =
 	| "cursor"
 	| "transcript"
 	| "director"
-	| "privacy";
+	| "privacy"
+	| "compositions";
 
 const FACETS: Array<{ id: Facet; labelKey: string; icon: typeof SlidersHorizontal }> = [
 	// Background is a SECTION of this facet now, not a facet of its own — see
@@ -123,6 +127,8 @@ const FACETS: Array<{ id: Facet; labelKey: string; icon: typeof SlidersHorizonta
 	{ id: "director", labelKey: "facets.director", icon: Clapperboard },
 	// The Privacy Guardian: sensitive text found on screen, blurred on accept (PrivacyPane).
 	{ id: "privacy", labelKey: "facets.privacy", icon: ShieldCheck },
+	// Output variants: frame, captions and export settings per deliverable (CompositionsPane).
+	{ id: "compositions", labelKey: "facets.compositions", icon: LayoutTemplate },
 ];
 
 // The rail is a column against the right edge, so its tooltips open to the left: above or below
@@ -144,6 +150,8 @@ interface FloatingInspectorProps {
 	clips: AxcutClip[];
 	onEditClip: (clip: AxcutClip) => void;
 	transcriptProps: TranscriptProps;
+	/** Opens the export dialog for these compositions (one, or all of them in a batch). */
+	onExportCompositions: (compositions: AxcutComposition[]) => void;
 	/** Drives the selected-element settings pane (zoom/speed/annotation/trim) —
 	 * takes over the inspector, forcing it open, whenever a timeline region is
 	 * selected. Clicking elsewhere on the timeline clears the selection
@@ -159,6 +167,7 @@ export function FloatingInspector({
 	clips,
 	onEditClip,
 	transcriptProps,
+	onExportCompositions,
 	tl,
 }: FloatingInspectorProps) {
 	const ts = useScopedT("settings");
@@ -178,6 +187,7 @@ export function FloatingInspector({
 		transcript: ts("facets.tips.transcript"),
 		director: ts("facets.tips.director"),
 		privacy: ts("facets.tips.privacy"),
+		compositions: ts("facets.tips.compositions"),
 	};
 	const facet = facets.some(({ id }) => id === chosenFacet) ? chosenFacet : facets[0].id;
 	const [clipPickerOpen, setClipPickerOpen] = useState(false);
@@ -200,6 +210,7 @@ export function FloatingInspector({
 							onCollapse={onToggleOpen}
 							transcriptProps={transcriptProps}
 							scenes={{ addTitleCard: tl.addTitleCard, addEffect: tl.addBundledEffectAtPlayhead }}
+							onExportComposition={onExportCompositions}
 						/>
 					)}
 				</div>
@@ -1582,11 +1593,13 @@ function FacetBody({
 	onCollapse,
 	transcriptProps,
 	scenes,
+	onExportComposition,
 }: {
 	facet: Facet;
 	onCollapse: () => void;
 	transcriptProps: TranscriptProps;
 	scenes: SceneActions;
+	onExportComposition: (compositions: AxcutComposition[]) => void;
 }) {
 	const te = useScopedT("editor");
 	// A small collapse affordance floated over the reused pane header.
@@ -1623,6 +1636,9 @@ function FacetBody({
 	if (facet === "transcript") return wrap(collapse, <TranscriptPane {...transcriptProps} />);
 	if (facet === "director") return wrap(collapse, <StoryboardPane />);
 	if (facet === "privacy") return wrap(collapse, <PrivacyPane />);
+	if (facet === "compositions") {
+		return wrap(collapse, <CompositionsPane onExport={onExportComposition} />);
+	}
 	// `effects` is the fallthrough rather than a branch of its own: the union has no
 	// tail left now that captions is a popover, and a `never` check here would only
 	// restate what the type already says.

@@ -23,6 +23,7 @@ import { isModalOpen } from "@/lib/ai-edition/modalGuard";
 import type {
 	AxcutAudioTrack,
 	AxcutClip,
+	AxcutComposition,
 	AxcutDocument,
 	AxcutShaderEffectRange,
 } from "@/lib/ai-edition/schema";
@@ -263,6 +264,9 @@ export function NewEditorShell() {
 	);
 	const [inspectorOpen, setInspectorOpen] = useState(true);
 	const [facet, setFacet] = useState<Facet>("effects");
+	// The compositions the export dialog was opened for: one (its look and export settings
+	// preset), several (a batch), or null for a plain export of the project as it is.
+	const [exportCompositions, setExportCompositions] = useState<AxcutComposition[] | null>(null);
 	const [openProjectOpen, setOpenProjectOpen] = useState(false);
 	const [newProjectOpen, setNewProjectOpen] = useState(false);
 	// Crop + trim in/out both live in EditClipModal now (per-clip), reachable
@@ -1686,6 +1690,10 @@ export function NewEditorShell() {
 								facet={facet}
 								open={inspectorOpen}
 								tl={tl}
+								onExportCompositions={(list) => {
+									setExportCompositions(list);
+									setExportOpen(true);
+								}}
 								onFacetChange={(f) => {
 									setFacet(f);
 									setInspectorOpen(true);
@@ -1796,8 +1804,12 @@ export function NewEditorShell() {
 			/>
 			<ExportDialog
 				open={exportOpen}
-				onClose={() => setExportOpen(false)}
+				onClose={() => {
+					setExportOpen(false);
+					setExportCompositions(null);
+				}}
 				document={document}
+				compositions={exportCompositions}
 				onOpenPrivacy={() => {
 					setExportOpen(false);
 					setFacet("privacy");

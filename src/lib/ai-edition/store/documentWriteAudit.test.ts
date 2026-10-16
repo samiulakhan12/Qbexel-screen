@@ -301,6 +301,10 @@ const DECLARED: WritePath[] = [
 	// is a click in the pane, so each records an undo step.
 	// The Privacy Guardian (PrivacyPane): the scan saved onto the document, decisions on
 	// findings, the blurs for accepted ones, and the "reviewed" mark. Each is a click.
+	// Compositions (CompositionsPane): the list of output variants on the document, and the
+	// application of one to the project's settings. Each is a click.
+	w("src/lib/ai-edition/store/useCompositions.ts", "applyToProject", "save", "gesture"),
+	w("src/lib/ai-edition/store/useCompositions.ts", "write", "save", "gesture"),
 	w("src/lib/ai-edition/store/usePrivacy.ts", "blur", "save", "gesture"),
 	w("src/lib/ai-edition/store/usePrivacy.ts", "decide", "save", "gesture"),
 	w("src/lib/ai-edition/store/usePrivacy.ts", "markDone", "save", "gesture"),
