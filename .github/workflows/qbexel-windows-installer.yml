@@ -1,0 +1,238 @@
+name: Qbexel Windows installer
+
+# Builds the Windows x64 installer of Qbexel Capture Studio on GitHub's Windows runner
+# and publishes it as a prerelease of THIS repository, so a machine without the
+# Visual Studio / Rust / CMake toolchain can install the app.
+#
+# Why a workflow of its own rather than build.yml: build.yml is upstream's release
+# matrix (Windows x64 + arm64, the Store package, two macOS builds, Linux) and it
+# still looks for installers named after the upstream product and for a speech
+# helper built by a run of build-whisper-stt.yml in the upstream repository. This
+# one builds the speech helper itself, in the same run, and finds the installer by
+# shape, so it works in a fork with no history and no secrets beyond GITHUB_TOKEN.
+#
+# Triggered by hand (Actions tab → "Qbexel Windows installer" → Run workflow) or by
+# pushing a branch named qbexel/installer/<anything>.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Tag of the prerelease to create or update (default: build-<version>-<run number>)"
+        required: false
+        type: string
+  push:
+    branches:
+      - "qbexel/installer/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: qbexel-windows-installer-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  whisper:
+    name: Speech-to-text helper (Windows x64)
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup
+
+      # The steps below are the Windows leg of build-whisper-stt.yml, kept in step with
+      # it: that workflow is the one upstream maintains, this is the copy a fork can run
+      # without an artifact history.
+      - name: Install Vulkan SDK
+        uses: jakoch/install-vulkan-sdk-action@v1
+        with:
+          vulkan_version: 1.4.304.1
+          install_runtime: false
+          cache: true
+
+      - name: Put glslc on PATH
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cand in "${VULKAN_SDK}/Bin" "${VULKAN_SDK}/bin"; do
+            if [[ -d "${cand}" ]]; then
+              echo "${cand}" >> "$GITHUB_PATH"
+            fi
+          done
+
+      - name: Install SPIRV-Headers
+        shell: bash
+        # ggml-vulkan's CMakeLists does `find_package(SPIRV-Headers CONFIG REQUIRED)`; the
+        # Windows Vulkan SDK installer does not ship that config, vcpkg's port does.
+        run: |
+          set -euo pipefail
+          VCPKG_ROOT_DIR="$(dirname "$(command -v vcpkg)")"
+          "${VCPKG_ROOT_DIR}/vcpkg" install spirv-headers:x64-windows
+          echo "CMAKE_PREFIX_PATH=${VCPKG_ROOT_DIR}/installed/x64-windows" >> "$GITHUB_ENV"
+
+      - name: Read the runner image
+        id: image
+        shell: bash
+        run: echo "tag=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache whisper.cpp build tree
+        uses: actions/cache@v6
+        with:
+          path: C:/wstbuild
+          key: whisper-stt-build-win32-x64-${{ steps.image.outputs.tag }}-${{ hashFiles('electron/native/whisper-stt/CMakeLists.txt') }}
+          restore-keys: |
+            whisper-stt-build-win32-x64-${{ steps.image.outputs.tag }}-
+
+      - name: Build whisper-stt-server
+        run: bash scripts/build-whisper-stt.sh
+
+      - name: Stage the helper for the installer job
+        shell: bash
+        run: |
+          set -euo pipefail
+          BAG="whisper-stt-win32-x64"
+          mkdir -p "$BAG"
+          cp -av "electron/native/bin/win32-x64/." "$BAG/"
+          tar -czf "${BAG}.tar.gz" "$BAG"
+          ls -la "${BAG}.tar.gz"
+
+      - name: Upload the helper
+        uses: actions/upload-artifact@v7
+        with:
+          name: whisper-stt-win32-x64
+          path: whisper-stt-win32-x64.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  installer:
+    name: Windows x64 installer
+    needs: whisper
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup
+
+      - name: Download the speech-to-text helper
+        uses: actions/download-artifact@v8
+        with:
+          name: whisper-stt-win32-x64
+          path: .whisper-stt
+
+      - name: Stage the speech-to-text helper
+        shell: bash
+        # scripts/stage-whisper-stt.sh leaves a helper that is already present alone and
+        # only checks it; placing the one built above first is the developer path.
+        run: |
+          set -euo pipefail
+          tar -xzf .whisper-stt/whisper-stt-win32-x64.tar.gz -C .whisper-stt
+          mkdir -p electron/native/bin/win32-x64
+          cp -a .whisper-stt/whisper-stt-win32-x64/. electron/native/bin/win32-x64/
+          ls electron/native/bin/win32-x64
+          bash scripts/stage-whisper-stt.sh win32-x64
+
+      - name: Build the installer
+        shell: bash
+        # Capture helper (CMake/MSVC), FFmpeg and ONNX Runtime fetch, Visual C++ runtime
+        # staging, Rust compositor addon, TypeScript, Vite, licences, electron-builder NSIS.
+        # The whole log is kept and published with the result, so a failure can be read
+        # without the Actions UI.
+        run: |
+          set -o pipefail
+          npm run build:win -- --publish never 2>&1 | tee build-win-x64.log
+
+      - name: Locate the installer
+        id: exe
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXE="$(find release -name '*.Setup.*-x64.exe' | head -1)"
+          test -f "$EXE" || { echo "::error::no x64 installer under release/"; exit 1; }
+          BLOCKMAP="${EXE}.blockmap"
+          test -f "$BLOCKMAP" || { echo "::error::blockmap missing beside $EXE"; exit 1; }
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "path=$EXE" >> "$GITHUB_OUTPUT"
+          echo "blockmap=$BLOCKMAP" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          ls -la "$EXE" "$BLOCKMAP"
+          sha256sum "$EXE" | tee "${EXE}.sha256"
+
+      - name: Upload the installer as a workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: qbexel-capture-studio-windows-x64
+          path: |
+            release/**/*.Setup.*-x64.exe
+            release/**/*.Setup.*-x64.exe.blockmap
+            release/**/*.Setup.*-x64.exe.sha256
+            build-win-x64.log
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish to a prerelease of this repository
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          STATUS: ${{ job.status }}
+          INPUT_TAG: ${{ github.event.inputs.release_tag }}
+          EXE: ${{ steps.exe.outputs.path }}
+          BLOCKMAP: ${{ steps.exe.outputs.blockmap }}
+        # A draft is created first and holds the build log; it is published only when
+        # the installer exists. A failed run therefore leaves a draft (visible to the
+        # repository's collaborators only) whose log says why, and no public release.
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="${INPUT_TAG:-build-${VERSION}-${GITHUB_RUN_NUMBER}}"
+          TITLE="Qbexel Capture Studio ${VERSION} — Windows x64 (build ${GITHUB_RUN_NUMBER})"
+          NOTES="$(cat <<EOF
+          Windows x64 installer of Qbexel Capture Studio ${VERSION}, built from
+          ${GITHUB_SHA} by the "Qbexel Windows installer" workflow (run ${GITHUB_RUN_NUMBER}).
+
+          **Install:** download the \`.exe\` below and run it. It is not code-signed, so
+          SmartScreen shows "Windows protected your PC": choose **More info**, then
+          **Run anyway**. Windows 10 1903 or later; see the README for hardware notes.
+
+          **Included:** native screen capture, the GPU compositor, the speech-to-text
+          helper (the English model downloads on first use), the Privacy Guardian (its OCR
+          model downloads on the first scan), the CLI and the MCP server.
+
+          The \`.blockmap\` is for differential updates, the \`.sha256\` is the installer's
+          checksum, and \`build-win-x64.log\` is the complete build log.
+          EOF
+          )"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --draft --prerelease --target "$GITHUB_SHA" \
+              --title "$TITLE" --notes "$NOTES"
+          fi
+          test -f build-win-x64.log && gh release upload "$TAG" build-win-x64.log --clobber
+          if [ "$STATUS" = "success" ] && [ -n "$EXE" ] && [ -f "$EXE" ]; then
+            gh release upload "$TAG" "$EXE" "$BLOCKMAP" "${EXE}.sha256" --clobber
+            gh release edit "$TAG" --draft=false --prerelease
+            URL="$(gh release view "$TAG" --json url --jq .url)"
+            {
+              echo "## Windows x64 installer"
+              echo ""
+              echo "Published to **$URL**"
+              echo ""
+              echo "- $(basename "$EXE")"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "Published $URL"
+          else
+            {
+              echo "## Windows x64 installer"
+              echo ""
+              echo "The build failed; the log is attached to the draft release \`$TAG\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "Build status: $STATUS — log uploaded to draft release $TAG"
+          fi
